@@ -18,14 +18,6 @@ export async function signInWithEmail(email: string, password: string) {
   return data;
 }
 
-export async function signInWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-  });
-  if (error) throw error;
-  return data;
-}
-
 export async function signInWithApple() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'apple',

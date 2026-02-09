@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { signInWithEmail, signInWithGoogle, signInWithApple } from '@/services/auth';
+import { signInWithEmail, signInWithApple } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -34,14 +34,6 @@ export default function SignIn() {
       Alert.alert('Sign In Error', error.message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
     }
   };
 
@@ -123,26 +115,15 @@ export default function SignIn() {
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Social Auth */}
-        <View style={styles.socialButtons}>
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogleSignIn}
-            activeOpacity={0.7}
-          >
-            <FontAwesome name="google" size={18} color="#DB4437" />
-            <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleAppleSignIn}
-            activeOpacity={0.7}
-          >
-            <FontAwesome name="apple" size={20} color={COLORS.primary} />
-            <Text style={styles.socialButtonText}>Continue with Apple</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Apple Sign In */}
+        <TouchableOpacity
+          style={styles.appleButton}
+          onPress={handleAppleSignIn}
+          activeOpacity={0.7}
+        >
+          <FontAwesome name="apple" size={20} color="#FFFFFF" />
+          <Text style={styles.appleButtonText}>Continue with Apple</Text>
+        </TouchableOpacity>
 
         {/* Sign Up Link */}
         <View style={styles.footer}>
@@ -250,24 +231,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     fontSize: 14,
   },
-  socialButtons: {
-    gap: 12,
-  },
-  socialButton: {
+  appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: COLORS.card,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
+    backgroundColor: '#000000',
     borderRadius: 50,
-    paddingVertical: 15,
+    paddingVertical: 16,
   },
-  socialButtonText: {
+  appleButtonText: {
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.text,
+    color: '#FFFFFF',
   },
   footer: {
     flexDirection: 'row',
