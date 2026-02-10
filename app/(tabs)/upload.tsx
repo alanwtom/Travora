@@ -67,14 +67,13 @@ export default function UploadScreen() {
       setIsUploading(true);
       const videoFileName = `video_${Date.now()}`;
 
-      // Upload video file
-      const videoUrl = await uploadVideo(user.id, videoUri, videoFileName);
-
-      // Upload thumbnail if provided
-      let thumbnailUrl: string | undefined;
-      if (thumbnailUri) {
-        thumbnailUrl = await uploadThumbnail(user.id, thumbnailUri, videoFileName);
-      }
+      // Upload video and thumbnail in parallel
+      const [videoUrl, thumbnailUrl] = await Promise.all([
+        uploadVideo(user.id, videoUri, videoFileName),
+        thumbnailUri
+          ? uploadThumbnail(user.id, thumbnailUri, videoFileName)
+          : Promise.resolve(undefined),
+      ]);
 
       // Create video record in database
       await createVideo({
