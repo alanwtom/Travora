@@ -97,7 +97,7 @@ export default function SignIn() {
         <View style={styles.infoBox}>
           <FontAwesome name="info-circle" size={16} color={COLORS.accent} style={{ marginRight: 8 }} />
           <Text style={styles.infoText}>
-            We'll send a secure code to your email to sign you in.
+            We'll send a 6-digit code to your email to sign you in.
           </Text>
         </View>
 

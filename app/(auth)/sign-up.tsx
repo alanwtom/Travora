@@ -97,7 +97,7 @@ export default function SignUp() {
         <View style={styles.infoBox}>
           <FontAwesome name="info-circle" size={16} color={COLORS.accent} style={{ marginRight: 8 }} />
           <Text style={styles.infoText}>
-            We'll send a secure code to your email to verify your account. No password needed.
+            We'll send a 6-digit code to your email to verify your account. No password needed.
           </Text>
         </View>
 

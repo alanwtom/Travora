@@ -43,8 +43,8 @@ export default function CheckEmail() {
       Alert.alert('Error', 'No email address provided');
       return;
     }
-    if (otp.length < 6) {
-      Alert.alert('Error', 'Please enter the code from your email');
+    if (otp.length !== 6) {
+      Alert.alert('Error', 'Please enter the 6-digit code from your email');
       return;
     }
     try {
@@ -84,7 +84,7 @@ export default function CheckEmail() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Enter the code</Text>
+          <Text style={styles.title}>Enter verification code</Text>
           <Text style={styles.subtitle}>
             We sent a 6-digit code to{' '}
             <Text style={styles.emailText}>{email || 'your email'}</Text>
@@ -95,17 +95,17 @@ export default function CheckEmail() {
         <View style={styles.otpContainer}>
           <TextInput
             style={styles.otpInput}
-            placeholder="12345678"
+            placeholder="123456"
             placeholderTextColor={COLORS.textLight}
             value={otp}
             onChangeText={(text) => {
-              // Only allow numbers, max 10 digits (Supabase may send 6-8 digit codes)
-              const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+              // Only allow numbers, exactly 6 digits
+              const numericText = text.replace(/[^0-9]/g, '').slice(0, 6);
               setOtp(numericText);
             }}
             keyboardType="number-pad"
             textAlign="center"
-            maxLength={10}
+            maxLength={6}
             autoFocus
           />
         </View>
@@ -114,7 +114,7 @@ export default function CheckEmail() {
         <TouchableOpacity
           style={[styles.verifyButton, isVerifying && styles.buttonDisabled]}
           onPress={handleVerify}
-          disabled={isVerifying || otp.length < 6}
+          disabled={isVerifying || otp.length !== 6}
           activeOpacity={0.85}
         >
           <Text style={styles.verifyButtonText}>
@@ -125,7 +125,7 @@ export default function CheckEmail() {
         {/* Instructions */}
         <View style={styles.instructions}>
           <Text style={styles.instructionsText}>
-            Check your email for a verification code. Enter the code below to sign in.
+            Check your email for a 6-digit verification code. Enter it below to sign in.
           </Text>
         </View>
 
