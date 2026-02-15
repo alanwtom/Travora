@@ -11,37 +11,31 @@ import {
   ScrollView,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { signInWithEmail, signInWithApple } from '@/services/auth';
+import { signInWithMagicLink } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function SignIn() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleMagicLinkSignIn = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
       return;
     }
-
     try {
-      setIsLoading(true);
-      await signInWithEmail(email, password);
-    } catch (error: any) {
-      Alert.alert('Sign In Error', error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    try {
-      await signInWithApple();
+      setIsSendingMagicLink(true);
+      await signInWithMagicLink(email);
+      router.push({
+        pathname: '/(auth)/check-email',
+        params: { email },
+      });
     } catch (error: any) {
       Alert.alert('Error', error.message);
+    } finally {
+      setIsSendingMagicLink(false);
     }
   };
 
@@ -67,7 +61,7 @@ export default function SignIn() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to continue your journey</Text>
+          <Text style={styles.subtitle}>Sign in with your email to continue</Text>
         </View>
 
         {/* Form */}
@@ -84,46 +78,28 @@ export default function SignIn() {
               keyboardType="email-address"
             />
           </View>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor={COLORS.textLight}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
 
+          {/* Sign In Button */}
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSignIn}
-            disabled={isLoading}
+            style={[styles.button, isSendingMagicLink && styles.buttonDisabled]}
+            onPress={handleMagicLinkSignIn}
+            disabled={isSendingMagicLink}
             activeOpacity={0.85}
           >
+            <FontAwesome name="envelope-o" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.buttonText}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isSendingMagicLink ? 'Sending code...' : 'Send sign-in code'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+        {/* Info */}
+        <View style={styles.infoBox}>
+          <FontAwesome name="info-circle" size={16} color={COLORS.accent} style={{ marginRight: 8 }} />
+          <Text style={styles.infoText}>
+            We'll send a secure code to your email to sign you in.
+          </Text>
         </View>
-
-        {/* Apple Sign In */}
-        <TouchableOpacity
-          style={styles.appleButton}
-          onPress={handleAppleSignIn}
-          activeOpacity={0.7}
-        >
-          <FontAwesome name="apple" size={20} color="#FFFFFF" />
-          <Text style={styles.appleButtonText}>Continue with Apple</Text>
-        </TouchableOpacity>
 
         {/* Sign Up Link */}
         <View style={styles.footer}>
@@ -196,10 +172,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: 50,
     paddingVertical: 17,
-    alignItems: 'center',
     marginTop: 6,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
@@ -216,34 +194,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
   },
-  divider: {
+  infoBox: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 28,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    alignItems: 'flex-start',
   },
-  dividerLine: {
+  infoText: {
     flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  dividerText: {
-    color: COLORS.textLight,
-    paddingHorizontal: 18,
     fontSize: 14,
-  },
-  appleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#000000',
-    borderRadius: 50,
-    paddingVertical: 16,
-  },
-  appleButtonText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#FFFFFF',
+    color: COLORS.textMuted,
+    lineHeight: 20,
   },
   footer: {
     flexDirection: 'row',

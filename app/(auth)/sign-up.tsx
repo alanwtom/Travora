@@ -11,44 +11,31 @@ import {
   ScrollView,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { signUpWithEmail } from '@/services/auth';
+import { signInWithMagicLink } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function SignUp() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
 
-  const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleMagicLinkSignUp = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
       return;
     }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
     try {
-      setIsLoading(true);
-      await signUpWithEmail(email, password);
-      Alert.alert(
-        'Account Created',
-        'Please check your email for a verification link.',
-      );
+      setIsSendingMagicLink(true);
+      await signInWithMagicLink(email);
+      router.push({
+        pathname: '/(auth)/check-email',
+        params: { email },
+      });
     } catch (error: any) {
-      Alert.alert('Sign Up Error', error.message);
+      Alert.alert('Error', error.message);
     } finally {
-      setIsLoading(false);
+      setIsSendingMagicLink(false);
     }
   };
 
@@ -91,39 +78,27 @@ export default function SignUp() {
               keyboardType="email-address"
             />
           </View>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="At least 6 characters"
-              placeholderTextColor={COLORS.textLight}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Confirm password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter your password"
-              placeholderTextColor={COLORS.textLight}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-          </View>
 
+          {/* Sign Up Button */}
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSignUp}
-            disabled={isLoading}
+            style={[styles.button, isSendingMagicLink && styles.buttonDisabled]}
+            onPress={handleMagicLinkSignUp}
+            disabled={isSendingMagicLink}
             activeOpacity={0.85}
           >
+            <FontAwesome name="envelope-o" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.buttonText}>
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isSendingMagicLink ? 'Sending code...' : 'Create account with email'}
             </Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Info */}
+        <View style={styles.infoBox}>
+          <FontAwesome name="info-circle" size={16} color={COLORS.accent} style={{ marginRight: 8 }} />
+          <Text style={styles.infoText}>
+            We'll send a secure code to your email to verify your account. No password needed.
+          </Text>
         </View>
 
         {/* Terms */}
@@ -204,10 +179,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: 50,
     paddingVertical: 17,
-    alignItems: 'center',
     marginTop: 6,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
@@ -223,6 +200,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.2,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    alignItems: 'flex-start',
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textMuted,
+    lineHeight: 20,
   },
   terms: {
     fontSize: 13,

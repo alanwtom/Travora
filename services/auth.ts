@@ -18,9 +18,23 @@ export async function signInWithEmail(email: string, password: string) {
   return data;
 }
 
-export async function signInWithApple() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'apple',
+export async function signInWithMagicLink(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      // Remove emailRedirectTo to use OTP code instead of magic link
+      // emailRedirectTo: 'travora://auth/callback',
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function verifyOtp(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
   });
   if (error) throw error;
   return data;
