@@ -1,25 +1,29 @@
+import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { toggleLike } from '@/services/likes';
+import { toggleSave } from '@/services/saves';
+import { VideoWithProfile } from '@/types/database';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { VideoWithProfile } from '@/types/database';
-import { COLORS } from '@/lib/constants';
-import { toggleLike } from '@/services/likes';
-import { useAuth } from '@/providers/AuthProvider';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 type Props = {
   video: VideoWithProfile;
 };
 
 export function VideoCard({ video }: Props) {
+  const router = useRouter();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(video.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(video.like_count);
+  const [isSaved, setIsSaved] = useState(video.is_saved ?? false);
 
   const handleLike = async () => {
     if (!user) return;
@@ -33,12 +37,30 @@ export function VideoCard({ video }: Props) {
     }
   };
 
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const saved = await toggleSave(user.id, video.id);
+      setIsSaved(saved);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
+  const handleVideoPress = () => {
+    router.push({
+      pathname: '/video/[id]',
+      params: { id: video.id },
+    });
+  };
+
   const timeAgo = getTimeAgo(video.created_at);
 
   return (
     <View style={styles.card}>
       {/* Thumbnail */}
-      <TouchableOpacity style={styles.thumbnailContainer}>
+      <TouchableOpacity style={styles.thumbnailContainer} onPress={handleVideoPress}>
         {video.thumbnail_url ? (
           <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnail} />
         ) : (
@@ -104,6 +126,17 @@ export function VideoCard({ video }: Props) {
           <TouchableOpacity style={styles.actionButton}>
             <FontAwesome name="comment-o" size={16} color={COLORS.textMuted} />
             <Text style={styles.actionText}>{video.comment_count}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
+            <FontAwesome
+              name={isSaved ? 'bookmark' : 'bookmark-o'}
+              size={16}
+              color={isSaved ? COLORS.primary : COLORS.textMuted}
+            />
+            <Text style={[styles.actionText, isSaved && { color: COLORS.primary }]}>
+              {isSaved ? 'Saved' : 'Save'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>

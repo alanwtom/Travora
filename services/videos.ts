@@ -1,6 +1,6 @@
+import { FEED_PAGE_SIZE } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 import { Video, VideoInsert, VideoUpdate, VideoWithProfile } from '@/types/database';
-import { FEED_PAGE_SIZE } from '@/lib/constants';
 
 export async function getFeedVideos(
   page: number = 0,
@@ -30,19 +30,39 @@ export async function getFeedVideos(
     comment_count: video.comment_count?.[0]?.count ?? 0,
   }));
 
-  // If user is logged in, check which videos they've liked
+  // If user is logged in, check which videos they've liked and saved
   if (userId && videos.length > 0) {
     const videoIds = videos.map((v: any) => v.id);
+    
     const { data: likedData } = await supabase
       .from('likes')
       .select('video_id')
       .eq('user_id', userId)
       .in('video_id', videoIds);
 
-    const likedSet = new Set(likedData?.map((l) => l.video_id) ?? []);
+    const likedSet = new Set((likedData ?? []).map((l: any) => l.video_id));
+    
     videos.forEach((v: any) => {
       v.is_liked = likedSet.has(v.id);
+      v.is_saved = false; // Default to false until saves table is available
     });
+
+    // Try to fetch saves, but don't fail if the table doesn't exist yet
+    try {
+      const { data: savedData } = await (supabase
+        .from('saves') as any)
+        .select('video_id')
+        .eq('user_id', userId)
+        .in('video_id', videoIds);
+
+      const savedSet = new Set((savedData ?? []).map((s: any) => s.video_id));
+      videos.forEach((v: any) => {
+        v.is_saved = savedSet.has(v.id);
+      });
+    } catch (error) {
+      // Silently ignore if saves table doesn't exist yet
+      console.log('Saves table not yet available');
+    }
   }
 
   return videos as VideoWithProfile[];
@@ -74,7 +94,7 @@ export async function getVideo(videoId: string): Promise<VideoWithProfile | null
   if (error) throw error;
 
   return {
-    ...data,
+    ...(data as any),
     profiles: (data as any).profiles,
     like_count: (data as any).like_count?.[0]?.count ?? 0,
     comment_count: (data as any).comment_count?.[0]?.count ?? 0,
@@ -82,8 +102,8 @@ export async function getVideo(videoId: string): Promise<VideoWithProfile | null
 }
 
 export async function createVideo(video: VideoInsert): Promise<Video> {
-  const { data, error } = await supabase
-    .from('videos')
+  const { data, error } = await (supabase
+    .from('videos') as any)
     .insert(video)
     .select()
     .single();
@@ -93,8 +113,8 @@ export async function createVideo(video: VideoInsert): Promise<Video> {
 }
 
 export async function updateVideo(videoId: string, updates: VideoUpdate): Promise<Video> {
-  const { data, error } = await supabase
-    .from('videos')
+  const { data, error } = await (supabase
+    .from('videos') as any)
     .update(updates)
     .eq('id', videoId)
     .select()
@@ -114,7 +134,7 @@ export async function deleteVideo(videoId: string) {
 }
 
 export async function incrementViewCount(videoId: string) {
-  const { error } = await supabase.rpc('increment_view_count' as any, {
+  const { error } = await (supabase.rpc as any)('increment_view_count' as any, {
     video_id: videoId,
   });
 
@@ -127,9 +147,9 @@ export async function incrementViewCount(videoId: string) {
       .single();
 
     if (video) {
-      await supabase
-        .from('videos')
-        .update({ view_count: video.view_count + 1 })
+      await (supabase
+        .from('videos') as any)
+        .update({ view_count: (video as any).view_count + 1 })
         .eq('id', videoId);
     }
   }

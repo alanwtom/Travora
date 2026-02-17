@@ -152,6 +152,25 @@ export interface Database {
           following_id?: string;
         };
       };
+      saves: {
+        Row: {
+          id: string;
+          user_id: string;
+          video_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          video_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          video_id?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -184,12 +203,16 @@ export type CommentUpdate = Database['public']['Tables']['comments']['Update'];
 export type Follow = Database['public']['Tables']['follows']['Row'];
 export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
 
+export type Save = Database['public']['Tables']['saves']['Row'];
+export type SaveInsert = Database['public']['Tables']['saves']['Insert'];
+
 // Extended types with relations
 export type VideoWithProfile = Video & {
   profiles: Profile;
   like_count: number;
   comment_count: number;
   is_liked?: boolean;
+  is_saved?: boolean;
 };
 
 export type CommentWithProfile = Comment & {

@@ -102,6 +102,22 @@ CREATE INDEX idx_follows_follower_id ON public.follows(follower_id);
 CREATE INDEX idx_follows_following_id ON public.follows(following_id);
 
 -- ============================================
+-- 7. SAVES TABLE
+-- Users can save/bookmark videos
+-- ============================================
+CREATE TABLE public.saves (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  video_id UUID NOT NULL REFERENCES public.videos(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, video_id)
+);
+
+-- Indexes for save lookups
+CREATE INDEX idx_saves_video_id ON public.saves(video_id);
+CREATE INDEX idx_saves_user_id ON public.saves(user_id);
+
+-- ============================================
 -- 6. FUNCTIONS
 -- ============================================
 

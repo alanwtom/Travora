@@ -1,29 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Image,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useAuth } from '@/providers/AuthProvider';
 import { useProfile } from '@/hooks/useProfile';
+import { useSavedVideos } from '@/hooks/useSavedVideos';
+import { useLikedVideos } from '@/hooks/useLikedVideos';
 import { useUserVideos } from '@/hooks/useVideos';
+import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
 import { signOut } from '@/services/auth';
 import { getFollowerCount, getFollowingCount } from '@/services/profiles';
-import { COLORS } from '@/lib/constants';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+type TabType = 'videos' | 'saved' | 'liked';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { videos, isLoading: videosLoading } = useUserVideos(user?.id ?? '');
+  const { videos: savedVideos, isLoading: savedLoading } = useSavedVideos(user?.id ?? '');
+  const { videos: likedVideos, isLoading: likedLoading } = useLikedVideos(user?.id ?? '');
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabType>('videos');
   const router = useRouter();
 
   useEffect(() => {
@@ -50,6 +57,11 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const displayedVideos =
+    activeTab === 'videos' ? videos : activeTab === 'saved' ? savedVideos : likedVideos;
+  const isLoading =
+    activeTab === 'videos' ? videosLoading : activeTab === 'saved' ? savedLoading : likedLoading;
+
   if (profileLoading) {
     return (
       <View style={styles.centered}>
@@ -61,7 +73,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={videos}
+        data={displayedVideos}
         keyExtractor={(item) => item.id}
         numColumns={3}
         renderItem={({ item }) => (
@@ -131,20 +143,97 @@ export default function ProfileScreen() {
               >
                 <Text style={styles.editButtonText}>Edit Profile</Text>
               </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.devButton}
+                onPress={() => router.push('/(tabs)/../dev' as any)}
+              >
+                <FontAwesome name="flask" size={18} color={COLORS.primary} />
+              </TouchableOpacity>
               <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
                 <FontAwesome name="sign-out" size={18} color={COLORS.error} />
               </TouchableOpacity>
             </View>
 
-            {/* Videos Header */}
-            <Text style={styles.sectionTitle}>Your Videos</Text>
+            {/* Tab Switcher */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'videos' && styles.tabActive]}
+                onPress={() => setActiveTab('videos')}
+              >
+                <FontAwesome
+                  name="play"
+                  size={16}
+                  color={activeTab === 'videos' ? COLORS.primary : COLORS.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    activeTab === 'videos' && styles.tabLabelActive,
+                  ]}
+                >
+                  Videos ({videos.length})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
+                onPress={() => setActiveTab('saved')}
+              >
+                <FontAwesome
+                  name="bookmark"
+                  size={16}
+                  color={activeTab === 'saved' ? COLORS.primary : COLORS.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    activeTab === 'saved' && styles.tabLabelActive,
+                  ]}
+                >
+                  Saved ({savedVideos.length})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'liked' && styles.tabActive]}
+                onPress={() => setActiveTab('liked')}
+              >
+                <FontAwesome
+                  name="heart"
+                  size={16}
+                  color={activeTab === 'liked' ? COLORS.primary : COLORS.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    activeTab === 'liked' && styles.tabLabelActive,
+                  ]}
+                >
+                  Liked ({likedVideos.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         }
         ListEmptyComponent={
-          !videosLoading ? (
+          !isLoading ? (
             <View style={styles.emptyVideos}>
-              <FontAwesome name="video-camera" size={32} color={COLORS.border} />
-              <Text style={styles.emptyText}>No videos yet</Text>
+              <FontAwesome
+                name={
+                  activeTab === 'videos'
+                    ? 'video-camera'
+                    : activeTab === 'saved'
+                    ? 'bookmark'
+                    : 'heart'
+                }
+                size={32}
+                color={COLORS.border}
+              />
+              <Text style={styles.emptyText}>
+                {activeTab === 'videos'
+                  ? 'No videos yet'
+                  : activeTab === 'saved'
+                  ? 'No saved videos yet'
+                  : 'No liked videos yet'}
+              </Text>
             </View>
           ) : null
         }
@@ -250,6 +339,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.text,
   },
+  devButton: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   signOutButton: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
@@ -259,6 +358,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginTop: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
+  },
+  tabLabel: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+  },
+  tabLabelActive: {
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,
