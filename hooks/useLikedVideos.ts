@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { VideoWithProfile } from '@/types/database';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useLikedVideos(userId: string | undefined) {
   const [videos, setVideos] = useState<VideoWithProfile[]>([]);
