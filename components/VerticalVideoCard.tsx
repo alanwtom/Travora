@@ -11,6 +11,7 @@ import {
 import { Video } from 'expo-av';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
+import { useFollow } from '@/hooks/useFollow';
 import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
@@ -29,6 +30,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const router = useRouter();
   const { user } = useAuth();
   const videoRef = useRef<any>(null);
+  const { isFollowing, toggle, isLoading: followLoading } = useFollow(
+    user?.id,
+    video.user_id
+  );
+  const showFollowButton = user?.id && video.user_id !== user.id;
   
   const [isLiked, setIsLiked] = useState(video.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(video.like_count);
@@ -99,13 +105,12 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
   const handleUserProfile = () => {
     if (video.user_id === user?.id) {
-      router.push('/profile');
+      router.push('/(tabs)/profile');
     } else {
-      // Navigate to user's profile - you may need to create a dynamic route for this
       router.push({
-        pathname: '/video/[id]',
-        params: { id: video.id },
-      });
+        pathname: '/user/[userId]',
+        params: { userId: video.user_id },
+      } as any);
     }
   };
 
@@ -182,28 +187,45 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         {/* Left side - User info and description */}
         <View style={styles.leftContent}>
           {/* User Info */}
-          <TouchableOpacity
-            style={styles.userRow}
-            onPress={handleUserProfile}
-            activeOpacity={0.7}
-          >
-            {video.profiles?.avatar_url ? (
-              <Image
-                source={{ uri: video.profiles.avatar_url }}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+          <View style={styles.userRow}>
+            <TouchableOpacity
+              style={styles.userInfoTouchable}
+              onPress={handleUserProfile}
+              activeOpacity={0.7}
+            >
+              {video.profiles?.avatar_url ? (
+                <Image
+                  source={{ uri: video.profiles.avatar_url }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+                </View>
+              )}
+              <View>
+                <Text style={styles.username} numberOfLines={1}>
+                  {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
+                </Text>
+                <Text style={styles.timestamp}>{timeAgo}</Text>
               </View>
+            </TouchableOpacity>
+            {showFollowButton && (
+              <TouchableOpacity
+                style={[styles.followButton, isFollowing && styles.followingButton]}
+                onPress={toggle}
+                disabled={followLoading}
+              >
+                {followLoading ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
+                )}
+              </TouchableOpacity>
             )}
-            <View>
-              <Text style={styles.username} numberOfLines={1}>
-                {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
-              </Text>
-              <Text style={styles.timestamp}>{timeAgo}</Text>
-            </View>
-          </TouchableOpacity>
+          </View>
 
           {/* Title and Caption */}
           {video.title && (
@@ -363,6 +385,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    justifyContent: 'space-between',
+  },
+  userInfoTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  followButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  followingButton: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  followButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  followingButtonText: {
+    color: '#FFFFFF',
   },
   avatar: {
     width: 40,
