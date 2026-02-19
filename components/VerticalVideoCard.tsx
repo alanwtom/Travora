@@ -1,23 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import { Video } from 'expo-av';
-import { useRouter } from 'expo-router';
+import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { useFollow } from '@/hooks/useFollow';
 import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
-import { COLORS } from '@/lib/constants';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Video } from 'expo-av';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 type Props = {
   video: VideoWithProfile;

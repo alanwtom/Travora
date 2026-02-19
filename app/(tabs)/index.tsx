@@ -1,11 +1,11 @@
+import { VerticalVideoFeed } from '@/components/VerticalVideoFeed';
+import { useFeedVideos } from '@/hooks/useVideos';
+import { COLORS } from '@/lib/constants';
 import React from 'react';
 import {
-  View,
-  StyleSheet,
+    StyleSheet,
+    View,
 } from 'react-native';
-import { useFeedVideos } from '@/hooks/useVideos';
-import { VerticalVideoFeed } from '@/components/VerticalVideoFeed';
-import { COLORS } from '@/lib/constants';
 
 export default function HomeScreen() {
   const { videos, isLoading, isRefreshing, error, loadMore, refresh, hasMore } = useFeedVideos();

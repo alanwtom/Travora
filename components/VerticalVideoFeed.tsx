@@ -1,15 +1,15 @@
-import React, { useState, useRef, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  ViewToken,
-  Dimensions,
-  ActivityIndicator,
-  Text,
-} from 'react-native';
-import { VideoWithProfile } from '@/types/database';
 import { COLORS } from '@/lib/constants';
+import { VideoWithProfile } from '@/types/database';
+import React, { useCallback, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
+    ViewToken,
+} from 'react-native';
 import { VerticalVideoCard } from './VerticalVideoCard';
 
 type Props = {

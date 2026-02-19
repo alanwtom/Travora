@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { useFollow } from '@/hooks/useFollow';
-import { VideoWithProfile } from '@/types/database';
 import { COLORS } from '@/lib/constants';
+import { VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 type Props = {
   video: VideoWithProfile;

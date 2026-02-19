@@ -28,10 +28,7 @@ export default function SignIn() {
     try {
       setIsSendingMagicLink(true);
       await signInWithMagicLink(email);
-      router.push({
-        pathname: '/(auth)/check-email',
-        params: { email },
-      });
+      router.push({ pathname: 'check-email', params: { email } });
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {

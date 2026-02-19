@@ -1,0 +1,3 @@
+// Generated env fallbacks for Expo bundler
+export const EXPO_PUBLIC_SUPABASE_URL = 'https://otffnddjbvmchkwuobli.supabase.co';
+export const EXPO_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90ZmZuZGRqYnZtY2hrd3VvYmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyODIyODYsImV4cCI6MjA4Njg1ODI4Nn0._mTeWfzbvLxtFhKXlNmvMnKDrbE6nHw57yyErxlDYzo';
