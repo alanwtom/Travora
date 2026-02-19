@@ -1,16 +1,16 @@
+import { COLORS } from '@/lib/constants';
+import { VideoWithProfile } from '@/types/database';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
+  Dimensions,
   Image,
   StyleSheet,
-  TouchableOpacity,
   Text,
-  Dimensions,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { VideoWithProfile } from '@/types/database';
-import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 type Props = {
   video: VideoWithProfile;

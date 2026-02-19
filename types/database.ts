@@ -114,6 +114,9 @@ export interface Database {
           user_id: string;
           video_id: string;
           content: string;
+          parent_comment_id: string | null;
+          is_pinned: boolean;
+          like_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -122,6 +125,9 @@ export interface Database {
           user_id: string;
           video_id: string;
           content: string;
+          parent_comment_id?: string | null;
+          is_pinned?: boolean;
+          like_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -130,7 +136,29 @@ export interface Database {
           user_id?: string;
           video_id?: string;
           content?: string;
+          parent_comment_id?: string | null;
+          is_pinned?: boolean;
+          like_count?: number;
           updated_at?: string;
+        };
+      };
+      comment_likes: {
+        Row: {
+          id: string;
+          user_id: string;
+          comment_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          comment_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          comment_id?: string;
         };
       };
       follows: {
@@ -200,6 +228,9 @@ export type Comment = Database['public']['Tables']['comments']['Row'];
 export type CommentInsert = Database['public']['Tables']['comments']['Insert'];
 export type CommentUpdate = Database['public']['Tables']['comments']['Update'];
 
+export type CommentLike = Database['public']['Tables']['comment_likes']['Row'];
+export type CommentLikeInsert = Database['public']['Tables']['comment_likes']['Insert'];
+
 export type Follow = Database['public']['Tables']['follows']['Row'];
 export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
 
@@ -217,4 +248,6 @@ export type VideoWithProfile = Video & {
 
 export type CommentWithProfile = Comment & {
   profiles: Profile;
+  is_liked?: boolean;
+  replies?: CommentWithProfile[];
 };
