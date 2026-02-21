@@ -204,7 +204,7 @@ export const NOTIFICATION_CATEGORIES: Record<
   },
   social: {
     label: 'Social',
-    description: 'New followers, likes, comments, and mentions',
+    description: 'Followers, likes, comments, and mentions',
     icon: 'people',
     color: '#EC4899',
     isEssential: false,

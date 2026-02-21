@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import {
-  Notification,
-  NotificationPriority,
-  NotificationChannel,
-  NotificationStatus,
+    Notification,
+    NotificationChannel,
+    NotificationPriority,
+    NotificationStatus,
 } from '@/types/notifications';
 import * as Notifications from 'expo-notifications';
 
@@ -13,6 +13,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -30,6 +32,7 @@ interface DeliveryQueueItem {
 class NotificationDeliveryService {
   private deliveryQueue: Map<string, DeliveryQueueItem> = new Map();
   private isProcessing = false;
+  private processIntervalId: ReturnType<typeof setInterval> | null = null;
   private readonly DELAY_MS = {
     high: 1000, // 1 second
     medium: 15000, // 15 seconds
@@ -37,6 +40,12 @@ class NotificationDeliveryService {
   };
 
   private readonly MAX_ATTEMPTS = 3;
+
+  constructor() {
+    this.processIntervalId = setInterval(() => {
+      void this.processQueue();
+    }, 1000);
+  }
 
   /**
    * Queue a notification for delivery
@@ -116,12 +125,14 @@ class NotificationDeliveryService {
 
       // Update status to delivered
       await this.updateNotificationStatus(notification.id, 'delivered');
+      notification.status = 'delivered';
     } catch (error) {
       console.error('Failed to deliver notification:', error);
 
       // Update status to failed
       await this.updateNotificationStatus(notification.id, 'failed');
       await this.logDeliveryAttempt(notification.id, 'all', 'failed', String(error));
+      notification.status = 'failed';
 
       // Retry if under max attempts
       if (attemptCount < this.MAX_ATTEMPTS) {
@@ -327,7 +338,7 @@ class NotificationDeliveryService {
       } as Notification);
     });
 
-    Notifications.addNotificationResponseReceivedListeners((response) => {
+    Notifications.addNotificationResponseReceivedListener((response) => {
       // Handle notification tap
       const { data } = response.notification.request.content;
       console.log('Notification tapped:', data);

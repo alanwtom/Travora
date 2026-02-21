@@ -180,7 +180,7 @@ export function useNotifications() {
       if (!user?.id) return;
 
       try {
-        await deleteNotification(notificationId, user.id);
+        await deleteNotification(notificationId); // Delete notification by ID only
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
         loadUnreadCount();
       } catch (error) {
@@ -196,7 +196,7 @@ export function useNotifications() {
       if (!user?.id) return;
 
       try {
-        await toggleNotificationChannel(user.id, category, enabled);
+        await toggleNotificationChannel(user.id, category, channel, enabled);
         await loadPreferences();
       } catch (error) {
         console.error('Failed to toggle channel:', error);

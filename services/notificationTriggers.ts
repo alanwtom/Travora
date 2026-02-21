@@ -6,8 +6,8 @@
  * of notifications based on user actions and events.
  */
 
-import { createNotification } from './notifications';
 import { CreateNotificationParams } from '@/types/notifications';
+import { createNotification } from './notifications';
 
 /**
  * ============================================
@@ -168,7 +168,7 @@ export async function triggerSeasonalSale(
  */
 
 /**
- * Trigger when user gets a new follower
+ * Trigger when a user gets a new follower
  */
 export async function triggerNewFollower(
   userId: string,
@@ -178,31 +178,34 @@ export async function triggerNewFollower(
     userId,
     triggerEvent: 'new_follower',
     titleData: { username: data.username },
-    customData: { followerId: data.username, username: data.username },
+    bodyData: { username: data.username },
+    customData: { followerId: data.followerId, username: data.username },
   });
 }
 
 /**
- * Trigger when video is liked
+ * Trigger when a user gets a new like on their video
  */
 export async function triggerVideoLiked(
   userId: string,
-  data: { username: string; videoTitle: string; videoId: string; likerId: string }
+  data: { username: string; videoTitle?: string; videoId: string; likerId: string }
 ): Promise<string | null> {
   return createNotification({
     userId,
     triggerEvent: 'video_liked',
-    titleData: { username: data.username, video_title: data.videoTitle },
+    titleData: { username: data.username, video_title: data.videoTitle ?? 'your video' },
+    bodyData: { username: data.username, video_title: data.videoTitle ?? 'your video' },
     customData: {
-      videoId: data.videoId,
       likerId: data.likerId,
+      videoId: data.videoId,
       username: data.username,
+      videoTitle: data.videoTitle ?? null,
     },
   });
 }
 
 /**
- * Trigger when comment is received
+ * Trigger when a user receives a comment on their video
  */
 export async function triggerCommentReceived(
   userId: string,
@@ -217,31 +220,43 @@ export async function triggerCommentReceived(
   return createNotification({
     userId,
     triggerEvent: 'comment_received',
-    titleData: {
-      username: data.username,
-      comment_content: data.commentContent.slice(0, 100),
-    },
+    titleData: { username: data.username },
+    bodyData: { username: data.username, comment_content: data.commentContent },
     customData: {
-      videoId: data.videoId,
-      commentId: data.commentId,
       commenterId: data.commenterId,
+      commentId: data.commentId,
+      videoId: data.videoId,
+      commentContent: data.commentContent,
       username: data.username,
     },
   });
 }
 
 /**
- * Trigger when user is mentioned
+ * Trigger when a user is mentioned in a comment
  */
 export async function triggerMentionReceived(
   userId: string,
-  data: { username: string; commentId: string; videoId: string }
+  data: {
+    username: string;
+    commentContent: string;
+    videoId: string;
+    commentId: string;
+    mentionerId: string;
+  }
 ): Promise<string | null> {
   return createNotification({
     userId,
     triggerEvent: 'mention_received',
     titleData: { username: data.username },
-    customData: { commentId: data.commentId, videoId: data.videoId, username: data.username },
+    bodyData: { username: data.username, comment_content: data.commentContent },
+    customData: {
+      mentionerId: data.mentionerId,
+      commentId: data.commentId,
+      videoId: data.videoId,
+      commentContent: data.commentContent,
+      username: data.username,
+    },
   });
 }
 
@@ -413,59 +428,4 @@ export async function triggerBulkNotification(
   );
 
   return results;
-}
-
-/**
- * Example: Send notification when someone comments on a video
- * This integrates with existing comment functionality
- */
-export async function notifyVideoCommented(
-  videoOwnerId: string,
-  commenterUsername: string,
-  commentContent: string,
-  videoId: string,
-  videoTitle: string,
-  commenterId: string
-): Promise<string | null> {
-  return triggerCommentReceived(videoOwnerId, {
-    username: commenterUsername,
-    commentContent,
-    videoId,
-    commentId: '', // Will be filled in by the caller
-    commenterId,
-  });
-}
-
-/**
- * Example: Send notification when someone follows a user
- * This integrates with existing follow functionality
- */
-export async function notifyUserFollowed(
-  followerId: string,
-  followedUserId: string,
-  followerUsername: string
-): Promise<string | null> {
-  return triggerNewFollower(followedUserId, {
-    username: followerUsername,
-    followerId,
-  });
-}
-
-/**
- * Example: Send notification when someone likes a video
- * This integrates with existing like functionality
- */
-export async function notifyVideoLiked(
-  videoOwnerId: string,
-  likerUsername: string,
-  videoId: string,
-  videoTitle: string,
-  likerId: string
-): Promise<string | null> {
-  return triggerVideoLiked(videoOwnerId, {
-    username: likerUsername,
-    videoTitle,
-    videoId,
-    likerId,
-  });
 }

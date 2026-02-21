@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { CommentWithProfile } from '@/types/database';
+import { triggerCommentReceived, triggerMentionReceived } from './notificationTriggers';
 
 export async function getVideoComments(videoId: string, userId?: string): Promise<CommentWithProfile[]> {
   try {
@@ -210,10 +211,19 @@ export async function addComment(
       throw error;
     }
 
-    return {
+    const createdComment = {
       ...(data as any),
       profiles: (data as any).profiles,
     } as CommentWithProfile;
+
+    void notifyVideoOwnerAboutComment(
+      userId,
+      videoId,
+      createdComment.id,
+      content
+    );
+
+    return createdComment;
   } catch (error: any) {
     // Fall back to legacy if anything fails
     if (parentCommentId && error.message.includes('parent_comment_id')) {
@@ -244,12 +254,115 @@ async function addCommentLegacy(
 
   if (error) throw error;
 
-  return {
+  const createdComment = {
     ...(data as any),
     profiles: (data as any).profiles,
     is_liked: false,
     replies: [],
   } as CommentWithProfile;
+
+  void notifyVideoOwnerAboutComment(
+    userId,
+    videoId,
+    createdComment.id,
+    content
+  );
+
+  return createdComment;
+}
+
+async function notifyVideoOwnerAboutComment(
+  commenterId: string,
+  videoId: string,
+  commentId: string,
+  commentContent: string
+): Promise<void> {
+  try {
+    const [{ data: videoData }, { data: commenterProfileData }] = await Promise.all([
+      supabase
+        .from('videos')
+        .select('user_id')
+        .eq('id', videoId)
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('username, display_name')
+        .eq('id', commenterId)
+        .maybeSingle(),
+    ]);
+
+    const video = videoData as { user_id: string } | null;
+    const commenterProfile = commenterProfileData as
+      | { username: string | null; display_name: string | null }
+      | null;
+
+    if (!video?.user_id || video.user_id === commenterId) {
+      return;
+    }
+
+    const username =
+      commenterProfile?.username || commenterProfile?.display_name || 'Someone';
+
+    await triggerCommentReceived(video.user_id, {
+      username,
+      commentContent: commentContent.trim().slice(0, 140),
+      videoId,
+      commentId,
+      commenterId,
+    });
+
+    const mentionUsernames = extractMentionUsernames(commentContent);
+    if (mentionUsernames.length === 0) {
+      return;
+    }
+
+    const { data: mentionedProfiles, error: mentionQueryError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('username', mentionUsernames as any);
+
+    if (mentionQueryError) {
+      console.warn('Failed to load mentioned users:', mentionQueryError);
+      return;
+    }
+
+    const uniqueMentionIds = Array.from(
+      new Set((mentionedProfiles ?? []).map((profile: any) => profile.id as string))
+    ).filter((mentionedId) => mentionedId !== commenterId && mentionedId !== video.user_id);
+
+    if (uniqueMentionIds.length === 0) {
+      return;
+    }
+
+    await Promise.all(
+      uniqueMentionIds.map((mentionedId) =>
+        triggerMentionReceived(mentionedId, {
+          username,
+          commentContent: commentContent.trim().slice(0, 140),
+          videoId,
+          commentId,
+          mentionerId: commenterId,
+        })
+      )
+    );
+  } catch (notifyError) {
+    console.warn('Failed to create comment received notification:', notifyError);
+  }
+}
+
+function extractMentionUsernames(content: string): string[] {
+  const mentionRegex = /@([a-zA-Z0-9_.]+)/g;
+  const mentions = new Set<string>();
+  let match: RegExpExecArray | null = null;
+
+  while ((match = mentionRegex.exec(content)) !== null) {
+    const username = match[1]?.trim();
+    if (username) {
+      mentions.add(username);
+    }
+  }
+
+  return Array.from(mentions);
 }
 
 export async function updateComment(commentId: string, content: string) {

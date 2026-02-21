@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 56,
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,

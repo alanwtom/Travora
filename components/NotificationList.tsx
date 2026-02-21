@@ -20,7 +20,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from './useColorScheme';
+import { useThemeColor } from './Themed';
 import { FlashList } from '@shopify/flash-list';
 import { Notification, NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from '@/types/notifications';
 import {
@@ -288,7 +288,7 @@ export function NotificationList({
           />
         }
         contentContainerStyle={notifications.length === 0 ? styles.emptyListContainer : undefined}
-      />
+      /> as any
     </View>
   );
 }

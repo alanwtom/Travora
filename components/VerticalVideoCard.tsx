@@ -7,12 +7,14 @@ import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Video } from 'expo-av';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -25,6 +27,7 @@ type Props = {
 };
 
 const { height, width } = Dimensions.get('window');
+const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 80 : 0;
 
 export function VerticalVideoCard({ video, isActive }: Props) {
   const router = useRouter();
@@ -43,11 +46,24 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
 
-  // Auto-play/pause based on active state
+  // Handle screen focus (tab switching)
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+      };
+    }, [])
+  );
+
+  // Auto-play/pause based on active state and screen focus
   useEffect(() => {
-    if (isActive && videoRef.current) {
+    const shouldBePlaying = isActive && isScreenFocused;
+
+    if (shouldBePlaying && videoRef.current) {
       videoRef.current.playAsync();
       setIsPlaying(true);
 
@@ -58,11 +74,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         });
         hasIncrementedView.current = true;
       }
-    } else if (!isActive && videoRef.current) {
+    } else if (!shouldBePlaying && videoRef.current) {
       videoRef.current.pauseAsync();
       setIsPlaying(false);
     }
-  }, [isActive, video.id]);
+  }, [isActive, isScreenFocused, video.id]);
 
   const handleLike = async () => {
     if (!user) return;
@@ -242,7 +258,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           {/* Location */}
           {video.location && (
             <View style={styles.locationRow}>
-              <FontAwesome name="map-marker" size={12} color={COLORS.primary} />
+              <FontAwesome name="map-marker" size={14} color="#FF3B30" />
               <Text style={styles.location}>{video.location}</Text>
             </View>
           )}
@@ -367,7 +383,7 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: BOTTOM_SAFE_AREA + 16,
     justifyContent: 'space-between',
   },
   leftContent: {
@@ -452,9 +468,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   location: {
-    fontSize: 13,
-    color: COLORS.primary,
-    fontWeight: '500',
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   actionButton: {
     alignItems: 'center',

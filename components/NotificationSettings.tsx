@@ -18,7 +18,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from './useColorScheme';
+import { useThemeColor } from './Themed';
 import {
   NotificationCategory,
   NotificationChannel,
@@ -97,7 +97,7 @@ export function NotificationSettingsScreen({ userId }: NotificationSettingsProps
       );
 
       // Real-time database update
-      await toggleNotificationChannel(userId, category, !currentValue);
+      await toggleNotificationChannel(userId, category, channel, !currentValue);
     } catch (error) {
       console.error('Failed to update notification preference:', error);
       // Revert on error

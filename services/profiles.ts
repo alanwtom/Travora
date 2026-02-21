@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Profile, ProfileUpdate } from '@/types/database';
+import { triggerNewFollower } from './notificationTriggers';
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -84,6 +85,26 @@ export async function followUser(followerId: string, followingId: string) {
     .insert({ follower_id: followerId, following_id: followingId });
 
   if (error) throw error;
+
+  if (followerId === followingId) return;
+
+  try {
+    const { data: followerProfile } = await supabase
+      .from('profiles')
+      .select('username, display_name')
+      .eq('id', followerId)
+      .maybeSingle();
+
+    const username =
+      followerProfile?.username || followerProfile?.display_name || 'Someone';
+
+    await triggerNewFollower(followingId, {
+      username,
+      followerId,
+    });
+  } catch (notifyError) {
+    console.warn('Failed to create new follower notification:', notifyError);
+  }
 }
 
 export async function unfollowUser(followerId: string, followingId: string) {

@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 60,
     paddingBottom: 16,
   },
   avatarContainer: {

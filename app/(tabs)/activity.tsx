@@ -1,19 +1,27 @@
+/**
+ * Activity Feed Screen
+ *
+ * Shows social activity from your network:
+ * - Videos from people you follow
+ * - Comments on your videos
+ */
+
+import { Text, useThemeColor } from '@/components/Themed';
 import { useActivityFeed } from '@/hooks/useActivityFeed';
-import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { ActivityItem } from '@/services/profiles';
+import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    RefreshControl,
+    StyleSheet,
+    TouchableOpacity, View
 } from 'react-native';
 
 function formatTimeAgo(dateStr: string): string {
@@ -38,36 +46,45 @@ function ActivityRow({
   item: ActivityItem;
   onPress: () => void;
 }) {
+  const textColor = useThemeColor({}, 'text');
+  const textMutedColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'text');
+  const surfaceColor = useThemeColor({ light: '#F3F4F6', dark: '#1C1C1E' }, 'background');
+  const borderColor = useThemeColor({ light: '#E5E5E5', dark: '#38383A' }, 'text');
+
   const actionText =
     item.type === 'video_upload'
       ? 'uploaded a new video'
       : 'commented on your video';
 
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.row, { borderBottomColor: borderColor }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       {item.profile.avatar_url ? (
         <Image source={{ uri: item.profile.avatar_url }} style={styles.avatar} />
       ) : (
-        <View style={[styles.avatar, styles.avatarPlaceholder]}>
-          <FontAwesome name="user" size={24} color={COLORS.textMuted} />
+        <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: surfaceColor }]}>
+          <FontAwesome name="user" size={24} color={textMutedColor} />
         </View>
       )}
       <View style={styles.content}>
-        <Text style={styles.text} numberOfLines={2}>
-          <Text style={styles.name}>
+        <Text style={[styles.text, { color: textColor }]} numberOfLines={2}>
+          <Text style={[styles.name, { color: textColor }]}>
             {item.profile.display_name || item.profile.username || 'Someone'}
           </Text>
           {' '}{actionText}
           {item.video?.title && (
-            <Text style={styles.videoTitle}> "{item.video.title}"</Text>
+            <Text style={[styles.videoTitle, { color: textMutedColor }]}> "{item.video.title}"</Text>
           )}
         </Text>
         {item.type === 'comment' && item.comment_content && (
-          <Text style={styles.comment} numberOfLines={2}>
+          <Text style={[styles.comment, { color: textMutedColor }]} numberOfLines={2}>
             "{item.comment_content}"
           </Text>
         )}
-        <Text style={styles.time}>{formatTimeAgo(item.created_at)}</Text>
+        <Text style={[styles.time, { color: textMutedColor }]}>{formatTimeAgo(item.created_at)}</Text>
       </View>
       {item.video?.thumbnail_url ? (
         <Image
@@ -75,8 +92,8 @@ function ActivityRow({
           style={styles.thumbnail}
         />
       ) : (
-        <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-          <FontAwesome name="play" size={16} color={COLORS.textMuted} />
+        <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surfaceColor }]}>
+          <FontAwesome name="play" size={16} color={textMutedColor} />
         </View>
       )}
     </TouchableOpacity>
@@ -86,11 +103,17 @@ function ActivityRow({
 export default function ActivityScreen() {
   const { user } = useAuth();
   const router = useRouter();
+
+  const textColor = useThemeColor({}, 'text');
+  const tintColor = useThemeColor({}, 'tint');
+  const backgroundColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({ light: '#E5E5E5', dark: '#38383A' }, 'text');
+
   const {
     activities,
-    isLoading,
-    isRefreshing,
-    error,
+    isLoading: isActivityLoading,
+    isRefreshing: isActivityRefreshing,
+    error: activityError,
     hasMore,
     loadMore,
     refresh,
@@ -105,66 +128,70 @@ export default function ActivityScreen() {
 
   if (!user) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor }]}>
         <Text style={styles.emptyText}>Sign in to see your activity</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {error && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-      <FlatList
-        data={activities}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ActivityRow item={item} onPress={() => handlePress(item)} />
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
+      {/* Activity Feed */}
+      <View style={styles.contentContainer}>
+        {activityError && (
+          <View style={[styles.errorBanner, { backgroundColor: '#EF444420' }]}>
+            <Text style={[styles.errorText, { color: '#EF4444' }]}>{activityError}</Text>
+          </View>
         )}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={refresh} />
-        }
-        onEndReached={() => {
-          if (hasMore && !isLoading) loadMore();
-        }}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.empty}>
-              <FontAwesome name="bell" size={48} color={COLORS.border} />
-              <Text style={styles.emptyText}>No activity yet</Text>
-              <Text style={styles.emptySubtext}>
-                When people you follow upload videos or comment on yours, you'll see it here
-              </Text>
-            </View>
-          ) : null
-        }
-        ListFooterComponent={
-          isLoading && activities.length > 0 ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            </View>
-          ) : null
-        }
-      />
-    </View>
+        <FlatList
+          data={activities}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <ActivityRow item={item} onPress={() => handlePress(item)} />
+          )}
+          refreshControl={
+            <RefreshControl refreshing={isActivityRefreshing} onRefresh={refresh} />
+          }
+          onEndReached={() => {
+            if (hasMore && !isActivityLoading) loadMore();
+          }}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={
+            !isActivityLoading ? (
+              <View style={styles.empty}>
+                <Ionicons name="people-outline" size={48} color={borderColor} />
+                <Text style={[styles.emptyText, { color: textColor }]}>No activity yet</Text>
+                <Text style={[styles.emptySubtext, { color: textColor + '60' }]}>
+                  When people you follow upload videos or comment on yours, you'll see it here
+                </Text>
+              </View>
+            ) : null
+          }
+          ListFooterComponent={
+            isActivityLoading && activities.length > 0 ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="small" color={tintColor} />
+              </View>
+            ) : null
+          }
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+  },
+  contentContainer: {
+    flex: 1,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   avatar: {
     width: 44,
@@ -173,7 +200,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatarPlaceholder: {
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -182,23 +208,19 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 15,
-    color: COLORS.text,
   },
   name: {
     fontWeight: '600',
   },
   videoTitle: {
-    color: COLORS.textMuted,
   },
   comment: {
     fontSize: 14,
-    color: COLORS.textMuted,
     fontStyle: 'italic',
     marginTop: 4,
   },
   time: {
     fontSize: 12,
-    color: COLORS.textMuted,
     marginTop: 4,
   },
   thumbnail: {
@@ -208,7 +230,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   thumbnailPlaceholder: {
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -226,20 +247,16 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text,
   },
   emptySubtext: {
     fontSize: 14,
-    color: COLORS.textMuted,
     textAlign: 'center',
   },
   errorBanner: {
     padding: 12,
-    backgroundColor: COLORS.error + '20',
   },
   errorText: {
     fontSize: 14,
-    color: COLORS.error,
   },
   footer: {
     padding: 16,
