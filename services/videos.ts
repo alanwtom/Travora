@@ -155,6 +155,76 @@ export async function incrementViewCount(videoId: string) {
   }
 }
 
+export async function getFollowingFeed(
+  userId: string,
+  page: number = 0,
+  limit: number = FEED_PAGE_SIZE
+): Promise<VideoWithProfile[]> {
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  const { data: followingData } = await supabase
+    .from('follows')
+    .select('following_id')
+    .eq('follower_id', userId);
+
+  const followingIds = (followingData ?? []).map((f: any) => f.following_id);
+  if (followingIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('videos')
+    .select(`
+      *,
+      profiles!videos_user_id_fkey(*),
+      like_count:likes(count),
+      comment_count:comments(count)
+    `)
+    .in('user_id', followingIds)
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) throw error;
+
+  const videos = (data ?? []).map((video: any) => ({
+    ...video,
+    profiles: video.profiles,
+    like_count: video.like_count?.[0]?.count ?? 0,
+    comment_count: video.comment_count?.[0]?.count ?? 0,
+  }));
+
+  if (userId && videos.length > 0) {
+    const videoIds = videos.map((v: any) => v.id);
+    const { data: likedData } = await supabase
+      .from('likes')
+      .select('video_id')
+      .eq('user_id', userId)
+      .in('video_id', videoIds);
+    const likedSet = new Set((likedData ?? []).map((l: any) => l.video_id));
+
+    try {
+      const { data: savedData } = await (supabase
+        .from('saves') as any)
+        .select('video_id')
+        .eq('user_id', userId)
+        .in('video_id', videoIds);
+      const savedSet = new Set((savedData ?? []).map((s: any) => s.video_id));
+      videos.forEach((v: any) => {
+        v.is_liked = likedSet.has(v.id);
+        v.is_saved = savedSet.has(v.id);
+      });
+    } catch {
+      videos.forEach((v: any) => {
+        v.is_liked = likedSet.has(v.id);
+        v.is_saved = false;
+      });
+    }
+  }
+
+  return videos as VideoWithProfile[];
+}
+
 export async function searchVideos(query: string): Promise<VideoWithProfile[]> {
   const { data, error } = await supabase
     .from('videos')

@@ -8,9 +8,10 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
+import { initializeNotificationDelivery } from '@/services/notificationDelivery';
 
 export {
-  ErrorBoundary,
+    ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
@@ -36,6 +37,12 @@ function RootLayoutNav() {
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);
+
+  useEffect(() => {
+    initializeNotificationDelivery().catch((error) => {
+      console.warn('Failed to initialize notification delivery:', error);
+    });
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

@@ -103,7 +103,12 @@ export function VerticalVideoFeed({
       refreshing={isRefreshing}
       onRefresh={onRefresh}
       showsVerticalScrollIndicator={false}
+<<<<<<< HEAD
       contentContainerStyle={{ paddingTop: 0 }}
+=======
+      contentContainerStyle={{ flexGrow: 1 }}
+      scrollIndicatorInsets={{ top: 0 }}
+>>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
       ListFooterComponent={
         isLoading ? (
           <View style={styles.loader}>

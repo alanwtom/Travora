@@ -125,14 +125,20 @@ export default function ProfileScreen() {
                 <Text style={styles.statValue}>{videos.length}</Text>
                 <Text style={styles.statLabel}>Videos</Text>
               </View>
-              <View style={styles.stat}>
-                <Text style={styles.statValue}>{followers}</Text>
+              <TouchableOpacity
+                style={styles.stat}
+                onPress={() => user?.id && router.push({ pathname: '/user/[userId]/followers', params: { userId: user.id } } as any)}
+              >
+                <Text style={[styles.statValue, styles.statLink]}>{followers}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statValue}>{following}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.stat}
+                onPress={() => user?.id && router.push({ pathname: '/user/[userId]/following', params: { userId: user.id } } as any)}
+              >
+                <Text style={[styles.statValue, styles.statLink]}>{following}</Text>
                 <Text style={styles.statLabel}>Following</Text>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {/* Action Buttons */}
@@ -255,7 +261,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 60,
     paddingBottom: 16,
   },
   avatarContainer: {
@@ -312,6 +318,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.text,
+  },
+  statLink: {
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
   },
   statLabel: {
     fontSize: 13,

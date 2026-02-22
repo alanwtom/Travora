@@ -1,17 +1,20 @@
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
+import { useFollow } from '@/hooks/useFollow';
 import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Video } from 'expo-av';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -26,12 +29,18 @@ type Props = {
 };
 
 const { height, width } = Dimensions.get('window');
+const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 80 : 0;
 
 export function VerticalVideoCard({ video, isActive }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
   const videoRef = useRef<any>(null);
+  const { isFollowing, toggle, isLoading: followLoading } = useFollow(
+    user?.id,
+    video.user_id
+  );
+  const showFollowButton = user?.id && video.user_id !== user.id;
   
   // Calculate the available height accounting for the tab bar
   const availableHeight = height - insets.bottom;
@@ -43,12 +52,28 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
+<<<<<<< HEAD
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+=======
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
+>>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   const hasIncrementedView = useRef(false);
 
-  // Auto-play/pause based on active state
+  // Handle screen focus (tab switching)
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+      };
+    }, [])
+  );
+
+  // Auto-play/pause based on active state and screen focus
   useEffect(() => {
-    if (isActive && videoRef.current) {
+    const shouldBePlaying = isActive && isScreenFocused;
+
+    if (shouldBePlaying && videoRef.current) {
       videoRef.current.playAsync();
       setIsPlaying(true);
 
@@ -59,11 +84,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         });
         hasIncrementedView.current = true;
       }
-    } else if (!isActive && videoRef.current) {
+    } else if (!shouldBePlaying && videoRef.current) {
       videoRef.current.pauseAsync();
       setIsPlaying(false);
     }
-  }, [isActive, video.id]);
+  }, [isActive, isScreenFocused, video.id]);
 
   const handleLike = async () => {
     if (!user) return;
@@ -106,13 +131,12 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
   const handleUserProfile = () => {
     if (video.user_id === user?.id) {
-      router.push('/profile');
+      router.push('/(tabs)/profile');
     } else {
-      // Navigate to user's profile - you may need to create a dynamic route for this
       router.push({
-        pathname: '/video/[id]',
-        params: { id: video.id },
-      });
+        pathname: '/user/[userId]',
+        params: { userId: video.user_id },
+      } as any);
     }
   };
 
@@ -193,28 +217,45 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         {/* Left side - User info and description */}
         <View style={styles.leftContent}>
           {/* User Info */}
-          <TouchableOpacity
-            style={styles.userRow}
-            onPress={handleUserProfile}
-            activeOpacity={0.7}
-          >
-            {video.profiles?.avatar_url ? (
-              <Image
-                source={{ uri: video.profiles.avatar_url }}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+          <View style={styles.userRow}>
+            <TouchableOpacity
+              style={styles.userInfoTouchable}
+              onPress={handleUserProfile}
+              activeOpacity={0.7}
+            >
+              {video.profiles?.avatar_url ? (
+                <Image
+                  source={{ uri: video.profiles.avatar_url }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+                </View>
+              )}
+              <View>
+                <Text style={styles.username} numberOfLines={1}>
+                  {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
+                </Text>
+                <Text style={styles.timestamp}>{timeAgo}</Text>
               </View>
+            </TouchableOpacity>
+            {showFollowButton && (
+              <TouchableOpacity
+                style={[styles.followButton, isFollowing && styles.followingButton]}
+                onPress={toggle}
+                disabled={followLoading}
+              >
+                {followLoading ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
+                )}
+              </TouchableOpacity>
             )}
-            <View>
-              <Text style={styles.username} numberOfLines={1}>
-                {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
-              </Text>
-              <Text style={styles.timestamp}>{timeAgo}</Text>
-            </View>
-          </TouchableOpacity>
+          </View>
 
           {/* Title and Caption */}
           {video.title && (
@@ -231,7 +272,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           {/* Location */}
           {video.location && (
             <View style={styles.locationRow}>
-              <FontAwesome name="map-marker" size={12} color={COLORS.primary} />
+              <FontAwesome name="map-marker" size={14} color="#FF3B30" />
               <Text style={styles.location}>{video.location}</Text>
             </View>
           )}
@@ -367,7 +408,11 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
+<<<<<<< HEAD
     paddingBottom: 80,
+=======
+    paddingBottom: BOTTOM_SAFE_AREA + 16,
+>>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
     justifyContent: 'space-between',
   },
   leftContent: {
@@ -386,6 +431,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    justifyContent: 'space-between',
+  },
+  userInfoTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  followButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  followingButton: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  followButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  followingButtonText: {
+    color: '#FFFFFF',
   },
   avatar: {
     width: 40,
@@ -427,9 +498,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   location: {
+<<<<<<< HEAD
     fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '500',
+=======
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '700',
+>>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   },
   actionButton: {
     alignItems: 'center',

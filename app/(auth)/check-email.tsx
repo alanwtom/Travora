@@ -144,7 +144,7 @@ export default function CheckEmail() {
         {/* Back to Sign In */}
         <TouchableOpacity
           style={styles.backToSignIn}
-          onPress={() => router.push('/(auth)/sign-in')}
+          onPress={() => router.push('sign-in')}
           activeOpacity={0.7}
         >
           <Text style={styles.backToSignInText}>Back to Sign In</Text>

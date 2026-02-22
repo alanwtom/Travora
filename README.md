@@ -56,7 +56,10 @@ Travora/
 │   └── storage.ts
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql  # Full DB schema
+│       ├── 001_initial_schema.sql  # Full DB schema
+│       └── 002_add_default_username.sql  # Default username trigger
+├── scripts/
+│   └── verify-supabase.js          # Supabase verification script
 ├── types/
 │   ├── database.ts             # Supabase-typed schema
 │   └── index.ts
@@ -91,8 +94,10 @@ npm install
 
 ### 2. Set up the database
 
-Copy the SQL from `supabase/migrations/001_initial_schema.sql` and run it in the
-[Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql) for your project.
+Run the SQL migrations in the [Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql) for your project:
+
+1. Run `supabase/migrations/001_initial_schema.sql` — Creates all tables, indexes, triggers, RLS policies, and storage buckets
+2. Run `supabase/migrations/002_add_default_username.sql` — Adds default username generation for new users
 
 This creates all tables, indexes, triggers, RLS policies, and storage buckets.
 
@@ -105,13 +110,31 @@ EXPO_PUBLIC_SUPABASE_URL=your-project-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### 4. Enable Auth Providers (in Supabase Dashboard)
+### 4. Verify Supabase setup
+
+Run the verification script to ensure your Supabase connection, database schema, and storage buckets are configured correctly:
+
+```bash
+npm run verify-supabase
+```
+
+This will check:
+- ✅ Environment variables are set
+- ✅ Database connection works
+- ✅ All tables exist (`profiles`, `videos`, `likes`, `comments`, `follows`, `saves`)
+- ✅ Row Level Security (RLS) is enabled
+- ✅ Storage buckets exist (`avatars`, `videos`)
+- ✅ Authentication service is working
+
+If any checks fail, the script will provide guidance on what needs to be fixed.
+
+### 5. Enable Auth Providers (in Supabase Dashboard)
 
 - **Email/Password** — enabled by default
 - **Google** — Authentication > Providers > Google (add OAuth credentials)
 - **Apple** — Authentication > Providers > Apple (add Service ID)
 
-### 5. Run the app
+### 6. Run the app
 
 ```bash
 npx expo start

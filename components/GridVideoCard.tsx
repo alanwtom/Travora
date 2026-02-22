@@ -1,9 +1,12 @@
+import { useAuth } from '@/providers/AuthProvider';
+import { useFollow } from '@/hooks/useFollow';
 import { COLORS } from '@/lib/constants';
 import { VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   StyleSheet,
@@ -25,13 +28,31 @@ const CARD_HEIGHT = CARD_WIDTH * 1.4; // Aspect ratio
 
 export function GridVideoCard({ video }: Props) {
   const router = useRouter();
+  const { user } = useAuth();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { isFollowing, toggle, isLoading: followLoading } = useFollow(
+    user?.id,
+    video.user_id
+  );
+  const showFollowButton = user?.id && video.user_id !== user.id;
 
   const handlePress = () => {
     router.push({
       pathname: '/video/[id]',
       params: { id: video.id },
     });
+  };
+
+  const handleUserPress = (e: any) => {
+    e?.stopPropagation?.();
+    if (video.user_id === user?.id) {
+      router.push('/(tabs)/profile');
+    } else {
+      router.push({
+        pathname: '/user/[userId]',
+        params: { userId: video.user_id },
+      } as any);
+    }
   };
 
   return (
@@ -81,19 +102,43 @@ export function GridVideoCard({ video }: Props) {
 
       {/* User info */}
       <View style={styles.userInfo}>
-        {video.profiles?.avatar_url ? (
-          <Image
-            source={{ uri: video.profiles.avatar_url }}
-            style={styles.avatar}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <FontAwesome name="user" size={9} color={COLORS.textMuted} />
-          </View>
+        <TouchableOpacity
+          style={styles.userInfoTouchable}
+          onPress={handleUserPress}
+          activeOpacity={0.7}
+        >
+          {video.profiles?.avatar_url ? (
+            <Image
+              source={{ uri: video.profiles.avatar_url }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <FontAwesome name="user" size={9} color={COLORS.textMuted} />
+            </View>
+          )}
+          <Text style={styles.username} numberOfLines={1}>
+            {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
+          </Text>
+        </TouchableOpacity>
+        {showFollowButton && (
+          <TouchableOpacity
+            style={[styles.followBtn, isFollowing && styles.followingBtn]}
+            onPress={(e) => {
+              e?.stopPropagation?.();
+              toggle();
+            }}
+            disabled={followLoading}
+          >
+            {followLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Text>
+            )}
+          </TouchableOpacity>
         )}
-        <Text style={styles.username} numberOfLines={1}>
-          {video.profiles?.display_name || video.profiles?.username || 'Unknown'}
-        </Text>
       </View>
 
       {/* Like and comment counts */}
@@ -202,6 +247,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 6,
+    justifyContent: 'space-between',
+  },
+  userInfoTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  followBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  followingBtn: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  followBtnText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.background,
+  },
+  followingBtnText: {
+    fontSize: 10,
+    color: COLORS.text,
   },
   avatar: {
     width: 24,
