@@ -17,6 +17,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CommentsModal } from './CommentsModal';
 
 type Props = {
   video: VideoWithProfile;
@@ -26,9 +28,13 @@ type Props = {
 const { height, width } = Dimensions.get('window');
 
 export function VerticalVideoCard({ video, isActive }: Props) {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
   const videoRef = useRef<any>(null);
+  
+  // Calculate the available height accounting for the tab bar
+  const availableHeight = height - insets.bottom;
   
   const [isLiked, setIsLiked] = useState(video.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(video.like_count);
@@ -37,6 +43,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const hasIncrementedView = useRef(false);
 
   // Auto-play/pause based on active state
@@ -116,10 +123,14 @@ export function VerticalVideoCard({ video, isActive }: Props) {
     });
   };
 
+  const handleCommentPress = () => {
+    setShowCommentsModal(true);
+  };
+
   const timeAgo = getTimeAgo(video.created_at);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { height: availableHeight, marginTop: -insets.top }]}>
       {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
@@ -241,7 +252,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             <Text style={styles.actionLabel}>{likeCount}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={handleCommentPress}
+            activeOpacity={0.7}
+          >
             <FontAwesome name="comment-o" size={28} color="rgba(255,255,255,0.8)" />
             <Text style={styles.actionLabel}>{video.comment_count}</Text>
           </TouchableOpacity>
@@ -269,6 +284,13 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <CommentsModal
+        visible={showCommentsModal}
+        video={video}
+        userId={user?.id}
+        onClose={() => setShowCommentsModal(false)}
+      />
     </View>
   );
 }
@@ -345,7 +367,7 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 80,
     justifyContent: 'space-between',
   },
   leftContent: {
@@ -358,6 +380,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: 20,
+    paddingBottom: 0,
   },
   userRow: {
     flexDirection: 'row',
@@ -405,7 +428,7 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 13,
-    color: COLORS.primary,
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   actionButton: {

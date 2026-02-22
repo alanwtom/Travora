@@ -1,7 +1,7 @@
 
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
-import { addComment, getVideoComments, toggleCommentLike, pinComment, getCommentReplies } from '@/services/comments';
+import { addComment, getVideoComments, pinComment, toggleCommentLike } from '@/services/comments';
 import { toggleLike } from '@/services/likes';
 import { isVideoSaved, toggleSave } from '@/services/saves';
 import { getVideo, incrementViewCount } from '@/services/videos';
@@ -15,13 +15,11 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

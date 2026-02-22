@@ -10,6 +10,7 @@ import {
     View,
     ViewToken,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalVideoCard } from './VerticalVideoCard';
 
 type Props = {
@@ -31,6 +32,7 @@ export function VerticalVideoFeed({
   onRefresh,
   hasMore,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [activeVideoId, setActiveVideoId] = useState<string | null>(
     videos[0]?.id || null
   );
@@ -80,13 +82,15 @@ export function VerticalVideoFeed({
     );
   }
 
+  const snapInterval = height - insets.bottom;
+
   return (
     <FlatList
       data={videos}
       renderItem={renderVideoItem}
       keyExtractor={(item) => item.id}
       pagingEnabled
-      snapToInterval={height}
+      snapToInterval={snapInterval}
       decelerationRate="fast"
       scrollEventThrottle={16}
       viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
@@ -99,6 +103,7 @@ export function VerticalVideoFeed({
       refreshing={isRefreshing}
       onRefresh={onRefresh}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingTop: 0 }}
       ListFooterComponent={
         isLoading ? (
           <View style={styles.loader}>
