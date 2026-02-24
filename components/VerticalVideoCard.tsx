@@ -52,11 +52,8 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-<<<<<<< HEAD
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-=======
   const [isScreenFocused, setIsScreenFocused] = useState(true);
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   const hasIncrementedView = useRef(false);
 
   // Handle screen focus (tab switching)
@@ -408,11 +405,7 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-<<<<<<< HEAD
-    paddingBottom: 80,
-=======
     paddingBottom: BOTTOM_SAFE_AREA + 16,
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
     justifyContent: 'space-between',
   },
   leftContent: {
@@ -498,15 +491,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   location: {
-<<<<<<< HEAD
     fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '500',
-=======
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '700',
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   },
   actionButton: {
     alignItems: 'center',
