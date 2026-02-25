@@ -199,6 +199,83 @@ export interface Database {
           video_id?: string;
         };
       };
+      itineraries: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          destination: string;
+          start_date: string | null;
+          end_date: string | null;
+          duration_days: number;
+          travel_style: string | null;
+          budget_level: string | null;
+          generated_by: string;
+          generation_time_ms: number | null;
+          days: Json;
+          metadata: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          destination: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration_days: number;
+          travel_style?: string | null;
+          budget_level?: string | null;
+          generated_by?: string;
+          generation_time_ms?: number | null;
+          days: Json;
+          metadata?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          destination?: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration_days?: number;
+          travel_style?: string | null;
+          budget_level?: string | null;
+          generated_by?: string;
+          generation_time_ms?: number | null;
+          days?: Json;
+          metadata?: Json | null;
+          updated_at?: string;
+        };
+      };
+      itinerary_ratings: {
+        Row: {
+          id: string;
+          itinerary_id: string;
+          user_id: string;
+          rating: boolean;
+          feedback: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          itinerary_id: string;
+          user_id: string;
+          rating: boolean;
+          feedback?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          itinerary_id?: string;
+          user_id?: string;
+          rating?: boolean;
+          feedback?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -237,6 +314,13 @@ export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
 export type Save = Database['public']['Tables']['saves']['Row'];
 export type SaveInsert = Database['public']['Tables']['saves']['Insert'];
 
+export type Itinerary = Database['public']['Tables']['itineraries']['Row'];
+export type ItineraryInsert = Database['public']['Tables']['itineraries']['Insert'];
+export type ItineraryUpdate = Database['public']['Tables']['itineraries']['Update'];
+
+export type ItineraryRating = Database['public']['Tables']['itinerary_ratings']['Row'];
+export type ItineraryRatingInsert = Database['public']['Tables']['itinerary_ratings']['Insert'];
+
 // Extended types with relations
 export type VideoWithProfile = Video & {
   profiles: Profile;
@@ -251,3 +335,75 @@ export type CommentWithProfile = Comment & {
   is_liked?: boolean;
   replies?: CommentWithProfile[];
 };
+
+// Extended types for itineraries
+export type ItineraryDay = {
+  day: number;
+  date?: string;
+  morning?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  afternoon?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  evening?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  activities?: Array<{
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  }>;
+};
+
+export type ItineraryWithProfile = Itinerary & {
+  profiles: Profile;
+  user_rating?: ItineraryRating;
+  average_rating?: number;
+  total_ratings?: number;
+};
+
+export type LocationWithCoordinates = {
+  id: string;
+  title: string;
+  location: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  caption: string | null;
+  description: string | null;
+};
+
+export type ItineraryPreferences = {
+  destination: string;
+  durationDays: number;
+  travelStyle?: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'mixed';
+  budgetLevel?: 'budget' | 'moderate' | 'luxury';
+  interests?: string[];
+  startDate?: string;
+  endDate?: string;
+};
+
+export type LocationCluster = {
+  id: string;
+  name: string;
+  center: {
+    latitude: number;
+    longitude: number;
+  };
+  locations: LocationWithCoordinates[];
+};
+

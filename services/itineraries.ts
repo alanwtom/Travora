@@ -1,0 +1,334 @@
+import { supabase } from '@/lib/supabase';
+import type {
+  Itinerary,
+  ItineraryInsert,
+  ItineraryRating,
+  ItineraryRatingInsert,
+  LocationWithCoordinates,
+  ItineraryPreferences,
+  ItineraryDay,
+  LocationCluster,
+} from '@/types/database';
+import {
+  clusterLocations,
+  optimizeRoute,
+  distributeClustersAcrossDays,
+  estimateTravelTime,
+} from './geolocation';
+
+/**
+ * Get all itineraries for a user
+ */
+export async function getUserItineraries(userId: string): Promise<Itinerary[]> {
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get a single itinerary by ID
+ */
+export async function getItineraryById(
+  itineraryId: string
+): Promise<Itinerary | null> {
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('*')
+    .eq('id', itineraryId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null; // Not found
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * Get user's liked locations for itinerary generation
+ */
+export async function getUserLikedLocations(
+  userId: string
+): Promise<LocationWithCoordinates[]> {
+  const { data, error } = await supabase
+    .from('likes')
+    .select(`
+      video_id,
+      videos:video_id (
+        id,
+        title,
+        location,
+        latitude,
+        longitude,
+        caption,
+        description
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  return (
+    data?.map((like: any) => like.videos).filter(Boolean) || []
+  );
+}
+
+/**
+ * Generate a rule-based itinerary (fallback when LLM is unavailable)
+ */
+export async function generateRuleBasedItinerary(
+  locations: LocationWithCoordinates[],
+  preferences: ItineraryPreferences
+): Promise<Omit<ItineraryInsert, 'user_id'>> {
+  const startTime = Date.now();
+
+  // Validate inputs
+  if (locations.length < 3) {
+    throw new Error(
+      'Please like at least 3 destinations to generate an itinerary.'
+    );
+  }
+
+  // Cluster locations by proximity
+  const clusters = clusterLocations(locations, 15); // 15km radius for clustering
+
+  // Distribute clusters across days
+  const daysClusters = distributeClustersAcrossDays(
+    clusters,
+    preferences.durationDays
+  );
+
+  // Generate day-by-day plan
+  const days: ItineraryDay[] = daysClusters.map((dayClusters, dayIndex) => {
+    const dayActivities: ItineraryDay = {
+      day: dayIndex + 1,
+      activities: [],
+    };
+
+    // Process each cluster in the day
+    for (const cluster of dayClusters) {
+      // Optimize route within cluster
+      const optimizedLocations = optimizeRoute(cluster.locations);
+
+      // Add activities for each location
+      for (let i = 0; i < optimizedLocations.length; i++) {
+        const loc = optimizedLocations[i];
+        const timeSlot = getDefaultTimeSlot(i);
+        const duration = getDefaultDuration(loc.caption || loc.description || '');
+
+        dayActivities.activities?.push({
+          time: timeSlot,
+          activity: `Visit ${loc.title || 'this location'}`,
+          location: loc.location || 'Unknown',
+          description: loc.caption || loc.description || 'Explore this destination',
+          duration,
+        });
+      }
+    }
+
+    return dayActivities;
+  });
+
+  const generationTime = Date.now() - startTime;
+
+  return {
+    title: `${preferences.durationDays}-Day Trip to ${preferences.destination}`,
+    destination: preferences.destination,
+    start_date: preferences.startDate || null,
+    end_date: preferences.endDate || null,
+    duration_days: preferences.durationDays,
+    travel_style: preferences.travelStyle || 'mixed',
+    budget_level: preferences.budgetLevel || 'moderate',
+    generated_by: 'rule_based',
+    generation_time_ms: generationTime,
+    days,
+    metadata: {
+      source_video_ids: locations.map((l) => l.id),
+      cluster_count: clusters.length,
+      location_count: locations.length,
+    },
+  };
+}
+
+/**
+ * Save a new itinerary
+ */
+export async function saveItinerary(
+  itinerary: ItineraryInsert
+): Promise<Itinerary> {
+  const { data, error } = await supabase
+    .from('itineraries')
+    .insert(itinerary)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Update an existing itinerary
+ */
+export async function updateItinerary(
+  itineraryId: string,
+  updates: Partial<ItineraryInsert>
+): Promise<Itinerary> {
+  const { data, error } = await supabase
+    .from('itineraries')
+    .update(updates)
+    .eq('id', itineraryId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Delete an itinerary
+ */
+export async function deleteItinerary(itineraryId: string): Promise<void> {
+  const { error } = await supabase
+    .from('itineraries')
+    .delete()
+    .eq('id', itineraryId);
+
+  if (error) throw error;
+}
+
+/**
+ * Rate an itinerary
+ */
+export async function rateItinerary(
+  itineraryId: string,
+  userId: string,
+  rating: boolean,
+  feedback?: string
+): Promise<ItineraryRating> {
+  // Check if user already rated this itinerary
+  const { data: existing } = await supabase
+    .from('itinerary_ratings')
+    .select('*')
+    .eq('itinerary_id', itineraryId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing) {
+    // Update existing rating
+    const { data, error } = await supabase
+      .from('itinerary_ratings')
+      .update({ rating, feedback })
+      .eq('id', existing.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } else {
+    // Insert new rating
+    const ratingInsert: ItineraryRatingInsert = {
+      itinerary_id: itineraryId,
+      user_id: userId,
+      rating,
+      feedback: feedback || null,
+    };
+
+    const { data, error } = await supabase
+      .from('itinerary_ratings')
+      .insert(ratingInsert)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+}
+
+/**
+ * Get ratings for an itinerary
+ */
+export async function getItineraryRatings(
+  itineraryId: string
+): Promise<ItineraryRating[]> {
+  const { data, error } = await supabase
+    .from('itinerary_ratings')
+    .select('*')
+    .eq('itinerary_id', itineraryId);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get itinerary statistics (average rating, total ratings)
+ */
+export async function getItineraryStats(itineraryId: string) {
+  const { data, error } = await supabase
+    .from('itinerary_ratings')
+    .select('rating')
+    .eq('itinerary_id', itineraryId);
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    return { averageRating: null, totalRatings: 0, thumbsUp: 0, thumbsDown: 0 };
+  }
+
+  const thumbsUp = data.filter((r) => r.rating).length;
+  const thumbsDown = data.filter((r) => !r.rating).length;
+  const averageRating = thumbsUp / data.length;
+
+  return {
+    averageRating,
+    totalRatings: data.length,
+    thumbsUp,
+    thumbsDown,
+  };
+}
+
+// Helper functions for rule-based generation
+
+function getDefaultTimeSlot(index: number): string {
+  const timeSlots = [
+    '9:00 AM',
+    '11:00 AM',
+    '1:00 PM',
+    '3:00 PM',
+    '5:00 PM',
+    '7:00 PM',
+  ];
+  return timeSlots[index % timeSlots.length];
+}
+
+function getDefaultDuration(description: string): string {
+  const lowerDesc = description.toLowerCase();
+
+  // Museum or cultural sites
+  if (lowerDesc.includes('museum') || lowerDesc.includes('gallery')) {
+    return '2-3 hours';
+  }
+
+  // Outdoor activities
+  if (lowerDesc.includes('hike') || lowerDesc.includes('park')) {
+    return '2-3 hours';
+  }
+
+  // Shopping or quick visits
+  if (lowerDesc.includes('shop') || lowerDesc.includes('market')) {
+    return '1-2 hours';
+  }
+
+  // Landmarks and monuments
+  if (lowerDesc.includes('tower') || lowerDesc.includes('monument')) {
+    return '1-2 hours';
+  }
+
+  // Default
+  return '1-2 hours';
+}
