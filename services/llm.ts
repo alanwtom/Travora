@@ -5,7 +5,7 @@ import type {
 } from '@/types/database';
 
 // LLM provider configuration
-type LLMProvider = 'openai' | 'anthropic';
+type LLMProvider = 'openai' | 'anthropic' | 'gemini';
 
 interface LLMConfig {
   provider: LLMProvider;
@@ -30,6 +30,8 @@ export async function callLLM(prompt: string): Promise<string> {
         return await callOpenAI(config, prompt);
       case 'anthropic':
         return await callAnthropic(config, prompt);
+      case 'gemini':
+        return await callGemini(config, prompt);
       default:
         throw new Error(`Unsupported LLM provider: ${config.provider}`);
     }
@@ -239,7 +241,13 @@ function getLLMConfig(): LLMConfig {
     apiKey,
     model:
       process.env.EXPO_PUBLIC_LLM_MODEL ||
-      (provider === 'openai' ? 'gpt-4o' : 'claude-3-5-sonnet-20241022'),
+      (provider === 'openai'
+        ? 'gpt-4o'
+        : provider === 'anthropic'
+        ? 'claude-3-5-sonnet-20241022'
+        : provider === 'gemini'
+        ? 'gemini-2.0-flash-exp'
+        : 'gpt-4o'),
   };
 }
 
@@ -326,6 +334,56 @@ IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, cod
 
   const data = await response.json();
   return data.content[0].text;
+}
+
+/**
+ * Call Google Gemini API
+ */
+async function callGemini(config: LLMConfig, prompt: string): Promise<string> {
+  if (typeof fetch === 'undefined') {
+    throw new Error('fetch is not available in this environment');
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-2.0-flash-exp'}:generateContent?key=${config.apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `${prompt}
+
+IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, code blocks (like ```json), or any text outside the JSON object. Return the raw JSON object directly.`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2000,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // Gemini returns the text in candidates[0].content.parts[0].text
+  if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+    return data.candidates[0].content.parts[0].text;
+  }
+
+  throw new Error('Unexpected Gemini API response format');
 }
 
 /**
