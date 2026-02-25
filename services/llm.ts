@@ -358,7 +358,7 @@ async function callGemini(config: LLMConfig, prompt: string): Promise<string> {
               {
                 text: `${prompt}
 
-IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, code blocks (like ```json), or any text outside the JSON object. Return the raw JSON object directly.`,
+IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, code blocks, or any text outside the JSON object. Return the raw JSON object directly.`,
               },
             ],
           },
