@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { getItineraryById, getItineraryStats, rateItinerary, deleteItinerary } from '@/services/itineraries';
 import { DayPlan } from '@/components/DayPlan';
 import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
+import { BackButton } from '@/components/BackButton';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -80,7 +81,7 @@ export default function ItineraryDetailScreen() {
         onPress: async () => {
           try {
             await deleteItinerary(itinerary.id);
-            router.replace('/itineraries');
+            router.replace('/profile/itineraries');
           } catch (error) {
             Alert.alert('Error', 'Failed to delete itinerary');
           }
@@ -122,9 +123,7 @@ export default function ItineraryDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <FontAwesome name="arrow-left" size={20} color={COLORS.text} />
-        </Pressable>
+        <BackButton />
         <Text style={styles.headerTitle}>Itinerary Details</Text>
         <Pressable onPress={handleDelete} style={styles.deleteButton}>
           <FontAwesome name="trash" size={18} color={COLORS.error} />
@@ -267,9 +266,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text,
     marginTop: 16,
-  },
-  backButton: {
-    padding: 8,
   },
   backButtonText: {
     fontSize: 14,

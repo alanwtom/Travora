@@ -7,9 +7,10 @@ import {
   getFollowerCount,
   getFollowingCount,
 } from '@/services/profiles';
+import { BackButton } from '@/components/BackButton';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,11 +20,50 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function CustomHeader({ username, displayName }: { username?: string; displayName?: string }) {
+  const { top } = useSafeAreaInsets();
+  const title = displayName || username || 'Profile';
+
+  return (
+    <View style={[headerStyles.container, { paddingTop: 12 + top }]}>
+      <BackButton />
+      <Text style={headerStyles.title} numberOfLines={1}>
+        {title}
+      </Text>
+      <View style={headerStyles.placeholder} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingBottom: 12,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  title: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  placeholder: {
+    width: 40,
+  },
+});
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
-  const navigation = useNavigation();
   const { user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile(userId ?? undefined);
   const { videos, isLoading: videosLoading } = useUserVideos(userId ?? '');
@@ -35,19 +75,6 @@ export default function UserProfileScreen() {
   const [following, setFollowing] = useState(0);
 
   const isOwnProfile = user?.id === userId;
-
-  // Set header title dynamically so it never shows "[userId]"
-  useLayoutEffect(() => {
-    if (profile) {
-      const title = profile.username ? `@${profile.username}` : profile.display_name || 'Profile';
-      navigation.setOptions({ title, headerTitle: title });
-    } else if (!userId) {
-      navigation.setOptions({ title: 'User not found', headerTitle: 'User not found' });
-    } else {
-      // While loading or before profile exists, keep a neutral title
-      navigation.setOptions({ title: 'Profile', headerTitle: 'Profile' });
-    }
-  }, [profile, profileLoading, userId, navigation]);
 
   useEffect(() => {
     if (userId && !isOwnProfile) {
@@ -117,6 +144,7 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader username={profile.username} displayName={profile.display_name} />
       <FlatList
         data={videos}
         keyExtractor={(item) => item.id}

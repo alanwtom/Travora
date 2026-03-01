@@ -141,6 +141,16 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Itineraries Button */}
+            <TouchableOpacity
+              style={styles.itinerariesButton}
+              onPress={() => router.push('/profile/itineraries' as any)}
+            >
+              <FontAwesome name="map-marked-alt" size={20} color={COLORS.primary} />
+              <Text style={styles.itinerariesButtonText}>My Itineraries</Text>
+              <FontAwesome name="chevron-right" size={16} color={COLORS.textMuted} />
+            </TouchableOpacity>
+
             {/* Action Buttons */}
             <View style={styles.actions}>
               <TouchableOpacity
@@ -149,7 +159,7 @@ export default function ProfileScreen() {
               >
                 <Text style={styles.editButtonText}>Edit Profile</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.devButton}
                 onPress={() => router.push('/(tabs)/../dev' as any)}
               >
@@ -327,6 +337,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textMuted,
     marginTop: 2,
+  },
+  itinerariesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  itinerariesButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    flex: 1,
+    marginLeft: 12,
   },
   actions: {
     flexDirection: 'row',

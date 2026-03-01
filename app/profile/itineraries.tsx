@@ -2,6 +2,7 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { useUserItineraries } from '@/hooks/useUserItineraries';
 import { ItineraryCard } from '@/components/ItineraryCard';
+import { BackButton } from '@/components/BackButton';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -13,6 +14,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -81,10 +83,7 @@ export default function ItinerariesScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Itineraries</Text>
-        {itineraries.length > 0 && (
-          <Text style={styles.headerSubtitle}>{itineraries.length} trip{itineraries.length !== 1 ? 's' : ''}</Text>
-        )}
+        <BackButton />
       </View>
 
       {/* Content */}
@@ -112,7 +111,7 @@ export default function ItinerariesScreen() {
       {/* FAB */}
       <Pressable
         style={styles.fab}
-        onPress={() => router.push('/itineraries/generate')}
+        onPress={() => router.push('/profile/itineraries/generate')}
       >
         <FontAwesome name="plus" size={24} color="white" />
       </Pressable>
@@ -129,19 +128,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: COLORS.card,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.background,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 2,
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: COLORS.background,
   },
   listContent: {
     padding: 16,

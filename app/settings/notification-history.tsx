@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColor } from '@/components/Themed';
 import { useAuth } from '@/providers/AuthProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { getNotifications } from '@/services/notifications';
 import { Notification, NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from '@/types/notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ActivityIndicator } from 'react-native';
+import { BackButton } from '@/components/BackButton';
 
 export default function NotificationHistoryScreen() {
   const { user } = useAuth();
@@ -167,9 +168,7 @@ export default function NotificationHistoryScreen() {
     <View style={[styles.container, { backgroundColor }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top, borderBottomColor: borderColor }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color={textColor} />
-        </TouchableOpacity>
+        <BackButton />
         <View style={styles.headerContent}>
           <Text style={[styles.headerTitle, { color: textColor }]}>Notification History</Text>
           <Text style={[styles.headerSubtitle, { color: textColor + '60' }]}>
@@ -209,10 +208,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-  },
-  backButton: {
-    marginRight: 8,
-    padding: 4,
   },
   headerContent: {
     flex: 1,

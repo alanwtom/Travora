@@ -19,7 +19,7 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
       onPress();
     } else {
       router.push({
-        pathname: '/itineraries/[id]',
+        pathname: '/profile/itineraries/[id]',
         params: { id: itinerary.id },
       });
     }

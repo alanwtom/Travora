@@ -49,6 +49,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [likeCount, setLikeCount] = useState(video.like_count);
   const [isSaved, setIsSaved] = useState(video.is_saved ?? false);
   const [isPlaying, setIsPlaying] = useState(isActive);
+  const [isMuted, setIsMuted] = useState(true);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -126,6 +127,17 @@ export function VerticalVideoCard({ video, isActive }: Props) {
     }
   };
 
+  const toggleMute = async () => {
+    if (!videoRef.current) return;
+
+    try {
+      await videoRef.current.setIsMutedAsync(!isMuted);
+      setIsMuted(!isMuted);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
   const handleUserProfile = () => {
     if (video.user_id === user?.id) {
       router.push('/(tabs)/profile');
@@ -151,7 +163,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const timeAgo = getTimeAgo(video.created_at);
 
   return (
-    <View style={[styles.container, { height: availableHeight, marginTop: -insets.top }]}>
+    <View style={[styles.container, { height: availableHeight }]}>
       {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
@@ -165,6 +177,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
               source={{ uri: video.video_url }}
               style={styles.video}
               isLooping
+              isMuted={isMuted}
               onLoadStart={() => setIsLoadingVideo(true)}
               onLoad={(status: any) => {
                 setIsLoadingVideo(false);
@@ -211,6 +224,19 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
       {/* Bottom Content Overlay */}
       <View style={styles.contentOverlay}>
+        {/* Mute button overlay */}
+        <TouchableOpacity
+          style={styles.muteButton}
+          onPress={toggleMute}
+          activeOpacity={0.7}
+        >
+          <FontAwesome
+            name={isMuted ? 'volume-off' : 'volume-up'}
+            size={20}
+            color="rgba(255,255,255,0.9)"
+          />
+        </TouchableOpacity>
+
         {/* Left side - User info and description */}
         <View style={styles.leftContent}>
           {/* User Info */}
@@ -290,8 +316,8 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             <Text style={styles.actionLabel}>{likeCount}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionButton} 
+          <TouchableOpacity
+            style={styles.actionButton}
             onPress={handleCommentPress}
             activeOpacity={0.7}
           >
@@ -408,6 +434,17 @@ const styles = StyleSheet.create({
     paddingBottom: BOTTOM_SAFE_AREA + 16,
     justifyContent: 'space-between',
   },
+  muteButton: {
+    position: 'absolute',
+    top: 80,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   leftContent: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -488,12 +525,13 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    marginTop: 4,
   },
   location: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   actionButton: {
     alignItems: 'center',
