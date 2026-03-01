@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { MapPin } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -35,7 +35,7 @@ export function ActivityItem({ time, activity, location, description, duration }
 
           {/* Location */}
           <View style={styles.locationRow}>
-            <FontAwesome name="map-marker" size={12} color={COLORS.primary} />
+            <MapPin size={12} color={COLORS.primary} strokeWidth={2.5} fill="rgba(0,0,0,0.1)" />
             <Text style={styles.locationText} numberOfLines={1}>
               {location}
             </Text>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     lineHeight: 18,
   },
 });

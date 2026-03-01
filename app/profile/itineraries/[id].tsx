@@ -4,7 +4,7 @@ import { getItineraryById, getItineraryStats, rateItinerary, deleteItinerary } f
 import { DayPlan } from '@/components/DayPlan';
 import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
 import { BackButton } from '@/components/BackButton';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { AlertCircle, Trash2, Bot, Settings, Calendar, Compass, Wallet, ThumbsUp, ThumbsDown, Star, Share2 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -108,7 +108,7 @@ export default function ItineraryDetailScreen() {
   if (!itinerary) {
     return (
       <View style={styles.errorContainer}>
-        <FontAwesome name="exclamation-circle" size={48} color={COLORS.error} />
+        <AlertCircle size={48} color={COLORS.error} strokeWidth={2} />
         <Text style={styles.errorText}>Itinerary not found</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
@@ -126,7 +126,7 @@ export default function ItineraryDetailScreen() {
         <BackButton />
         <Text style={styles.headerTitle}>Itinerary Details</Text>
         <Pressable onPress={handleDelete} style={styles.deleteButton}>
-          <FontAwesome name="trash" size={18} color={COLORS.error} />
+          <Trash2 size={18} color={COLORS.error} strokeWidth={2.5} />
         </Pressable>
       </View>
 
@@ -142,11 +142,11 @@ export default function ItineraryDetailScreen() {
               itinerary.generated_by === 'llm' ? styles.methodBadgeAI : styles.methodBadgeRule,
             ]}
           >
-            <FontAwesome
-              name={itinerary.generated_by === 'llm' ? 'robot' : 'cogs'}
-              size={12}
-              color="white"
-            />
+            {itinerary.generated_by === 'llm' ? (
+              <Bot size={12} color="white" strokeWidth={2.5} />
+            ) : (
+              <Settings size={12} color="white" strokeWidth={2.5} />
+            )}
             <Text style={styles.methodBadgeText}>
               {itinerary.generated_by === 'llm' ? 'AI' : 'Smart Match'}
             </Text>
@@ -159,13 +159,13 @@ export default function ItineraryDetailScreen() {
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <FontAwesome name="calendar" size={14} color={COLORS.primary} />
+            <Calendar size={14} color={COLORS.primary} strokeWidth={2.5} />
             <Text style={styles.metaText}>{itinerary.duration_days} Days</Text>
           </View>
 
           {itinerary.travel_style && (
             <View style={styles.metaItem}>
-              <FontAwesome name="compass" size={14} color={COLORS.primary} />
+              <Compass size={14} color={COLORS.primary} strokeWidth={2.5} />
               <Text style={styles.metaText}>
                 {itinerary.travel_style.charAt(0).toUpperCase() + itinerary.travel_style.slice(1)}
               </Text>
@@ -174,7 +174,7 @@ export default function ItineraryDetailScreen() {
 
           {itinerary.budget_level && (
             <View style={styles.metaItem}>
-              <FontAwesome name="wallet" size={14} color={COLORS.primary} />
+              <Wallet size={14} color={COLORS.primary} strokeWidth={2.5} />
               <Text style={styles.metaText}>
                 {itinerary.budget_level.charAt(0).toUpperCase() + itinerary.budget_level.slice(1)}
               </Text>
@@ -185,9 +185,9 @@ export default function ItineraryDetailScreen() {
         {/* Stats */}
         {stats && stats.totalRatings > 0 && (
           <View style={styles.statsRow}>
-            <FontAwesome name="thumbs-up" size={14} color={COLORS.success} />
+            <ThumbsUp size={14} color={COLORS.success} strokeWidth={2.5} fill={COLORS.success} />
             <Text style={styles.statsText}>{stats.thumbsUp}</Text>
-            <FontAwesome name="thumbs-down" size={14} color={COLORS.error} style={styles.statsSpacer} />
+            <ThumbsDown size={14} color={COLORS.error} strokeWidth={2.5} style={styles.statsSpacer} fill={COLORS.error} />
             <Text style={styles.statsText}>{stats.thumbsDown}</Text>
             {stats.averageRating !== null && (
               <Text style={styles.statsText}>
@@ -217,7 +217,7 @@ export default function ItineraryDetailScreen() {
           style={[styles.actionButton, styles.rateButton]}
           onPress={() => setRatingModalVisible(true)}
         >
-          <FontAwesome name="star" size={16} color="white" />
+          <Star size={16} color="white" strokeWidth={2.5} fill="white" />
           <Text style={styles.actionButtonText}>Rate Itinerary</Text>
         </TouchableOpacity>
 
@@ -225,7 +225,7 @@ export default function ItineraryDetailScreen() {
           style={[styles.actionButton, styles.shareButton]}
           onPress={handleShare}
         >
-          <FontAwesome name="share-alt" size={16} color={COLORS.text} />
+          <Share2 size={16} color={COLORS.text} strokeWidth={2.5} />
           <Text style={[styles.actionButtonText, styles.shareButtonText]}>Share</Text>
         </TouchableOpacity>
       </View>
@@ -287,6 +287,10 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 8,
   },
+  backButton: {
+    padding: 8,
+    alignSelf: 'flex-start',
+  },
   titleCard: {
     backgroundColor: COLORS.card,
     borderRadius: 12,
@@ -329,7 +333,7 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     marginBottom: 12,
   },
   metaRow: {

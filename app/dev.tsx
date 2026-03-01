@@ -1,16 +1,16 @@
 /**
  * Development Testing Screen
- * 
+ *
  * This screen provides quick access to development utilities for testing,
  * including seeding mock videos for testing the feed, likes, saves, and comments.
- * 
+ *
  * This file is only used during development and should not be included in production builds.
  */
 
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { MOCK_VIDEOS_DATA, seedMockVideos } from '@/utils/mockVideos';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ChevronLeft, TestTube2, Plus, Info, Database, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -65,17 +65,17 @@ export default function DevelopmentScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Back Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.back()}
       >
-        <FontAwesome name="chevron-left" size={24} color={COLORS.primary} />
+        <ChevronLeft size={24} color={COLORS.primary} strokeWidth={2.5} />
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
 
       {/* Header */}
       <View style={styles.header}>
-        <FontAwesome name="flask" size={32} color={COLORS.primary} />
+        <TestTube2 size={32} color={COLORS.primary} strokeWidth={2} />
         <Text style={styles.title}>Development Tools</Text>
         <Text style={styles.subtitle}>⚠️ For development testing only</Text>
       </View>
@@ -128,14 +128,14 @@ export default function DevelopmentScreen() {
             <ActivityIndicator color="#FFF" />
           ) : (
             <>
-              <FontAwesome name="plus" size={16} color="#FFF" />
+              <Plus size={16} color="#FFF" strokeWidth={3} />
               <Text style={styles.buttonText}>Create Mock Videos</Text>
             </>
           )}
         </TouchableOpacity>
 
         <View style={styles.infoBox}>
-          <FontAwesome name="info-circle" size={16} color={COLORS.primary} />
+          <Info size={16} color={COLORS.primary} strokeWidth={2.5} />
           <Text style={styles.infoText}>
             Mock videos include realistic travel locations, descriptions, captions, and placeholder images. They're created under your account.
           </Text>
@@ -149,7 +149,7 @@ export default function DevelopmentScreen() {
           style={styles.linkButton}
           onPress={() => Linking.openURL('https://supabase.com')}
         >
-          <FontAwesome name="database" size={16} color={COLORS.primary} />
+          <Database size={16} color={COLORS.primary} strokeWidth={2.5} />
           <Text style={styles.linkText}>Supabase Dashboard</Text>
         </TouchableOpacity>
       </View>
@@ -159,27 +159,27 @@ export default function DevelopmentScreen() {
         <Text style={styles.cardTitle}>✅ What You Can Test</Text>
         <View style={styles.featuresList}>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Feed pagination and loading</Text>
           </View>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Like/unlike functionality</Text>
           </View>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Save/unsave videos</Text>
           </View>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Comments functionality</Text>
           </View>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Profile and user stats</Text>
           </View>
           <View style={styles.feature}>
-            <FontAwesome name="check" size={14} color={COLORS.success} />
+            <Check size={14} color={COLORS.success} strokeWidth={2.5} />
             <Text style={styles.featureText}>Video details and metadata</Text>
           </View>
         </View>

@@ -4,7 +4,7 @@ import type { ItineraryPreferences } from '@/types/database';
 import { useItineraryGeneration } from '@/hooks/useItineraryGeneration';
 import { useLikedLocations } from '@/hooks/useLikedLocations';
 import { BackButton } from '@/components/BackButton';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Heart, Settings, MapPin, Search, Check, Plus, Minus, X, Wand2, ChevronDown, AlertTriangle, AlertCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import React, { useState, useMemo } from 'react';
 import {
@@ -20,7 +20,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
 const TRAVEL_STYLES = ['Adventure', 'Relaxation', 'Cultural', 'Foodie', 'Mixed'] as const;
 const BUDGET_LEVELS = ['Budget', 'Moderate', 'Luxury'] as const;
@@ -405,7 +404,7 @@ export default function GenerateItineraryScreen() {
 
       {/* Liked Locations Info */}
       <View style={styles.locationsInfoCard}>
-        <FontAwesome name="heart" size={16} color={COLORS.error} />
+        <Heart size={16} color={COLORS.error} strokeWidth={2.5} fill={COLORS.error} />
         <Text style={styles.locationsInfoText}>
           {locations.length} destination{locations.length !== 1 ? 's' : ''} liked
         </Text>
@@ -423,7 +422,7 @@ export default function GenerateItineraryScreen() {
           <Text style={styles.progressTitle}>Creating Your Itinerary</Text>
           {usingFallback && (
             <View style={styles.fallbackBadge}>
-              <FontAwesome name="cogs" size={14} color={COLORS.textMuted} />
+              <Settings size={14} color={COLORS.textMuted} strokeWidth={2} />
               <Text style={styles.fallbackText}>Using Smart Matching</Text>
             </View>
           )}
@@ -455,7 +454,7 @@ export default function GenerateItineraryScreen() {
               >
                 {destination || 'Select destination'}
               </Text>
-              <Ionicons name="chevron-down" size={20} color={COLORS.textMuted} />
+              <ChevronDown size={20} color={COLORS.textMuted} strokeWidth={2.5} />
             </TouchableOpacity>
             {destination.length > 0 && !isDestinationValid && (
               <Text style={styles.helperText}>Please select a destination</Text>
@@ -479,13 +478,13 @@ export default function GenerateItineraryScreen() {
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Select Destination</Text>
                   <TouchableOpacity onPress={() => setShowSuggestions(false)}>
-                    <Ionicons name="close" size={28} color={COLORS.text} />
+                    <X size={28} color={COLORS.text} strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
                 {/* Search Input */}
                 <View style={styles.searchContainer}>
-                  <Ionicons name="search" size={20} color={COLORS.textMuted} />
+                  <Search size={20} color={COLORS.textMuted} strokeWidth={2.5} />
                   <TextInput
                     style={styles.searchInput}
                     placeholder="Search destinations..."
@@ -511,17 +510,17 @@ export default function GenerateItineraryScreen() {
                         onPress={() => selectDestination(dest)}
                       >
                         <View style={styles.destinationIcon}>
-                          <FontAwesome name="map-marker" size={16} color={COLORS.accent} />
+                          <MapPin size={16} color={COLORS.accent} strokeWidth={2.5} />
                         </View>
                         <Text style={styles.destinationText}>{dest}</Text>
-                        <Ionicons name="checkmark" size={20} color={
+                        <Check size={20} color={
                           destination === dest ? COLORS.accent : 'transparent'
-                        } />
+                        } strokeWidth={3} />
                       </TouchableOpacity>
                     ))
                   ) : (
                     <View style={styles.noResults}>
-                      <FontAwesome name="search" size={32} color={COLORS.textMuted} />
+                      <Search size={32} color={COLORS.textMuted} strokeWidth={2} />
                       <Text style={styles.noResultsText}>No destinations found</Text>
                       <Text style={styles.noResultsSubtext}>Try a different search term</Text>
                     </View>
@@ -539,7 +538,7 @@ export default function GenerateItineraryScreen() {
                 style={styles.durationButton}
                 onPress={() => setDuration(Math.max(1, parseInt(duration) - 1).toString())}
               >
-                <FontAwesome name="minus" size={16} color={COLORS.primary} />
+                <Minus size={16} color={COLORS.primary} strokeWidth={3} />
               </TouchableOpacity>
               <TextInput
                 style={styles.durationInput}
@@ -553,7 +552,7 @@ export default function GenerateItineraryScreen() {
                 style={styles.durationButton}
                 onPress={() => setDuration(Math.min(14, parseInt(duration) + 1).toString())}
               >
-                <FontAwesome name="plus" size={16} color={COLORS.primary} />
+                <Plus size={16} color={COLORS.primary} strokeWidth={3} />
               </TouchableOpacity>
             </View>
           </View>
@@ -623,11 +622,11 @@ export default function GenerateItineraryScreen() {
                   ]}
                   onPress={() => toggleInterest(interest)}
                 >
-                  <FontAwesome
-                    name={interests.includes(interest) ? 'check' : 'plus'}
-                    size={12}
-                    color={interests.includes(interest) ? 'white' : COLORS.primary}
-                  />
+                  {interests.includes(interest) ? (
+                    <Check size={12} color="white" strokeWidth={3} />
+                  ) : (
+                    <Plus size={12} color={COLORS.primary} strokeWidth={3} />
+                  )}
                   <Text
                     style={[
                       styles.interestTagText,
@@ -644,7 +643,7 @@ export default function GenerateItineraryScreen() {
           {/* Location Mismatch Warning */}
           {destination && !hasMatchingLocations && getMismatchedMessage() && (
             <View style={styles.warningCard}>
-              <FontAwesome name="exclamation-triangle" size={16} color={COLORS.warning} />
+              <AlertTriangle size={16} color={COLORS.warning} strokeWidth={2.5} />
               <Text style={styles.warningText}>{getMismatchedMessage()}</Text>
             </View>
           )}
@@ -652,7 +651,7 @@ export default function GenerateItineraryScreen() {
           {/* Error */}
           {error && (
             <View style={styles.errorCard}>
-              <FontAwesome name="exclamation-circle" size={16} color={COLORS.error} />
+              <AlertCircle size={16} color={COLORS.error} strokeWidth={2.5} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -666,7 +665,7 @@ export default function GenerateItineraryScreen() {
             onPress={handleGenerate}
             disabled={!isFormValid || !hasEnoughLocations || !hasMatchingLocations}
           >
-            <FontAwesome name="magic" size={18} color="white" />
+            <Wand2 size={18} color="white" strokeWidth={2.5} />
             <Text style={styles.generateButtonText}>Generate Itinerary</Text>
           </TouchableOpacity>
         </>

@@ -3,7 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -65,13 +65,13 @@ export function VideoCard({ video }: Props) {
           <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnail} />
         ) : (
           <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-            <FontAwesome name="play-circle" size={48} color="rgba(255,255,255,0.8)" />
+            <Icons.PlayCircle size={48} color="rgba(255,255,255,0.8)" fill="rgba(255,255,255,0.2)" />
           </View>
         )}
         {/* Location badge */}
         {video.location && (
           <View style={styles.locationBadge}>
-            <FontAwesome name="map-marker" size={10} color="#FFFFFF" />
+            <Icons.MapPin size={10} color="#FFFFFF" strokeWidth={2.5} />
             <Text style={styles.locationBadgeText}>{video.location}</Text>
           </View>
         )}
@@ -88,7 +88,7 @@ export function VideoCard({ video }: Props) {
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <FontAwesome name="user" size={12} color={COLORS.textMuted} />
+              <Icons.User size={12} color={COLORS.textMuted} strokeWidth={2} />
             </View>
           )}
           <View style={styles.userInfo}>
@@ -113,10 +113,11 @@ export function VideoCard({ video }: Props) {
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-            <FontAwesome
-              name={isLiked ? 'heart' : 'heart-o'}
+            <Icons.Heart
               size={16}
               color={isLiked ? COLORS.error : COLORS.textMuted}
+              fill={isLiked ? COLORS.error : 'none'}
+              strokeWidth={isLiked ? 0 : 2}
             />
             <Text style={[styles.actionText, isLiked && { color: COLORS.error }]}>
               {likeCount}
@@ -124,15 +125,16 @@ export function VideoCard({ video }: Props) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>
-            <FontAwesome name="comment-o" size={16} color={COLORS.textMuted} />
+            <Icons.MessageCircle size={16} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.actionText}>{video.comment_count}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
-            <FontAwesome
-              name={isSaved ? 'bookmark' : 'bookmark-o'}
+            <Icons.Bookmark
               size={16}
               color={isSaved ? COLORS.primary : COLORS.textMuted}
+              fill={isSaved ? COLORS.primary : 'none'}
+              strokeWidth={isSaved ? 0 : 2}
             />
             <Text style={[styles.actionText, isSaved && { color: COLORS.primary }]}>
               {isSaved ? 'Saved' : 'Save'}
@@ -140,7 +142,7 @@ export function VideoCard({ video }: Props) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>
-            <FontAwesome name="eye" size={16} color={COLORS.textMuted} />
+            <Icons.Eye size={16} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.actionText}>{video.view_count}</Text>
           </TouchableOpacity>
         </View>

@@ -1,7 +1,7 @@
 import { COLORS } from '@/lib/constants';
 import type { ItineraryDay } from '@/types/database';
 import { ActivityItem } from './ActivityItem';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ChevronUp, ChevronDown } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -36,11 +36,11 @@ export function DayPlan({ day }: Props) {
           {day.date && <Text style={styles.dateText}> · {formatDate(day.date)}</Text>}
         </View>
 
-        <FontAwesome
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={16}
-          color={COLORS.textMuted}
-        />
+        {isExpanded ? (
+          <ChevronUp size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+        ) : (
+          <ChevronDown size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+        )}
       </TouchableOpacity>
 
       {/* Activities */}

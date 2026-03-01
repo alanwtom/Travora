@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -20,7 +20,7 @@ export function BackButton({ onPress }: BackButtonProps) {
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.backButton}>
-      <FontAwesome name="chevron-left" size={24} color={COLORS.primary} />
+      <ChevronLeft size={24} color={COLORS.primary} strokeWidth={3} />
     </TouchableOpacity>
   );
 }

@@ -1,24 +1,26 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Home, Compass, Plus, Bell, User } from 'lucide-react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { COLORS } from '@/lib/constants';
 
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: 'Home' | 'Compass' | 'Bell' | 'User';
   color: string;
   focused?: boolean;
 }) {
+  const { name, color, focused } = props;
+  const IconComponent = { Home, Compass, Bell, User }[name];
   return (
     <View style={styles.iconContainer}>
-      <FontAwesome
-        size={20}
-        {...props}
+      <IconComponent
+        size={22}
+        color={focused ? COLORS.accent : color}
+        strokeWidth={2.5}
       />
     </View>
   );
@@ -38,7 +40,6 @@ export default function TabLayout() {
           paddingBottom: Platform.OS === 'ios' ? 22 : 8,
           paddingTop: 8,
           paddingHorizontal: 4,
-          borderTopWidth: 0,
           elevation: 0,
           backgroundColor: '#FFFFFF',
           shadowColor: '#000',
@@ -63,7 +64,7 @@ export default function TabLayout() {
           title: 'Home',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="home" color={focused ? COLORS.accent : color} focused={focused} />
+            <TabBarIcon name="Home" color={color} focused={focused} />
           ),
         }}
       />
@@ -72,7 +73,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="compass" color={focused ? COLORS.accent : color} focused={focused} />
+            <TabBarIcon name="Compass" color={color} focused={focused} />
           ),
         }}
       />
@@ -88,7 +89,7 @@ export default function TabLayout() {
                 end={{ x: 1, y: 1 }}
                 style={styles.uploadButton}
               >
-                <Ionicons name="add" size={26} color="#FFFFFF" />
+                <Plus size={26} color="#FFFFFF" strokeWidth={3} />
               </LinearGradient>
             </View>
           ),
@@ -99,7 +100,7 @@ export default function TabLayout() {
         options={{
           title: 'Activity',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="bell" color={focused ? COLORS.accent : color} focused={focused} />
+            <TabBarIcon name="Bell" color={color} focused={focused} />
           ),
         }}
       />
@@ -108,7 +109,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="user" color={focused ? COLORS.accent : color} focused={focused} />
+            <TabBarIcon name="User" color={color} focused={focused} />
           ),
         }}
       />

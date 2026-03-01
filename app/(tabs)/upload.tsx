@@ -15,7 +15,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { uploadVideo, uploadThumbnail } from '@/services/storage';
 import { createVideo } from '@/services/videos';
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { CheckCircle, Video, Image as LucideImage, MapPin, UploadCloud, X } from 'lucide-react-native';
 
 export default function UploadScreen() {
   const { user } = useAuth();
@@ -108,12 +108,12 @@ export default function UploadScreen() {
       <TouchableOpacity style={styles.mediaPicker} onPress={pickVideo}>
         {videoUri ? (
           <View style={styles.selectedMedia}>
-            <FontAwesome name="check-circle" size={32} color={COLORS.success} />
+            <CheckCircle size={32} color={COLORS.success} strokeWidth={3} />
             <Text style={styles.selectedText}>Video selected</Text>
           </View>
         ) : (
           <View style={styles.placeholderMedia}>
-            <FontAwesome name="video-camera" size={32} color={COLORS.textMuted} />
+            <Video size={32} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.placeholderText}>Tap to select a video</Text>
           </View>
         )}
@@ -125,7 +125,7 @@ export default function UploadScreen() {
           <Image source={{ uri: thumbnailUri }} style={styles.thumbnailPreview} />
         ) : (
           <View style={styles.placeholderThumbnail}>
-            <FontAwesome name="image" size={20} color={COLORS.textMuted} />
+            <LucideImage size={20} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.thumbnailPlaceholderText}>Add thumbnail</Text>
           </View>
         )}
@@ -157,7 +157,7 @@ export default function UploadScreen() {
           onChangeText={setCaption}
         />
         <View style={styles.locationInput}>
-          <FontAwesome name="map-marker" size={16} color={COLORS.textMuted} />
+          <MapPin size={16} color={COLORS.textMuted} strokeWidth={2.5} />
           <TextInput
             style={styles.locationTextInput}
             placeholder="Location (e.g. Bali, Indonesia)"
@@ -178,7 +178,7 @@ export default function UploadScreen() {
           <ActivityIndicator color="#FFFFFF" />
         ) : (
           <>
-            <FontAwesome name="cloud-upload" size={18} color="#FFFFFF" />
+            <UploadCloud size={18} color="#FFFFFF" strokeWidth={2.5} />
             <Text style={styles.uploadButtonText}>Upload Video</Text>
           </>
         )}

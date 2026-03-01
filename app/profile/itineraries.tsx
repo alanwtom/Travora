@@ -3,7 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useUserItineraries } from '@/hooks/useUserItineraries';
 import { ItineraryCard } from '@/components/ItineraryCard';
 import { BackButton } from '@/components/BackButton';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { MapPin, AlertCircle, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -47,7 +47,7 @@ export default function ItinerariesScreen() {
 
     return (
       <View style={styles.emptyContainer}>
-        <FontAwesome name="map-marked-alt" size={64} color={COLORS.textMuted} />
+        <MapPin size={64} color={COLORS.textMuted} strokeWidth={1.5} />
         <Text style={styles.emptyTitle}>No Itineraries Yet</Text>
         <Text style={styles.emptyText}>
           Generate your first travel itinerary based on your liked destinations
@@ -61,7 +61,7 @@ export default function ItinerariesScreen() {
 
     return (
       <View style={styles.errorContainer}>
-        <FontAwesome name="exclamation-circle" size={48} color={COLORS.error} />
+        <AlertCircle size={48} color={COLORS.error} strokeWidth={2} />
         <Text style={styles.errorTitle}>Failed to Load Itineraries</Text>
         <Text style={styles.errorText}>{error}</Text>
         <Pressable style={styles.retryButton} onPress={refetch}>
@@ -113,7 +113,7 @@ export default function ItinerariesScreen() {
         style={styles.fab}
         onPress={() => router.push('/profile/itineraries/generate')}
       >
-        <FontAwesome name="plus" size={24} color="white" />
+        <Plus size={24} color="white" strokeWidth={3} />
       </Pressable>
     </View>
   );
@@ -122,12 +122,6 @@ export default function ItinerariesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
     backgroundColor: COLORS.background,
   },
   header: {

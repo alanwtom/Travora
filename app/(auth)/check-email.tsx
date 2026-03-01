@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { signInWithMagicLink, verifyOtp } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ChevronLeft, Mail } from 'lucide-react-native';
 
 export default function CheckEmail() {
   const router = useRouter();
@@ -74,12 +74,12 @@ export default function CheckEmail() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <FontAwesome name="chevron-left" size={16} color={COLORS.primary} />
+          <ChevronLeft size={16} color={COLORS.primary} strokeWidth={3} />
         </TouchableOpacity>
 
         {/* Icon */}
         <View style={styles.iconContainer}>
-          <FontAwesome name="envelope-o" size={64} color={COLORS.accent} />
+          <Mail size={64} color={COLORS.accent} strokeWidth={1.5} />
         </View>
 
         {/* Header */}

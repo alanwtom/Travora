@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { X, ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -62,7 +62,7 @@ export function ItineraryRatingModal({
           <View style={styles.header}>
             <Text style={styles.title}>Rate Itinerary</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <FontAwesome name="times" size={20} color={COLORS.text} />
+              <X size={20} color={COLORS.text} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
@@ -85,10 +85,11 @@ export function ItineraryRatingModal({
                 onPress={() => setSelectedRating(true)}
                 disabled={isLoading}
               >
-                <FontAwesome
-                  name="thumbs-up"
+                <ThumbsUp
                   size={32}
                   color={isThumbsUp ? 'white' : COLORS.textMuted}
+                  strokeWidth={2.5}
+                  fill={isThumbsUp ? 'white' : 'none'}
                 />
                 <Text
                   style={[
@@ -109,10 +110,11 @@ export function ItineraryRatingModal({
                 onPress={() => setSelectedRating(false)}
                 disabled={isLoading}
               >
-                <FontAwesome
-                  name="thumbs-down"
+                <ThumbsDown
                   size={32}
                   color={isThumbsDown ? 'white' : COLORS.textMuted}
+                  strokeWidth={2.5}
+                  fill={isThumbsDown ? 'white' : 'none'}
                 />
                 <Text
                   style={[
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
   },
   itineraryTitle: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     marginBottom: 20,
     lineHeight: 22,
   },

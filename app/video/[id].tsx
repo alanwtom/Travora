@@ -6,7 +6,7 @@ import { toggleLike } from '@/services/likes';
 import { isVideoSaved, toggleSave } from '@/services/saves';
 import { getVideo, incrementViewCount } from '@/services/videos';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { PlayCircle, Play, User, MapPin, Heart, Bookmark, Share2, MessageCircle, Reply, X, Send, ChevronLeft, Video as VideoIcon } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -247,7 +247,7 @@ export default function VideoDetailScreen() {
     <>
       {comment.is_pinned && (
         <View style={styles.pinnedBadge}>
-          <FontAwesome name="thumb-tack" size={12} color={COLORS.primary} />
+          <MapPin size={12} color={COLORS.primary} strokeWidth={2.5} />
           <Text style={styles.pinnedText}>Pinned by author</Text>
         </View>
       )}
@@ -260,7 +260,7 @@ export default function VideoDetailScreen() {
             />
           ) : (
             <View style={[styles.commentAvatar, styles.avatarPlaceholder]}>
-              <FontAwesome name="user" size={10} color={COLORS.textMuted} />
+              <User size={10} color={COLORS.textMuted} strokeWidth={2} />
             </View>
           )}
           <View style={styles.commentInfo}>
@@ -277,30 +277,32 @@ export default function VideoDetailScreen() {
             </Text>
           </View>
           {user?.id === video.user_id && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => handlePinComment(comment.id, comment.is_pinned)}
               style={styles.pinButton}
             >
-              <FontAwesome 
-                name={comment.is_pinned ? 'thumb-tack' : 'thumb-tack'} 
-                size={14} 
+              <MapPin
+                size={14}
                 color={comment.is_pinned ? COLORS.primary : COLORS.textMuted}
+                strokeWidth={2.5}
+                fill={comment.is_pinned ? COLORS.primary : 'none'}
               />
             </TouchableOpacity>
           )}
         </View>
         <Text style={styles.commentContent}>{comment.content}</Text>
-        
+
         {/* Comment Actions */}
         <View style={styles.commentActions}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionItem}
             onPress={() => handleToggleCommentLike(comment.id)}
           >
-            <FontAwesome 
-              name={comment.is_liked ? 'heart' : 'heart-o'} 
-              size={14} 
+            <Heart
+              size={14}
               color={comment.is_liked ? COLORS.error : COLORS.textMuted}
+              strokeWidth={2}
+              fill={comment.is_liked ? COLORS.error : 'none'}
             />
             <Text style={[
               styles.actionText,
@@ -310,16 +312,16 @@ export default function VideoDetailScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionItem}
             onPress={() => setReplyingToCommentId(comment.id)}
           >
-            <FontAwesome name="reply" size={14} color={COLORS.textMuted} />
+            <Reply size={14} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.actionText}>Reply</Text>
           </TouchableOpacity>
 
           {(comment.replies && comment.replies.length > 0) && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionItem}
               onPress={() => {
                 const newExpanded = new Set(expandedCommentIds);
@@ -331,7 +333,7 @@ export default function VideoDetailScreen() {
                 setExpandedCommentIds(newExpanded);
               }}
             >
-              <FontAwesome name="comments" size={14} color={COLORS.textMuted} />
+              <MessageCircle size={14} color={COLORS.textMuted} strokeWidth={2} />
               <Text style={styles.actionText}>
                 {comment.replies.length} repl{comment.replies.length === 1 ? 'y' : 'ies'}
               </Text>
@@ -352,7 +354,7 @@ export default function VideoDetailScreen() {
                     />
                   ) : (
                     <View style={[styles.replyAvatar, styles.avatarPlaceholder]}>
-                      <FontAwesome name="user" size={8} color={COLORS.textMuted} />
+                      <User size={8} color={COLORS.textMuted} strokeWidth={2} />
                     </View>
                   )}
                   <View style={styles.replyInfo}>
@@ -370,17 +372,18 @@ export default function VideoDetailScreen() {
                   </View>
                 </View>
                 <Text style={styles.replyContent}>{reply.content}</Text>
-                
+
                 {/* Reply Actions */}
                 <View style={styles.replyActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.replyActionItem}
                     onPress={() => handleToggleCommentLike(reply.id)}
                   >
-                    <FontAwesome 
-                      name={reply.is_liked ? 'heart' : 'heart-o'} 
-                      size={12} 
+                    <Heart
+                      size={12}
                       color={reply.is_liked ? COLORS.error : COLORS.textMuted}
+                      strokeWidth={2}
+                      fill={reply.is_liked ? COLORS.error : 'none'}
                     />
                     <Text style={[
                       styles.replyActionText,
@@ -390,16 +393,16 @@ export default function VideoDetailScreen() {
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.replyActionItem}
                     onPress={() => setReplyingToCommentId(reply.id)}
                   >
-                    <FontAwesome name="reply" size={12} color={COLORS.textMuted} />
+                    <Reply size={12} color={COLORS.textMuted} strokeWidth={2} />
                     <Text style={styles.replyActionText}>Reply</Text>
                   </TouchableOpacity>
 
                   {(reply.replies && reply.replies.length > 0) && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.replyActionItem}
                       onPress={() => {
                         const newExpanded = new Set(expandedCommentIds);
@@ -411,7 +414,7 @@ export default function VideoDetailScreen() {
                         setExpandedCommentIds(newExpanded);
                       }}
                     >
-                      <FontAwesome name="comments" size={12} color={COLORS.textMuted} />
+                      <MessageCircle size={12} color={COLORS.textMuted} strokeWidth={2} />
                       <Text style={styles.replyActionText}>
                         {reply.replies.length} repl{reply.replies.length === 1 ? 'y' : 'ies'}
                       </Text>
@@ -432,7 +435,7 @@ export default function VideoDetailScreen() {
                             />
                           ) : (
                             <View style={[styles.nestedReplyAvatar, styles.avatarPlaceholder]}>
-                              <FontAwesome name="user" size={6} color={COLORS.textMuted} />
+                              <User size={6} color={COLORS.textMuted} strokeWidth={2} />
                             </View>
                           )}
                           <View style={styles.nestedReplyInfo}>
@@ -450,17 +453,18 @@ export default function VideoDetailScreen() {
                           </View>
                         </View>
                         <Text style={styles.nestedReplyContent}>{nestedReply.content}</Text>
-                        
+
                         {/* Nested Reply Actions */}
                         <View style={styles.nestedReplyActions}>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.replyActionItem}
                             onPress={() => handleToggleCommentLike(nestedReply.id)}
                           >
-                            <FontAwesome 
-                              name={nestedReply.is_liked ? 'heart' : 'heart-o'} 
-                              size={11} 
+                            <Heart
+                              size={11}
                               color={nestedReply.is_liked ? COLORS.error : COLORS.textMuted}
+                              strokeWidth={2}
+                              fill={nestedReply.is_liked ? COLORS.error : 'none'}
                             />
                             <Text style={[
                               styles.nestedReplyActionText,
@@ -470,11 +474,11 @@ export default function VideoDetailScreen() {
                             </Text>
                           </TouchableOpacity>
 
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.replyActionItem}
                             onPress={() => setReplyingToCommentId(nestedReply.id)}
                           >
-                            <FontAwesome name="reply" size={11} color={COLORS.textMuted} />
+                            <Reply size={11} color={COLORS.textMuted} strokeWidth={2} />
                             <Text style={styles.nestedReplyActionText}>Reply</Text>
                           </TouchableOpacity>
                         </View>
@@ -498,11 +502,11 @@ export default function VideoDetailScreen() {
           <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnail} />
         ) : (
           <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-            <FontAwesome name="play-circle" size={64} color="rgba(255,255,255,0.8)" />
+            <PlayCircle size={64} color="rgba(255,255,255,0.8)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
           </View>
         )}
         <View style={styles.playOverlay}>
-          <FontAwesome name="play" size={48} color="rgba(255,255,255,0.9)" />
+          <Play size={48} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
         </View>
       </View>
 
@@ -519,7 +523,7 @@ export default function VideoDetailScreen() {
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <FontAwesome name="user" size={16} color={COLORS.textMuted} />
+              <User size={16} color={COLORS.textMuted} strokeWidth={2} />
             </View>
           )}
           <View style={styles.creatorInfo}>
@@ -544,7 +548,7 @@ export default function VideoDetailScreen() {
         {video.location && (
           <View style={styles.section}>
             <View style={styles.locationRow}>
-              <FontAwesome name="map-marker" size={16} color={COLORS.primary} />
+              <MapPin size={16} color={COLORS.primary} strokeWidth={2.5} />
               <Text style={styles.locationText}>{video.location}</Text>
             </View>
           </View>
@@ -569,27 +573,29 @@ export default function VideoDetailScreen() {
         {/* Action Buttons */}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-            <FontAwesome
-              name={isLiked ? 'heart' : 'heart-o'}
+            <Heart
               size={24}
               color={isLiked ? COLORS.error : COLORS.text}
+              strokeWidth={2}
+              fill={isLiked ? COLORS.error : 'none'}
             />
             <Text style={[styles.actionLabel, isLiked && { color: COLORS.error }]}>
               {isLiked ? 'Liked' : 'Like'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
-            <FontAwesome
-              name={isSaved ? 'bookmark' : 'bookmark-o'}
+            <Bookmark
               size={24}
               color={isSaved ? COLORS.primary : COLORS.text}
+              strokeWidth={2}
+              fill={isSaved ? COLORS.primary : 'none'}
             />
             <Text style={[styles.actionLabel, isSaved && { color: COLORS.primary }]}>
               {isSaved ? 'Saved' : 'Save'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <FontAwesome name="share-alt" size={24} color={COLORS.text} />
+            <Share2 size={24} color={COLORS.text} strokeWidth={2.5} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
         </View>
@@ -604,10 +610,10 @@ export default function VideoDetailScreen() {
           <View>
             {replyingToCommentId && (
               <View style={styles.replyingToContext}>
-                <FontAwesome name="reply" size={14} color={COLORS.primary} />
+                <Reply size={14} color={COLORS.primary} strokeWidth={2} />
                 <Text style={styles.replyingToText}>Replying to comment</Text>
                 <TouchableOpacity onPress={() => setReplyingToCommentId(null)}>
-                  <FontAwesome name="times" size={16} color={COLORS.textMuted} />
+                  <X size={16} color={COLORS.textMuted} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
             )}
@@ -632,7 +638,7 @@ export default function VideoDetailScreen() {
                 {isPostingComment ? (
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
-                  <FontAwesome name="send" size={16} color="#FFF" />
+                  <Send size={16} color="#FFF" strokeWidth={2.5} />
                 )}
               </TouchableOpacity>
             </View>
@@ -653,7 +659,7 @@ export default function VideoDetailScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <FontAwesome name="chevron-left" size={24} color={COLORS.primary} />
+            <ChevronLeft size={24} color={COLORS.primary} strokeWidth={2.5} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Video Details</Text>
           <View style={styles.spacer} />

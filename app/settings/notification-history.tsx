@@ -10,7 +10,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColor } from '@/components/Themed';
 import { useAuth } from '@/providers/AuthProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Clock, Bell, Mail, BellOff } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { getNotifications } from '@/services/notifications';
@@ -105,7 +105,7 @@ export default function NotificationHistoryScreen() {
           {/* Metadata */}
           <View style={styles.metadataRow}>
             <View style={styles.metadataItem}>
-              <Ionicons name="time" size={12} color={textColor + '50'} />
+              <Clock size={12} color={textColor + '50'} strokeWidth={2} />
               <Text style={[styles.metadataText, { color: textColor + '60' }]}>
                 {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
               </Text>
@@ -115,7 +115,7 @@ export default function NotificationHistoryScreen() {
             <View style={styles.channelsContainer}>
               {item.channels.includes('push') && (
                 <View style={[styles.channelBadge, { backgroundColor: tintColor + '20' }]}>
-                  <Ionicons name="notifications" size={12} color={tintColor} />
+                  <Bell size={12} color={tintColor} strokeWidth={2.5} />
                   <Text style={[styles.channelText, { color: tintColor }]}>
                     {item.push_sent ? 'Sent' : 'Pending'}
                   </Text>
@@ -123,7 +123,7 @@ export default function NotificationHistoryScreen() {
               )}
               {item.channels.includes('email') && (
                 <View style={[styles.channelBadge, { backgroundColor: tintColor + '20' }]}>
-                  <Ionicons name="mail" size={12} color={tintColor} />
+                  <Mail size={12} color={tintColor} strokeWidth={2.5} />
                   <Text style={[styles.channelText, { color: tintColor }]}>
                     {item.email_sent ? 'Sent' : 'Pending'}
                   </Text>
@@ -180,7 +180,7 @@ export default function NotificationHistoryScreen() {
       {/* Notifications List */}
       {notifications.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="notifications-off-outline" size={64} color={textColor + '30'} />
+          <BellOff size={64} color={textColor + '30'} strokeWidth={1.5} />
           <Text style={[styles.emptyTitle, { color: textColor }]}>No notifications yet</Text>
           <Text style={[styles.emptyMessage, { color: textColor + '60' }]}>
             Notification delivery history will appear here

@@ -17,7 +17,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Bell, BellOff, Gift, Mail } from 'lucide-react-native';
 import { useThemeColor } from './Themed';
 import {
   NotificationCategory,
@@ -202,7 +202,7 @@ export function NotificationSettingsScreen({ userId }: NotificationSettingsProps
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Ionicons name="notifications-off" size={24} color={textColor} />
+            <BellOff size={24} color={textColor} strokeWidth={2} />
             <Text style={{ fontSize: 18, fontWeight: '600', marginLeft: 12, color: textColor }}>
               Master Switch
             </Text>
@@ -278,7 +278,7 @@ export function NotificationSettingsScreen({ userId }: NotificationSettingsProps
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                <Ionicons name="gift" size={20} color="#F59E0B" />
+                <Gift size={20} color="#F59E0B" strokeWidth={2} />
                 <Text
                   style={{ fontSize: 16, fontWeight: '600', marginLeft: 8, color: textColor }}
                 >
@@ -307,7 +307,8 @@ export function NotificationSettingsScreen({ userId }: NotificationSettingsProps
           <View style={{ flexDirection: 'row', gap: 16 }}>
             {Object.entries(NOTIFICATION_CHANNELS).map(([key, channel]) => (
               <View key={key} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name={channel.icon as any} size={16} color={textColor + '80'} />
+                {channel.icon === 'notifications' && <Bell size={16} color={textColor + '80'} strokeWidth={2} />}
+                {channel.icon === 'mail' && <Mail size={16} color={textColor + '80'} strokeWidth={2} />}
                 <Text style={{ fontSize: 12, color: textColor + '80', marginLeft: 4 }}>
                   {channel.label}
                 </Text>
@@ -408,7 +409,7 @@ function NotificationCategoryCard({
             alignItems: 'center',
           }}
         >
-          <Ionicons name={category.icon as any} size={20} color={tintColor} />
+          <Bell size={20} color={tintColor} strokeWidth={2.5} />
         </View>
         <View style={{ flex: 1, marginLeft: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -460,11 +461,11 @@ function NotificationCategoryCard({
                 borderColor: item.enabled ? tintColor : textColor + '30',
               }}
             >
-              <Ionicons
-                name={NOTIFICATION_CHANNELS[item.channel].icon as any}
-                size={22}
-                color={item.enabled ? tintColor : textColor + '40'}
-              />
+              {item.channel === 'push' ? (
+                <Bell size={22} color={item.enabled ? tintColor : textColor + '40'} strokeWidth={2.5} />
+              ) : (
+                <Mail size={22} color={item.enabled ? tintColor : textColor + '40'} strokeWidth={2.5} />
+              )}
             </View>
             <Text
               style={{

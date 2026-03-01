@@ -5,7 +5,7 @@ import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { Video } from 'expo-av';
 import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -199,13 +199,13 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             )}
             {!isPlaying && !isLoadingVideo && (
               <View style={styles.pauseOverlay}>
-                <FontAwesome name="play" size={64} color="rgba(255,255,255,0.9)" />
+                <Icons.Play size={64} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
               </View>
             )}
           </>
         ) : (
           <View style={[styles.video, styles.videoPlaceholder]}>
-            <FontAwesome name="play-circle" size={64} color={COLORS.primary} />
+            <Icons.PlayCircle size={64} color={COLORS.primary} fill="rgba(255,255,255,0.2)" strokeWidth={2} />
           </View>
         )}
 
@@ -230,11 +230,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           onPress={toggleMute}
           activeOpacity={0.7}
         >
-          <FontAwesome
-            name={isMuted ? 'volume-off' : 'volume-up'}
-            size={20}
-            color="rgba(255,255,255,0.9)"
-          />
+          {isMuted ? (
+            <Icons.VolumeX size={20} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+          ) : (
+            <Icons.Volume2 size={20} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+          )}
         </TouchableOpacity>
 
         {/* Left side - User info and description */}
@@ -253,7 +253,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
                 />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+                  <Icons.User size={14} color={COLORS.textMuted} strokeWidth={2} />
                 </View>
               )}
               <View>
@@ -295,7 +295,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           {/* Location */}
           {video.location && (
             <View style={styles.locationRow}>
-              <FontAwesome name="map-marker" size={14} color="#FF3B30" />
+              <Icons.MapPin size={14} color="#FF3B30" strokeWidth={2.5} fill="rgba(255,59,48,0.2)" />
               <Text style={styles.location}>{video.location}</Text>
             </View>
           )}
@@ -308,10 +308,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleLike}
             activeOpacity={0.7}
           >
-            <FontAwesome
-              name={isLiked ? 'heart' : 'heart-o'}
+            <Icons.Heart
               size={28}
               color={isLiked ? COLORS.error : 'rgba(255,255,255,0.8)'}
+              fill={isLiked ? COLORS.error : 'none'}
+              strokeWidth={isLiked ? 0 : 2}
             />
             <Text style={styles.actionLabel}>{likeCount}</Text>
           </TouchableOpacity>
@@ -321,7 +322,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleCommentPress}
             activeOpacity={0.7}
           >
-            <FontAwesome name="comment-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Icons.MessageCircle size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />
             <Text style={styles.actionLabel}>{video.comment_count}</Text>
           </TouchableOpacity>
 
@@ -330,10 +331,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleSave}
             activeOpacity={0.7}
           >
-            <FontAwesome
-              name={isSaved ? 'bookmark' : 'bookmark-o'}
+            <Icons.Bookmark
               size={28}
               color={isSaved ? COLORS.primary : 'rgba(255,255,255,0.8)'}
+              fill={isSaved ? COLORS.primary : 'none'}
+              strokeWidth={isSaved ? 0 : 2}
             />
             <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
           </TouchableOpacity>
@@ -343,7 +345,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleVideoPress}
             activeOpacity={0.7}
           >
-            <FontAwesome name="share-square-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Icons.Share2 size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
         </View>

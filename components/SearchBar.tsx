@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Search, XCircle } from 'lucide-react-native';
 import { COLORS } from '@/lib/constants';
 
 const DEBOUNCE_MS = 300;
@@ -69,7 +69,7 @@ export function SearchBar({
 
   return (
     <View style={styles.container}>
-      <FontAwesome name="search" size={16} color={COLORS.textMuted} style={styles.icon} />
+      <Search size={16} color={COLORS.textMuted} strokeWidth={2.5} style={styles.icon} />
       <TextInput
         style={styles.input}
         value={value}
@@ -84,7 +84,7 @@ export function SearchBar({
         <ActivityIndicator size="small" color={COLORS.primary} style={styles.clearButton} />
       ) : value.length > 0 ? (
         <TouchableOpacity onPress={handleClear} style={styles.clearButton} hitSlop={8}>
-          <FontAwesome name="times-circle" size={18} color={COLORS.textMuted} />
+          <XCircle size={18} color={COLORS.textMuted} strokeWidth={2} />
         </TouchableOpacity>
       ) : null}
     </View>

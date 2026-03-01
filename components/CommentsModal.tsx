@@ -1,7 +1,7 @@
 import { COLORS } from '@/lib/constants';
 import { addComment, getVideoComments, toggleCommentLike, getCommentReplies } from '@/services/comments';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -163,10 +163,11 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
         <TouchableOpacity
           onPress={() => handleCommentLike(item.id, item.is_liked || false)}
         >
-          <FontAwesome
-            name={item.is_liked ? 'heart' : 'heart-o'}
+          <Icons.Heart
             size={18}
             color={item.is_liked ? COLORS.error : 'rgba(0,0,0,0.5)'}
+            fill={item.is_liked ? COLORS.error : 'none'}
+            strokeWidth={item.is_liked ? 0 : 2}
           />
           {item.like_count > 0 && (
             <Text style={styles.likeCount}>{item.like_count}</Text>
@@ -207,10 +208,11 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
                   <TouchableOpacity
                     onPress={() => handleCommentLike(reply.id, reply.is_liked || false)}
                   >
-                    <FontAwesome
-                      name={reply.is_liked ? 'heart' : 'heart-o'}
+                    <Icons.Heart
                       size={16}
                       color={reply.is_liked ? COLORS.error : 'rgba(0,0,0,0.5)'}
+                      fill={reply.is_liked ? COLORS.error : 'none'}
+                      strokeWidth={reply.is_liked ? 0 : 2}
                     />
                     {reply.like_count > 0 && (
                       <Text style={styles.likeCount}>{reply.like_count}</Text>
@@ -238,7 +240,7 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{comments.length} comments</Text>
             <TouchableOpacity onPress={onClose}>
-              <FontAwesome name="close" size={24} color="#000" />
+              <Icons.X size={24} color="#000" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
@@ -265,7 +267,7 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
                     Replying to {comments.find(c => c.id === replyingToCommentId)?.profiles?.display_name || 'a comment'}
                   </Text>
                   <TouchableOpacity onPress={() => setReplyingToCommentId(null)}>
-                    <FontAwesome name="close" size={16} color="#666" />
+                    <Icons.X size={16} color="#666" strokeWidth={2} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -286,7 +288,7 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
                   {isPostingComment ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <FontAwesome name="send" size={18} color="#fff" />
+                    <Icons.Send size={18} color="#fff" strokeWidth={2.5} />
                   )}
                 </TouchableOpacity>
               </View>

@@ -1,6 +1,6 @@
 import { COLORS } from '@/lib/constants';
 import type { ItineraryWithStats } from '@/hooks/useUserItineraries';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -32,18 +32,18 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
     }
   };
 
-  const getTravelStyleIcon = (style?: string | null) => {
+  const getTravelStyleIcon = (style?: string | null): React.ComponentType<{ size: number; color: string; strokeWidth?: number }> => {
     switch (style?.toLowerCase()) {
       case 'adventure':
-        return 'hiking';
+        return Icons.Mountain;
       case 'relaxation':
-        return 'umbrella-beach';
+        return Icons.Umbrella;
       case 'cultural':
-        return 'landmark';
+        return Icons.Landmark;
       case 'foodie':
-        return 'utensils';
+        return Icons.Utensils;
       default:
-        return 'compass';
+        return Icons.Compass;
     }
   };
 
@@ -77,7 +77,7 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
               style={styles.deleteButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <FontAwesome name="trash" size={14} color={COLORS.error} />
+              <Icons.Trash2 size={14} color={COLORS.error} strokeWidth={2} />
             </TouchableOpacity>
           )}
         </View>
@@ -94,11 +94,11 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
           {/* Travel style badge */}
           {itinerary.travel_style && (
             <View style={styles.badge}>
-              <FontAwesome
-                name={getTravelStyleIcon(itinerary.travel_style) as any}
-                size={10}
-                color={COLORS.primary}
-              />
+              {React.createElement(getTravelStyleIcon(itinerary.travel_style), {
+                size: 10,
+                color: COLORS.primary,
+                strokeWidth: 2.5,
+              })}
               <Text style={styles.badgeText}>
                 {itinerary.travel_style.charAt(0).toUpperCase() +
                   itinerary.travel_style.slice(1)}
@@ -114,7 +114,7 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
                 { backgroundColor: getBudgetColor(itinerary.budget_level) + '20' },
               ]}
             >
-              <FontAwesome name="wallet" size={10} color={getBudgetColor(itinerary.budget_level)} />
+              <Icons.Wallet size={10} color={getBudgetColor(itinerary.budget_level)} strokeWidth={2} />
               <Text style={[styles.badgeText, { color: getBudgetColor(itinerary.budget_level) }]}>
                 {itinerary.budget_level.charAt(0).toUpperCase() +
                   itinerary.budget_level.slice(1)}
@@ -131,11 +131,11 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
                 : styles.badgeRuleBased,
             ]}
           >
-            <FontAwesome
-              name={itinerary.generated_by === 'llm' ? 'robot' : 'cogs'}
-              size={10}
-              color="white"
-            />
+            {itinerary.generated_by === 'llm' ? (
+              <Icons.Bot size={10} color="white" strokeWidth={2} />
+            ) : (
+              <Icons.Settings size={10} color="white" strokeWidth={2} />
+            )}
             <Text style={styles.badgeTextLight}>
               {itinerary.generated_by === 'llm' ? 'AI' : 'Smart Match'}
             </Text>
@@ -145,32 +145,32 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
         {/* Rating row */}
         {itinerary.stats && itinerary.stats.totalRatings > 0 && (
           <View style={styles.ratingRow}>
-            <FontAwesome
-              name="thumbs-up"
+            <Icons.ThumbsUp
               size={12}
               color={itinerary.stats.thumbsUp > 0 ? COLORS.success : COLORS.textMuted}
+              strokeWidth={2}
+              fill={itinerary.stats.thumbsUp > 0 ? COLORS.success : 'none'}
             />
             <Text style={styles.ratingText}>{itinerary.stats.thumbsUp}</Text>
-            <FontAwesome
-              name="thumbs-down"
+            <Icons.ThumbsDown
               size={12}
               color={itinerary.stats.thumbsDown > 0 ? COLORS.error : COLORS.textMuted}
+              strokeWidth={2}
               style={styles.thumbsDownSpacer}
+              fill={itinerary.stats.thumbsDown > 0 ? COLORS.error : 'none'}
             />
             <Text style={styles.ratingText}>{itinerary.stats.thumbsDown}</Text>
             {itinerary.stats.averageRating !== null && (
-              <>
-                <Text style={styles.ratingText}>
-                  {' '}(Math.round(itinerary.stats.averageRating * 100)}%)
-                </Text>
-              </>
+              <Text style={styles.ratingText}>
+                {' · '}{Math.round(itinerary.stats.averageRating * 100)}%)
+              </Text>
             )}
           </View>
         )}
       </View>
 
       {/* Right: Chevron */}
-      <FontAwesome name="chevron-right" size={16} color={COLORS.textMuted} />
+      <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
     </TouchableOpacity>
   );
 }

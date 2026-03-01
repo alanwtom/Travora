@@ -8,7 +8,7 @@ import {
   getFollowingCount,
 } from '@/services/profiles';
 import { BackButton } from '@/components/BackButton';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Play, User, MapPin, Video } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -158,7 +158,7 @@ export default function UserProfileScreen() {
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
             ) : (
               <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
-                <FontAwesome name="play" size={20} color={COLORS.textMuted} />
+                <Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
               </View>
             )}
           </TouchableOpacity>
@@ -170,7 +170,7 @@ export default function UserProfileScreen() {
                 <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <FontAwesome name="user" size={32} color={COLORS.textMuted} />
+                  <User size={32} color={COLORS.textMuted} strokeWidth={2} />
                 </View>
               )}
             </View>
@@ -186,7 +186,7 @@ export default function UserProfileScreen() {
 
             {profile.location && (
               <View style={styles.locationRow}>
-                <FontAwesome name="map-marker" size={14} color={COLORS.textMuted} />
+                <MapPin size={14} color={COLORS.textMuted} strokeWidth={2.5} />
                 <Text style={styles.locationText}>{profile.location}</Text>
               </View>
             )}
@@ -227,7 +227,7 @@ export default function UserProfileScreen() {
 
             <View style={styles.tabContainer}>
               <View style={[styles.tab, styles.tabActive]}>
-                <FontAwesome name="play" size={16} color={COLORS.primary} />
+                <Play size={16} color={COLORS.primary} fill={COLORS.primary} strokeWidth={0} />
                 <Text style={[styles.tabLabel, styles.tabLabelActive]}>
                   Videos ({videos.length})
                 </Text>
@@ -238,7 +238,7 @@ export default function UserProfileScreen() {
         ListEmptyComponent={
           !videosLoading ? (
             <View style={styles.emptyVideos}>
-              <FontAwesome name="video-camera" size={32} color={COLORS.border} />
+              <Video size={32} color={COLORS.border} strokeWidth={2} />
               <Text style={styles.emptyText}>No videos yet</Text>
             </View>
           ) : null
