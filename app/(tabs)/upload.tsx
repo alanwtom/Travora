@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { uploadThumbnail, uploadVideo } from '@/services/storage';
+import { createVideo } from '@/services/videos';
+import * as ImagePicker from 'expo-image-picker';
+import { CheckCircle, Image as LucideImage, MapPin, UploadCloud, Video } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react'; // UPDATED: added useEffect, useRef
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ScrollView,
-  Image,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '@/providers/AuthProvider';
-import { uploadVideo, uploadThumbnail } from '@/services/storage';
-import { createVideo } from '@/services/videos';
-import { COLORS } from '@/lib/constants';
-import { CheckCircle, Video, Image as LucideImage, MapPin, UploadCloud, X } from 'lucide-react-native';
+// GPS ADDITION: import our custom hook
+import { useLocation } from '@/hooks/useLocation';
 
 export default function UploadScreen() {
   const { user } = useAuth();
@@ -26,6 +28,21 @@ export default function UploadScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // GPS ADDITION: useLocation hook
+  const { coords, placeName, loading: locationLoading, error, fetchLocation } = useLocation();
+  const isFetchingRef = useRef(false); // to know when we are waiting for GPS result
+
+  // GPS ADDITION: effect to handle location result
+  useEffect(() => {
+    if (placeName && isFetchingRef.current) {
+      setLocation(placeName);
+      isFetchingRef.current = false;
+    } else if (error && isFetchingRef.current) {
+      Alert.alert('Location Error', error);
+      isFetchingRef.current = false;
+    }
+  }, [placeName, error]);
 
   const pickVideo = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -50,6 +67,13 @@ export default function UploadScreen() {
     if (!result.canceled && result.assets[0]) {
       setThumbnailUri(result.assets[0].uri);
     }
+  };
+
+  // GPS ADDITION: handler for GPS button
+  const handleUseLocation = async () => {
+    isFetchingRef.current = true;
+    await fetchLocation();
+    // The useEffect will handle setting location or showing error
   };
 
   const handleUpload = async () => {
@@ -156,6 +180,7 @@ export default function UploadScreen() {
           value={caption}
           onChangeText={setCaption}
         />
+        {/* GPS ADDITION: modified location input with GPS button */}
         <View style={styles.locationInput}>
           <MapPin size={16} color={COLORS.textMuted} strokeWidth={2.5} />
           <TextInput
@@ -165,6 +190,13 @@ export default function UploadScreen() {
             value={location}
             onChangeText={setLocation}
           />
+          <TouchableOpacity onPress={handleUseLocation} disabled={locationLoading}>
+            {locationLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <MapPin size={16} color={COLORS.primary} strokeWidth={2.5} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -263,6 +295,7 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+  // GPS ADDITION: updated styles for location input (already compatible, no change needed)
   locationInput: {
     flexDirection: 'row',
     alignItems: 'center',
