@@ -1,17 +1,37 @@
+<<<<<<< HEAD
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+=======
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { View, Platform, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Home, Compass, Plus, Bell, User } from 'lucide-react-native';
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { COLORS } from '@/lib/constants';
 
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: 'Home' | 'Compass' | 'Bell' | 'User';
   color: string;
+  focused?: boolean;
 }) {
-  return <FontAwesome size={22} style={{ marginBottom: -2 }} {...props} />;
+  const { name, color, focused } = props;
+  const IconComponent = { Home, Compass, Bell, User }[name];
+  return (
+    <View style={styles.iconContainer}>
+      <IconComponent
+        size={22}
+        color={focused ? COLORS.accent : color}
+        strokeWidth={2.5}
+      />
+    </View>
+  );
 }
 
 export default function TabLayout() {
@@ -20,21 +40,29 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: COLORS.accent,
+        tabBarInactiveTintColor: COLORS.textMuted,
         headerShown: false,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 83 : 65,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 8,
+          height: Platform.OS === 'ios' ? 78 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 22 : 8,
           paddingTop: 8,
-          borderTopWidth: 0,
+          paddingHorizontal: 4,
           elevation: 0,
-          shadowOpacity: 0,
-          backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF',
-          shadowColor: 'transparent',
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          borderTopWidth: 0.5,
+          borderTopColor: 'rgba(0, 0, 0, 0.08)',
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: '500',
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
       }}
     >
@@ -43,14 +71,18 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="Home" color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <TabBarIcon name="compass" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="Compass" color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -58,10 +90,15 @@ export default function TabLayout() {
         options={{
           title: '',
           tabBarIcon: ({ focused }) => (
-            <View style={styles.uploadButtonContainer}>
-              <View style={styles.uploadButton}>
-                <Ionicons name="add" size={28} color="#FFFFFF" />
-              </View>
+            <View style={styles.uploadButtonWrapper}>
+              <LinearGradient
+                colors={[COLORS.accent, COLORS.accentLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.uploadButton}
+              >
+                <Plus size={26} color="#FFFFFF" strokeWidth={3} />
+              </LinearGradient>
             </View>
           ),
         }}
@@ -70,14 +107,18 @@ export default function TabLayout() {
         name="activity"
         options={{
           title: 'Activity',
-          tabBarIcon: ({ color }) => <TabBarIcon name="bell" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="Bell" color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name="User" color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>
@@ -85,25 +126,27 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  uploadButtonContainer: {
-    position: 'absolute',
-    top: -24,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+  iconContainer: {
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  uploadButtonWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
   },
   uploadButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });

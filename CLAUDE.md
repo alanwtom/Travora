@@ -102,3 +102,20 @@ This creates all tables, indexes, RLS policies, storage buckets, and triggers.
 - All storage uploads use the user's ID as the top-level folder for RLS compliance
 - `likes` table has `UNIQUE(user_id, video_id)` constraint to prevent duplicate likes
 - `follows` table prevents self-follows via constraint
+
+## Jira Workflow & Sprint Management
+
+When working on tasks assigned via Jira (project TM07), agents should follow the grading best practices outlined in the [Travora Jira Workflow](.claude/skills/travora-jira-workflow.md) skill.
+
+**Key Rules:**
+1. **Workflow**: To Do → In Progress (5+ min) → Done (never skip In Progress!)
+2. **Documentation**: Log detailed worklogs with GitHub commit links
+3. **SCRUM**: Provide detailed updates in SCRUM tables using real full names
+4. **Story Creation**: Include assignee, story points, description, and acceptance criteria
+
+**Jira Project Info:**
+- Project Key: TM07
+- URL: https://travora.atlassian.net
+- Cloud ID: c1f31043-5388-4b56-a7cd-b1a02b30970e
+
+When the user mentions "sprint" or asks about Jira tasks, automatically check the current sprint status using the Atlassian MCP tools.

@@ -16,7 +16,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useProfile } from '@/hooks/useProfile';
 import { uploadAvatar } from '@/services/storage';
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { User } from 'lucide-react-native';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -103,7 +103,7 @@ export default function EditProfileScreen() {
           <Image source={{ uri: displayAvatarUri }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <FontAwesome name="user" size={32} color={COLORS.textMuted} />
+            <User size={32} color={COLORS.textMuted} strokeWidth={2} />
           </View>
         )}
         <Text style={styles.changePhotoText}>Change Photo</Text>

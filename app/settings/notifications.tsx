@@ -16,7 +16,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { NotificationSettingsScreen } from '@/components/NotificationSettings';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Bug, ChevronRight } from 'lucide-react-native';
 
 export default function NotificationSettingsPage() {
   const { user } = useAuth();
@@ -64,7 +64,7 @@ export default function NotificationSettingsPage() {
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="bug" size={20} color={textColor + '60'} />
+          <Bug size={20} color={textColor + '60'} strokeWidth={2} />
           <View style={{ marginLeft: 12 }}>
             <Text style={{ fontSize: 15, color: textColor }}>Notification History</Text>
             <Text style={{ fontSize: 12, color: textColor + '60' }}>
@@ -72,7 +72,7 @@ export default function NotificationSettingsPage() {
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={textColor + '40'} />
+        <ChevronRight size={20} color={textColor + '40'} strokeWidth={2.5} />
       </TouchableOpacity>
 
       {/* Settings Content */}

@@ -19,7 +19,7 @@ import {
   RefreshControl,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Bell, Mail, XCircle, BellOff } from 'lucide-react-native';
 import { useThemeColor } from './Themed';
 import { FlashList } from '@shopify/flash-list';
 import { Notification, NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from '@/types/notifications';
@@ -166,11 +166,11 @@ export function NotificationList({
               { backgroundColor: categoryMeta.color + '20' },
             ]}
           >
-            <Ionicons
-              name={categoryMeta.icon as any}
-              size={22}
-              color={categoryMeta.color}
-            />
+            {categoryMeta.icon === 'heart' && <Bell size={22} color={categoryMeta.color} strokeWidth={2.5} />}
+            {categoryMeta.icon === 'chatbubble' && <Bell size={22} color={categoryMeta.color} strokeWidth={2.5} />}
+            {categoryMeta.icon === 'people' && <Bell size={22} color={categoryMeta.color} strokeWidth={2.5} />}
+            {categoryMeta.icon === 'notifications' && <Bell size={22} color={categoryMeta.color} strokeWidth={2.5} />}
+            {!categoryMeta.icon || !['heart', 'chatbubble', 'people', 'notifications'].includes(categoryMeta.icon) && <Bell size={22} color={categoryMeta.color} strokeWidth={2.5} />}
           </View>
 
           {/* Content */}
@@ -210,12 +210,12 @@ export function NotificationList({
                 {/* Channel indicators */}
                 {item.channels.includes('push') && (
                   <View style={[styles.chip, { backgroundColor: tintColor + '20' }]}>
-                    <Ionicons name="notifications" size={12} color={tintColor} />
+                    <Bell size={12} color={tintColor} strokeWidth={2.5} />
                   </View>
                 )}
                 {item.channels.includes('email') && (
                   <View style={[styles.chip, { backgroundColor: tintColor + '20' }]}>
-                    <Ionicons name="mail" size={12} color={tintColor} />
+                    <Mail size={12} color={tintColor} strokeWidth={2.5} />
                   </View>
                 )}
               </View>
@@ -228,7 +228,7 @@ export function NotificationList({
             style={styles.deleteButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close-circle" size={20} color={textColor + '40'} />
+            <XCircle size={20} color={textColor + '40'} strokeWidth={2} />
           </TouchableOpacity>
         </TouchableOpacity>
       );
@@ -238,7 +238,7 @@ export function NotificationList({
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="notifications-off" size={64} color={textColor + '30'} />
+      <BellOff size={64} color={textColor + '30'} strokeWidth={1.5} />
       <Text style={[styles.emptyStateTitle, { color: textColor }]}>
         No Notifications
       </Text>

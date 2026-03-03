@@ -10,8 +10,7 @@ import { Text, useThemeColor } from '@/components/Themed';
 import { useActivityFeed } from '@/hooks/useActivityFeed';
 import { useAuth } from '@/providers/AuthProvider';
 import { ActivityItem } from '@/services/profiles';
-import { Ionicons } from '@expo/vector-icons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Users, User, Play } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -66,7 +65,7 @@ function ActivityRow({
         <Image source={{ uri: item.profile.avatar_url }} style={styles.avatar} />
       ) : (
         <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: surfaceColor }]}>
-          <FontAwesome name="user" size={24} color={textMutedColor} />
+          <User size={24} color={textMutedColor} strokeWidth={2} />
         </View>
       )}
       <View style={styles.content}>
@@ -93,7 +92,7 @@ function ActivityRow({
         />
       ) : (
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surfaceColor }]}>
-          <FontAwesome name="play" size={16} color={textMutedColor} />
+          <Play size={16} color={textMutedColor} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
         </View>
       )}
     </TouchableOpacity>
@@ -159,7 +158,7 @@ export default function ActivityScreen() {
           ListEmptyComponent={
             !isActivityLoading ? (
               <View style={styles.empty}>
-                <Ionicons name="people-outline" size={48} color={borderColor} />
+                <Users size={48} color={borderColor} strokeWidth={1.5} />
                 <Text style={[styles.emptyText, { color: textColor }]}>No activity yet</Text>
                 <Text style={[styles.emptySubtext, { color: textColor + '60' }]}>
                   When people you follow upload videos or comment on yours, you'll see it here

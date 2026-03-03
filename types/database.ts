@@ -199,26 +199,59 @@ export interface Database {
           video_id?: string;
         };
       };
+<<<<<<< HEAD
       ratings: {
         Row: {
           id: string;
           user_id: string;
           video_id: string;
           rating: number;
+=======
+      itineraries: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          destination: string;
+          start_date: string | null;
+          end_date: string | null;
+          duration_days: number;
+          travel_style: string | null;
+          budget_level: string | null;
+          generated_by: string;
+          generation_time_ms: number | null;
+          days: Json;
+          metadata: Json | null;
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
+<<<<<<< HEAD
           video_id: string;
           rating: number;
+=======
+          title: string;
+          destination: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration_days: number;
+          travel_style?: string | null;
+          budget_level?: string | null;
+          generated_by?: string;
+          generation_time_ms?: number | null;
+          days: Json;
+          metadata?: Json | null;
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
+<<<<<<< HEAD
           video_id?: string;
           rating?: number;
           updated_at?: string;
@@ -303,6 +336,45 @@ export interface Database {
           user_id?: string;
           review_id?: string;
           is_helpful?: boolean;
+=======
+          title?: string;
+          destination?: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          duration_days?: number;
+          travel_style?: string | null;
+          budget_level?: string | null;
+          generated_by?: string;
+          generation_time_ms?: number | null;
+          days?: Json;
+          metadata?: Json | null;
+          updated_at?: string;
+        };
+      };
+      itinerary_ratings: {
+        Row: {
+          id: string;
+          itinerary_id: string;
+          user_id: string;
+          rating: boolean;
+          feedback: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          itinerary_id: string;
+          user_id: string;
+          rating: boolean;
+          feedback?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          itinerary_id?: string;
+          user_id?: string;
+          rating?: boolean;
+          feedback?: string | null;
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
         };
       };
     };
@@ -343,6 +415,7 @@ export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
 export type Save = Database['public']['Tables']['saves']['Row'];
 export type SaveInsert = Database['public']['Tables']['saves']['Insert'];
 
+<<<<<<< HEAD
 export type Rating = Database['public']['Tables']['ratings']['Row'];
 export type RatingInsert = Database['public']['Tables']['ratings']['Insert'];
 export type RatingUpdate = Database['public']['Tables']['ratings']['Update'];
@@ -357,6 +430,14 @@ export type ReviewPhotoInsert = Database['public']['Tables']['review_photos']['I
 export type ReviewHelpfulness = Database['public']['Tables']['review_helpfulness']['Row'];
 export type ReviewHelpfulnessInsert = Database['public']['Tables']['review_helpfulness']['Insert'];
 export type ReviewHelpfulnessUpdate = Database['public']['Tables']['review_helpfulness']['Update'];
+=======
+export type Itinerary = Database['public']['Tables']['itineraries']['Row'];
+export type ItineraryInsert = Database['public']['Tables']['itineraries']['Insert'];
+export type ItineraryUpdate = Database['public']['Tables']['itineraries']['Update'];
+
+export type ItineraryRating = Database['public']['Tables']['itinerary_ratings']['Row'];
+export type ItineraryRatingInsert = Database['public']['Tables']['itinerary_ratings']['Insert'];
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
 
 // Extended types with relations
 export type VideoWithProfile = Video & {
@@ -381,3 +462,75 @@ export type CommentWithProfile = Comment & {
   is_liked?: boolean;
   replies?: CommentWithProfile[];
 };
+
+// Extended types for itineraries
+export type ItineraryDay = {
+  day: number;
+  date?: string;
+  morning?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  afternoon?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  evening?: {
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  };
+  activities?: Array<{
+    time: string;
+    activity: string;
+    location: string;
+    description?: string;
+    duration: string;
+  }>;
+};
+
+export type ItineraryWithProfile = Itinerary & {
+  profiles: Profile;
+  user_rating?: ItineraryRating;
+  average_rating?: number;
+  total_ratings?: number;
+};
+
+export type LocationWithCoordinates = {
+  id: string;
+  title: string;
+  location: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  caption: string | null;
+  description: string | null;
+};
+
+export type ItineraryPreferences = {
+  destination: string;
+  durationDays: number;
+  travelStyle?: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'mixed';
+  budgetLevel?: 'budget' | 'moderate' | 'luxury';
+  interests?: string[];
+  startDate?: string;
+  endDate?: string;
+};
+
+export type LocationCluster = {
+  id: string;
+  name: string;
+  center: {
+    latitude: number;
+    longitude: number;
+  };
+  locations: LocationWithCoordinates[];
+};
+

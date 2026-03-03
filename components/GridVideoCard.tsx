@@ -2,7 +2,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useFollow } from '@/hooks/useFollow';
 import { COLORS } from '@/lib/constants';
 import { VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -67,20 +67,20 @@ export function GridVideoCard({ video }: Props) {
           />
         ) : (
           <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-            <FontAwesome name="play-circle" size={36} color="rgba(255,255,255,0.8)" />
+            <Icons.PlayCircle size={36} color="rgba(255,255,255,0.8)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
           </View>
         )}
 
         {/* Overlay gradient effect and play icon */}
         <View style={styles.overlay}>
-          <FontAwesome name="play-circle" size={32} color="rgba(255,255,255,0.9)" />
+          <Icons.PlayCircle size={32} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
         </View>
 
         {/* Stats overlay - bottom left */}
         <View style={styles.statsOverlay}>
           {video.location && (
             <View style={styles.locationBadge}>
-              <FontAwesome name="map-marker" size={10} color="#FFFFFF" />
+              <Icons.MapPin size={10} color="#FFFFFF" strokeWidth={2.5} fill="rgba(255,255,255,0.2)" />
               <Text style={styles.locationText} numberOfLines={1}>
                 {video.location}
               </Text>
@@ -90,7 +90,7 @@ export function GridVideoCard({ video }: Props) {
 
         {/* View count - bottom right */}
         <View style={styles.viewCountOverlay}>
-          <FontAwesome name="eye" size={12} color="#FFFFFF" />
+          <Icons.Eye size={12} color="#FFFFFF" strokeWidth={2.5} />
           <Text style={styles.viewCountText}>{formatCount(video.view_count)}</Text>
         </View>
       </View>
@@ -114,7 +114,7 @@ export function GridVideoCard({ video }: Props) {
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <FontAwesome name="user" size={9} color={COLORS.textMuted} />
+              <Icons.User size={9} color={COLORS.textMuted} strokeWidth={2} />
             </View>
           )}
           <Text style={styles.username} numberOfLines={1}>
@@ -144,11 +144,11 @@ export function GridVideoCard({ video }: Props) {
       {/* Like and comment counts */}
       <View style={styles.engagementRow}>
         <View style={styles.engagementItem}>
-          <FontAwesome name="heart" size={11} color={COLORS.error} />
+          <Icons.Heart size={11} color={COLORS.error} fill={COLORS.error} strokeWidth={0} />
           <Text style={styles.engagementText}>{formatCount(video.like_count)}</Text>
         </View>
         <View style={styles.engagementItem}>
-          <FontAwesome name="comment" size={11} color={COLORS.textMuted} />
+          <Icons.MessageCircle size={11} color={COLORS.textMuted} strokeWidth={2} />
           <Text style={styles.engagementText}>{formatCount(video.comment_count)}</Text>
         </View>
       </View>

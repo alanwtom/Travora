@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { uploadThumbnail, uploadVideo } from '@/services/storage';
+import { createVideo } from '@/services/videos';
+import * as ImagePicker from 'expo-image-picker';
+import { CheckCircle, Image as LucideImage, MapPin, UploadCloud, Video } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react'; // UPDATED: added useEffect, useRef
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ScrollView,
-  Image,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '@/providers/AuthProvider';
-import { uploadVideo, uploadThumbnail } from '@/services/storage';
-import { createVideo } from '@/services/videos';
-import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+// GPS ADDITION: import our custom hook
+import { useLocation } from '@/hooks/useLocation';
 
 export default function UploadScreen() {
   const { user } = useAuth();
@@ -26,6 +28,21 @@ export default function UploadScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // GPS ADDITION: useLocation hook
+  const { coords, placeName, loading: locationLoading, error, fetchLocation } = useLocation();
+  const isFetchingRef = useRef(false); // to know when we are waiting for GPS result
+
+  // GPS ADDITION: effect to handle location result
+  useEffect(() => {
+    if (placeName && isFetchingRef.current) {
+      setLocation(placeName);
+      isFetchingRef.current = false;
+    } else if (error && isFetchingRef.current) {
+      Alert.alert('Location Error', error);
+      isFetchingRef.current = false;
+    }
+  }, [placeName, error]);
 
   const pickVideo = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -50,6 +67,13 @@ export default function UploadScreen() {
     if (!result.canceled && result.assets[0]) {
       setThumbnailUri(result.assets[0].uri);
     }
+  };
+
+  // GPS ADDITION: handler for GPS button
+  const handleUseLocation = async () => {
+    isFetchingRef.current = true;
+    await fetchLocation();
+    // The useEffect will handle setting location or showing error
   };
 
   const handleUpload = async () => {
@@ -108,12 +132,12 @@ export default function UploadScreen() {
       <TouchableOpacity style={styles.mediaPicker} onPress={pickVideo}>
         {videoUri ? (
           <View style={styles.selectedMedia}>
-            <FontAwesome name="check-circle" size={32} color={COLORS.success} />
+            <CheckCircle size={32} color={COLORS.success} strokeWidth={3} />
             <Text style={styles.selectedText}>Video selected</Text>
           </View>
         ) : (
           <View style={styles.placeholderMedia}>
-            <FontAwesome name="video-camera" size={32} color={COLORS.textMuted} />
+            <Video size={32} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.placeholderText}>Tap to select a video</Text>
           </View>
         )}
@@ -125,7 +149,7 @@ export default function UploadScreen() {
           <Image source={{ uri: thumbnailUri }} style={styles.thumbnailPreview} />
         ) : (
           <View style={styles.placeholderThumbnail}>
-            <FontAwesome name="image" size={20} color={COLORS.textMuted} />
+            <LucideImage size={20} color={COLORS.textMuted} strokeWidth={2} />
             <Text style={styles.thumbnailPlaceholderText}>Add thumbnail</Text>
           </View>
         )}
@@ -156,8 +180,9 @@ export default function UploadScreen() {
           value={caption}
           onChangeText={setCaption}
         />
+        {/* GPS ADDITION: modified location input with GPS button */}
         <View style={styles.locationInput}>
-          <FontAwesome name="map-marker" size={16} color={COLORS.textMuted} />
+          <MapPin size={16} color={COLORS.textMuted} strokeWidth={2.5} />
           <TextInput
             style={styles.locationTextInput}
             placeholder="Location (e.g. Bali, Indonesia)"
@@ -165,6 +190,13 @@ export default function UploadScreen() {
             value={location}
             onChangeText={setLocation}
           />
+          <TouchableOpacity onPress={handleUseLocation} disabled={locationLoading}>
+            {locationLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <MapPin size={16} color={COLORS.primary} strokeWidth={2.5} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -178,7 +210,7 @@ export default function UploadScreen() {
           <ActivityIndicator color="#FFFFFF" />
         ) : (
           <>
-            <FontAwesome name="cloud-upload" size={18} color="#FFFFFF" />
+            <UploadCloud size={18} color="#FFFFFF" strokeWidth={2.5} />
             <Text style={styles.uploadButtonText}>Upload Video</Text>
           </>
         )}
@@ -263,6 +295,7 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+  // GPS ADDITION: updated styles for location input (already compatible, no change needed)
   locationInput: {
     flexDirection: 'row',
     alignItems: 'center',

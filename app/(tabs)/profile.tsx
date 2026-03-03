@@ -6,7 +6,7 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { signOut } from '@/services/auth';
 import { getFollowerCount, getFollowingCount } from '@/services/profiles';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -82,7 +82,7 @@ export default function ProfileScreen() {
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
             ) : (
               <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
-                <FontAwesome name="play" size={20} color={COLORS.textMuted} />
+                <Icons.Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
               </View>
             )}
           </TouchableOpacity>
@@ -95,7 +95,7 @@ export default function ProfileScreen() {
                 <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <FontAwesome name="user" size={32} color={COLORS.textMuted} />
+                  <Icons.User size={32} color={COLORS.textMuted} strokeWidth={2} />
                 </View>
               )}
             </View>
@@ -114,7 +114,7 @@ export default function ProfileScreen() {
             {/* Location */}
             {profile?.location && (
               <View style={styles.locationRow}>
-                <FontAwesome name="map-marker" size={14} color={COLORS.textMuted} />
+                <Icons.MapPin size={14} color={COLORS.textMuted} strokeWidth={2.5} />
                 <Text style={styles.locationText}>{profile.location}</Text>
               </View>
             )}
@@ -141,6 +141,16 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Itineraries Button */}
+            <TouchableOpacity
+              style={styles.itinerariesButton}
+              onPress={() => router.push('/profile/itineraries' as any)}
+            >
+              <Icons.MapPin size={20} color={COLORS.primary} strokeWidth={2} />
+              <Text style={styles.itinerariesButtonText}>My Itineraries</Text>
+              <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+            </TouchableOpacity>
+
             {/* Action Buttons */}
             <View style={styles.actions}>
               <TouchableOpacity
@@ -149,14 +159,14 @@ export default function ProfileScreen() {
               >
                 <Text style={styles.editButtonText}>Edit Profile</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.devButton}
                 onPress={() => router.push('/(tabs)/../dev' as any)}
               >
-                <FontAwesome name="flask" size={18} color={COLORS.primary} />
+                <Icons.TestTube2 size={18} color={COLORS.primary} strokeWidth={2} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                <FontAwesome name="sign-out" size={18} color={COLORS.error} />
+                <Icons.LogOut size={18} color={COLORS.error} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
@@ -166,10 +176,11 @@ export default function ProfileScreen() {
                 style={[styles.tab, activeTab === 'videos' && styles.tabActive]}
                 onPress={() => setActiveTab('videos')}
               >
-                <FontAwesome
-                  name="play"
+                <Icons.Play
                   size={16}
                   color={activeTab === 'videos' ? COLORS.primary : COLORS.textMuted}
+                  fill={activeTab === 'videos' ? COLORS.primary : 'none'}
+                  strokeWidth={activeTab === 'videos' ? 0 : 2}
                 />
                 <Text
                   style={[
@@ -184,10 +195,11 @@ export default function ProfileScreen() {
                 style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
                 onPress={() => setActiveTab('saved')}
               >
-                <FontAwesome
-                  name="bookmark"
+                <Icons.Bookmark
                   size={16}
                   color={activeTab === 'saved' ? COLORS.primary : COLORS.textMuted}
+                  fill={activeTab === 'saved' ? COLORS.primary : 'none'}
+                  strokeWidth={activeTab === 'saved' ? 0 : 2}
                 />
                 <Text
                   style={[
@@ -202,10 +214,11 @@ export default function ProfileScreen() {
                 style={[styles.tab, activeTab === 'liked' && styles.tabActive]}
                 onPress={() => setActiveTab('liked')}
               >
-                <FontAwesome
-                  name="heart"
+                <Icons.Heart
                   size={16}
                   color={activeTab === 'liked' ? COLORS.primary : COLORS.textMuted}
+                  fill={activeTab === 'liked' ? COLORS.primary : 'none'}
+                  strokeWidth={activeTab === 'liked' ? 0 : 2}
                 />
                 <Text
                   style={[
@@ -222,17 +235,13 @@ export default function ProfileScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.emptyVideos}>
-              <FontAwesome
-                name={
-                  activeTab === 'videos'
-                    ? 'video-camera'
-                    : activeTab === 'saved'
-                    ? 'bookmark'
-                    : 'heart'
-                }
-                size={32}
-                color={COLORS.border}
-              />
+              {activeTab === 'videos' ? (
+                <Icons.Video size={32} color={COLORS.border} strokeWidth={2} />
+              ) : activeTab === 'saved' ? (
+                <Icons.Bookmark size={32} color={COLORS.border} strokeWidth={2} />
+              ) : (
+                <Icons.Heart size={32} color={COLORS.border} strokeWidth={2} />
+              )}
               <Text style={styles.emptyText}>
                 {activeTab === 'videos'
                   ? 'No videos yet'
@@ -327,6 +336,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textMuted,
     marginTop: 2,
+  },
+  itinerariesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  itinerariesButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    flex: 1,
+    marginLeft: 12,
   },
   actions: {
     flexDirection: 'row',

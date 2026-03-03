@@ -3,7 +3,7 @@ import { useFollowers } from '@/hooks/useFollowers';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProfileWithFollowStatus } from '@/services/profiles';
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { User, Users } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -54,7 +54,7 @@ function FollowerRow({
         <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
       ) : (
         <View style={[styles.avatar, styles.avatarPlaceholder]}>
-          <FontAwesome name="user" size={24} color={COLORS.textMuted} />
+          <User size={24} color={COLORS.textMuted} strokeWidth={2} />
         </View>
       )}
       <View style={styles.info}>
@@ -149,7 +149,7 @@ export default function FollowersScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <FontAwesome name="users" size={48} color={COLORS.border} />
+              <Users size={48} color={COLORS.border} strokeWidth={1.5} />
               <Text style={styles.emptyText}>
                 {searchQuery ? 'No matching followers' : 'No followers yet'}
               </Text>

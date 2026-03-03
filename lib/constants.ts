@@ -36,6 +36,7 @@ export const COLORS = {
   borderDark: '#3D3D54',
 
   error: '#D4645A',           // warm red
+  warning: '#F59E0B',         // amber
   success: '#6AAF72',         // sage green
 
   // Gradients (used as reference values)

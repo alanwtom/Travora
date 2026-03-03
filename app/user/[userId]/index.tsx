@@ -7,9 +7,10 @@ import {
   getFollowerCount,
   getFollowingCount,
 } from '@/services/profiles';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import { BackButton } from '@/components/BackButton';
+import { Play, User, MapPin, Video } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,11 +20,50 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function CustomHeader({ username, displayName }: { username?: string; displayName?: string }) {
+  const { top } = useSafeAreaInsets();
+  const title = displayName || username || 'Profile';
+
+  return (
+    <View style={[headerStyles.container, { paddingTop: 12 + top }]}>
+      <BackButton />
+      <Text style={headerStyles.title} numberOfLines={1}>
+        {title}
+      </Text>
+      <View style={headerStyles.placeholder} />
+    </View>
+  );
+}
+
+const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingBottom: 12,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  title: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  placeholder: {
+    width: 40,
+  },
+});
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
-  const navigation = useNavigation();
   const { user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile(userId ?? undefined);
   const { videos, isLoading: videosLoading } = useUserVideos(userId ?? '');
@@ -35,19 +75,6 @@ export default function UserProfileScreen() {
   const [following, setFollowing] = useState(0);
 
   const isOwnProfile = user?.id === userId;
-
-  // Set header title dynamically so it never shows "[userId]"
-  useLayoutEffect(() => {
-    if (profile) {
-      const title = profile.username ? `@${profile.username}` : profile.display_name || 'Profile';
-      navigation.setOptions({ title, headerTitle: title });
-    } else if (!userId) {
-      navigation.setOptions({ title: 'User not found', headerTitle: 'User not found' });
-    } else {
-      // While loading or before profile exists, keep a neutral title
-      navigation.setOptions({ title: 'Profile', headerTitle: 'Profile' });
-    }
-  }, [profile, profileLoading, userId, navigation]);
 
   useEffect(() => {
     if (userId && !isOwnProfile) {
@@ -117,6 +144,7 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader username={profile.username} displayName={profile.display_name} />
       <FlatList
         data={videos}
         keyExtractor={(item) => item.id}
@@ -130,7 +158,7 @@ export default function UserProfileScreen() {
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
             ) : (
               <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
-                <FontAwesome name="play" size={20} color={COLORS.textMuted} />
+                <Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
               </View>
             )}
           </TouchableOpacity>
@@ -142,7 +170,7 @@ export default function UserProfileScreen() {
                 <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <FontAwesome name="user" size={32} color={COLORS.textMuted} />
+                  <User size={32} color={COLORS.textMuted} strokeWidth={2} />
                 </View>
               )}
             </View>
@@ -158,7 +186,7 @@ export default function UserProfileScreen() {
 
             {profile.location && (
               <View style={styles.locationRow}>
-                <FontAwesome name="map-marker" size={14} color={COLORS.textMuted} />
+                <MapPin size={14} color={COLORS.textMuted} strokeWidth={2.5} />
                 <Text style={styles.locationText}>{profile.location}</Text>
               </View>
             )}
@@ -199,7 +227,7 @@ export default function UserProfileScreen() {
 
             <View style={styles.tabContainer}>
               <View style={[styles.tab, styles.tabActive]}>
-                <FontAwesome name="play" size={16} color={COLORS.primary} />
+                <Play size={16} color={COLORS.primary} fill={COLORS.primary} strokeWidth={0} />
                 <Text style={[styles.tabLabel, styles.tabLabelActive]}>
                   Videos ({videos.length})
                 </Text>
@@ -210,7 +238,7 @@ export default function UserProfileScreen() {
         ListEmptyComponent={
           !videosLoading ? (
             <View style={styles.emptyVideos}>
-              <FontAwesome name="video-camera" size={32} color={COLORS.border} />
+              <Video size={32} color={COLORS.border} strokeWidth={2} />
               <Text style={styles.emptyText}>No videos yet</Text>
             </View>
           ) : null

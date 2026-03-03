@@ -5,7 +5,7 @@ import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Icons from 'lucide-react-native';
 import { Video } from 'expo-av';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -51,13 +51,17 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [likeCount, setLikeCount] = useState(video.like_count);
   const [isSaved, setIsSaved] = useState(video.is_saved ?? false);
   const [isPlaying, setIsPlaying] = useState(isActive);
+  const [isMuted, setIsMuted] = useState(true);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+<<<<<<< HEAD
   const [showRatingsModal, setShowRatingsModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
+=======
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
   const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
 
@@ -131,6 +135,17 @@ export function VerticalVideoCard({ video, isActive }: Props) {
     }
   };
 
+  const toggleMute = async () => {
+    if (!videoRef.current) return;
+
+    try {
+      await videoRef.current.setIsMutedAsync(!isMuted);
+      setIsMuted(!isMuted);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
   const handleUserProfile = () => {
     if (video.user_id === user?.id) {
       router.push('/(tabs)/profile');
@@ -170,7 +185,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const timeAgo = getTimeAgo(video.created_at);
 
   return (
-    <View style={[styles.container, { height: availableHeight, marginTop: -insets.top }]}>
+    <View style={[styles.container, { height: availableHeight }]}>
       {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
@@ -184,6 +199,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
               source={{ uri: video.video_url }}
               style={styles.video}
               isLooping
+              isMuted={isMuted}
               onLoadStart={() => setIsLoadingVideo(true)}
               onLoad={(status: any) => {
                 setIsLoadingVideo(false);
@@ -205,13 +221,13 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             )}
             {!isPlaying && !isLoadingVideo && (
               <View style={styles.pauseOverlay}>
-                <FontAwesome name="play" size={64} color="rgba(255,255,255,0.9)" />
+                <Icons.Play size={64} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
               </View>
             )}
           </>
         ) : (
           <View style={[styles.video, styles.videoPlaceholder]}>
-            <FontAwesome name="play-circle" size={64} color={COLORS.primary} />
+            <Icons.PlayCircle size={64} color={COLORS.primary} fill="rgba(255,255,255,0.2)" strokeWidth={2} />
           </View>
         )}
 
@@ -230,6 +246,19 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
       {/* Bottom Content Overlay */}
       <View style={styles.contentOverlay}>
+        {/* Mute button overlay */}
+        <TouchableOpacity
+          style={styles.muteButton}
+          onPress={toggleMute}
+          activeOpacity={0.7}
+        >
+          {isMuted ? (
+            <Icons.VolumeX size={20} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+          ) : (
+            <Icons.Volume2 size={20} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+          )}
+        </TouchableOpacity>
+
         {/* Left side - User info and description */}
         <View style={styles.leftContent}>
           {/* User Info */}
@@ -246,7 +275,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
                 />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <FontAwesome name="user" size={14} color={COLORS.textMuted} />
+                  <Icons.User size={14} color={COLORS.textMuted} strokeWidth={2} />
                 </View>
               )}
               <View>
@@ -288,7 +317,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           {/* Location */}
           {video.location && (
             <View style={styles.locationRow}>
-              <FontAwesome name="map-marker" size={14} color="#FF3B30" />
+              <Icons.MapPin size={14} color="#FF3B30" strokeWidth={2.5} fill="rgba(255,59,48,0.2)" />
               <Text style={styles.location}>{video.location}</Text>
             </View>
           )}
@@ -301,20 +330,21 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleLike}
             activeOpacity={0.7}
           >
-            <FontAwesome
-              name={isLiked ? 'heart' : 'heart-o'}
+            <Icons.Heart
               size={28}
               color={isLiked ? COLORS.error : 'rgba(255,255,255,0.8)'}
+              fill={isLiked ? COLORS.error : 'none'}
+              strokeWidth={isLiked ? 0 : 2}
             />
             <Text style={styles.actionLabel}>{likeCount}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionButton} 
+          <TouchableOpacity
+            style={styles.actionButton}
             onPress={handleCommentPress}
             activeOpacity={0.7}
           >
-            <FontAwesome name="comment-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Icons.MessageCircle size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />
             <Text style={styles.actionLabel}>{video.comment_count}</Text>
           </TouchableOpacity>
 
@@ -332,10 +362,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleSave}
             activeOpacity={0.7}
           >
-            <FontAwesome
-              name={isSaved ? 'bookmark' : 'bookmark-o'}
+            <Icons.Bookmark
               size={28}
               color={isSaved ? COLORS.primary : 'rgba(255,255,255,0.8)'}
+              fill={isSaved ? COLORS.primary : 'none'}
+              strokeWidth={isSaved ? 0 : 2}
             />
             <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
           </TouchableOpacity>
@@ -345,7 +376,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleVideoPress}
             activeOpacity={0.7}
           >
-            <FontAwesome name="share-square-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Icons.Share2 size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
         </View>
@@ -463,8 +494,23 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
+<<<<<<< HEAD
     paddingBottom: 80,
+=======
+    paddingBottom: BOTTOM_SAFE_AREA + 16,
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
     justifyContent: 'space-between',
+  },
+  muteButton: {
+    position: 'absolute',
+    top: 80,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   leftContent: {
     flex: 1,
@@ -546,12 +592,19 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    marginTop: 4,
   },
   location: {
+<<<<<<< HEAD
     fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '500',
+=======
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+>>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
   },
   actionButton: {
     alignItems: 'center',

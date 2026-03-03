@@ -13,7 +13,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { signInWithMagicLink } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ChevronLeft, Mail, Info } from 'lucide-react-native';
 
 export default function SignIn() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function SignIn() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <FontAwesome name="chevron-left" size={16} color={COLORS.primary} />
+          <ChevronLeft size={16} color={COLORS.primary} strokeWidth={3} />
         </TouchableOpacity>
 
         {/* Header */}
@@ -83,7 +83,7 @@ export default function SignIn() {
             disabled={isSendingMagicLink}
             activeOpacity={0.85}
           >
-            <FontAwesome name="envelope-o" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Mail size={18} color="#FFFFFF" strokeWidth={2.5} style={{ marginRight: 8 }} />
             <Text style={styles.buttonText}>
               {isSendingMagicLink ? 'Sending code...' : 'Send sign-in code'}
             </Text>
@@ -92,7 +92,7 @@ export default function SignIn() {
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <FontAwesome name="info-circle" size={16} color={COLORS.accent} style={{ marginRight: 8 }} />
+          <Info size={16} color={COLORS.accent} strokeWidth={2.5} style={{ marginRight: 8 }} />
           <Text style={styles.infoText}>
             We'll send a 6-digit code to your email to sign you in.
           </Text>
