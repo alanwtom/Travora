@@ -2,13 +2,13 @@ import { COLORS } from '@/lib/constants';
 import { VideoWithProfile } from '@/types/database';
 import React, { useCallback, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
-    ViewToken,
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  ViewToken,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalVideoCard } from './VerticalVideoCard';
@@ -103,12 +103,7 @@ export function VerticalVideoFeed({
       refreshing={isRefreshing}
       onRefresh={onRefresh}
       showsVerticalScrollIndicator={false}
-<<<<<<< HEAD
       contentContainerStyle={{ paddingTop: 0 }}
-=======
-      contentContainerStyle={{ flexGrow: 1 }}
-      scrollIndicatorInsets={{ top: 0 }}
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
       ListFooterComponent={
         isLoading ? (
           <View style={styles.loader}>

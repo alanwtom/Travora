@@ -1,18 +1,18 @@
 import { COLORS } from '@/lib/constants';
-import { addComment, getVideoComments, toggleCommentLike, getCommentReplies } from '@/services/comments';
+import { addComment, getCommentReplies, getVideoComments, toggleCommentLike } from '@/services/comments';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 type Props = {

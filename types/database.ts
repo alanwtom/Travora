@@ -199,6 +199,112 @@ export interface Database {
           video_id?: string;
         };
       };
+      ratings: {
+        Row: {
+          id: string;
+          user_id: string;
+          video_id: string;
+          rating: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          video_id: string;
+          rating: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          video_id?: string;
+          rating?: number;
+          updated_at?: string;
+        };
+      };
+      reviews: {
+        Row: {
+          id: string;
+          user_id: string;
+          video_id: string;
+          rating: number;
+          title: string | null;
+          content: string;
+          helpful_count: number;
+          unhelpful_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          video_id: string;
+          rating: number;
+          title?: string | null;
+          content: string;
+          helpful_count?: number;
+          unhelpful_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          video_id?: string;
+          rating?: number;
+          title?: string | null;
+          content?: string;
+          helpful_count?: number;
+          unhelpful_count?: number;
+          updated_at?: string;
+        };
+      };
+      review_photos: {
+        Row: {
+          id: string;
+          review_id: string;
+          photo_url: string;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          photo_url: string;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          review_id?: string;
+          photo_url?: string;
+          display_order?: number;
+        };
+      };
+      review_helpfulness: {
+        Row: {
+          id: string;
+          user_id: string;
+          review_id: string;
+          is_helpful: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          review_id: string;
+          is_helpful: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          review_id?: string;
+          is_helpful?: boolean;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -237,6 +343,21 @@ export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
 export type Save = Database['public']['Tables']['saves']['Row'];
 export type SaveInsert = Database['public']['Tables']['saves']['Insert'];
 
+export type Rating = Database['public']['Tables']['ratings']['Row'];
+export type RatingInsert = Database['public']['Tables']['ratings']['Insert'];
+export type RatingUpdate = Database['public']['Tables']['ratings']['Update'];
+
+export type Review = Database['public']['Tables']['reviews']['Row'];
+export type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
+export type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
+
+export type ReviewPhoto = Database['public']['Tables']['review_photos']['Row'];
+export type ReviewPhotoInsert = Database['public']['Tables']['review_photos']['Insert'];
+
+export type ReviewHelpfulness = Database['public']['Tables']['review_helpfulness']['Row'];
+export type ReviewHelpfulnessInsert = Database['public']['Tables']['review_helpfulness']['Insert'];
+export type ReviewHelpfulnessUpdate = Database['public']['Tables']['review_helpfulness']['Update'];
+
 // Extended types with relations
 export type VideoWithProfile = Video & {
   profiles: Profile;
@@ -244,6 +365,15 @@ export type VideoWithProfile = Video & {
   comment_count: number;
   is_liked?: boolean;
   is_saved?: boolean;
+  user_rating?: number;
+  average_rating?: number;
+  review_count?: number;
+};
+
+export type ReviewWithProfile = Review & {
+  profiles: Profile;
+  review_photos?: ReviewPhoto[];
+  user_helpfulness?: boolean | null;
 };
 
 export type CommentWithProfile = Comment & {

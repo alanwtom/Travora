@@ -1,27 +1,29 @@
+import { useFollow } from '@/hooks/useFollow';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
-import { useFollow } from '@/hooks/useFollow';
 import { toggleLike } from '@/services/likes';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import { VideoWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Video } from 'expo-av';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
     Image,
-    KeyboardAvoidingView,
     Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommentsModal } from './CommentsModal';
+import { RatingsModal } from './RatingsModal';
+import { ReviewsModal } from './ReviewsModal';
+import { ReviewSubmitModal } from './ReviewSubmitModal';
 
 type Props = {
   video: VideoWithProfile;
@@ -52,11 +54,11 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-<<<<<<< HEAD
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-=======
+  const [showRatingsModal, setShowRatingsModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   const hasIncrementedView = useRef(false);
 
   // Handle screen focus (tab switching)
@@ -149,6 +151,20 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
   const handleCommentPress = () => {
     setShowCommentsModal(true);
+  };
+
+  const handleRatingPress = () => {
+    if (!user) return;
+    setShowRatingsModal(true);
+  };
+
+  const handleReviewsPress = () => {
+    setShowReviewsModal(true);
+  };
+
+  const handleWriteReviewPress = () => {
+    setShowReviewSubmitModal(true);
+    setShowRatingsModal(false);
   };
 
   const timeAgo = getTimeAgo(video.created_at);
@@ -304,6 +320,15 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
           <TouchableOpacity
             style={styles.actionButton}
+            onPress={handleRatingPress}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="star-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.actionLabel}>Rate</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
             onPress={handleSave}
             activeOpacity={0.7}
           >
@@ -326,11 +351,41 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         </View>
       </View>
 
-      <CommentsModal
+            <CommentsModal
         visible={showCommentsModal}
         video={video}
         userId={user?.id}
         onClose={() => setShowCommentsModal(false)}
+      />
+
+      <RatingsModal
+        visible={showRatingsModal}
+        video={video}
+        userId={user?.id}
+        onClose={() => setShowRatingsModal(false)}
+        onWriteReview={handleWriteReviewPress}
+        onViewReviews={handleReviewsPress}
+      />
+
+      <ReviewsModal
+        visible={showReviewsModal}
+        video={video}
+        userId={user?.id}
+        onClose={() => setShowReviewsModal(false)}
+      />
+
+      <ReviewSubmitModal
+        visible={showReviewSubmitModal}
+        video={video}
+        userId={user?.id}
+        onClose={() => setShowReviewSubmitModal(false)}
+        onSubmitted={() => {
+          setShowReviewSubmitModal(false);
+          // Reload reviews if reviews modal is open
+          if (showReviewsModal) {
+            handleReviewsPress();
+          }
+        }}
       />
     </View>
   );
@@ -408,11 +463,7 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-<<<<<<< HEAD
     paddingBottom: 80,
-=======
-    paddingBottom: BOTTOM_SAFE_AREA + 16,
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
     justifyContent: 'space-between',
   },
   leftContent: {
@@ -498,15 +549,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   location: {
-<<<<<<< HEAD
     fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '500',
-=======
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '700',
->>>>>>> 667a73a459e95d68d3cb9354a0f5b8f483689732
   },
   actionButton: {
     alignItems: 'center',
