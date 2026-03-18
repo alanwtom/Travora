@@ -4,6 +4,7 @@ import { getItineraryById, getItineraryStats, rateItinerary, deleteItinerary } f
 import { DayPlan } from '@/components/DayPlan';
 import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
 import { BackButton } from '@/components/BackButton';
+import { CollaboratorsModal } from '@/components/CollaboratorsModal';
 import { AlertCircle, Trash2, Bot, Settings, Calendar, Compass, Wallet, ThumbsUp, ThumbsDown, Star, Share2 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -28,6 +29,7 @@ export default function ItineraryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [collaboratorsModalVisible, setCollaboratorsModalVisible] = useState(false);
 
   useEffect(() => {
     loadItinerary();
@@ -92,9 +94,7 @@ export default function ItineraryDetailScreen() {
 
   const handleShare = () => {
     if (!itinerary) return;
-
-    // Simple share implementation
-    Alert.alert('Share', 'Share functionality coming soon!');
+    setCollaboratorsModalVisible(true);
   };
 
   if (loading) {
@@ -237,6 +237,16 @@ export default function ItineraryDetailScreen() {
         onSubmit={handleRatingSubmit}
         itineraryTitle={itinerary.title}
         isLoading={submittingRating}
+      />
+
+      {/* Collaborators Modal */}
+      <CollaboratorsModal
+        visible={collaboratorsModalVisible}
+        itineraryId={itinerary.id}
+        itineraryTitle={itinerary.title}
+        isOwner={user?.id === itinerary.user_id}
+        currentUserId={user?.id}
+        onClose={() => setCollaboratorsModalVisible(false)}
       />
     </ScrollView>
   );
