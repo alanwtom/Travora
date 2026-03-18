@@ -8,6 +8,7 @@ import type {
   ItineraryPreferences,
   ItineraryDay,
   LocationCluster,
+  CollaborationRole,
 } from '@/types/database';
 import {
   clusterLocations,
@@ -15,6 +16,7 @@ import {
   distributeClustersAcrossDays,
   estimateTravelTime,
 } from './geolocation';
+import { canEditItinerary as checkEditPermission, getUserRoleForItinerary } from './collaborators';
 
 /**
  * Get all itineraries for a user
@@ -331,4 +333,118 @@ function getDefaultDuration(description: string): string {
 
   // Default
   return '1-2 hours';
+}
+
+// ============================================
+// COLLABORATION FUNCTIONS
+// ============================================
+
+/**
+ * Get all itineraries accessible to a user (own + shared)
+ * @param userId - The user ID
+ * @returns Array of itineraries with collaboration info
+ */
+export async function getAccessibleItineraries(
+  userId: string
+): Promise<Array<Itinerary & { user_role: 'owner' | 'editor' | 'viewer' }>> {
+  // Get user's own itineraries
+  const { data: ownItineraries, error: ownError } = await supabase
+    .from('itineraries')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (ownError) throw ownError;
+
+  // Get shared itineraries with role info
+  const { data: sharedData, error: sharedError } = await supabase
+    .from('itinerary_collaborators')
+    .select(`
+      role,
+      itineraries!inner(*)
+    `)
+    .eq('user_id', userId);
+
+  if (sharedError) throw sharedError;
+
+  // Format results
+  const ownWithRole = (ownItineraries || []).map((itinerary) => ({
+    ...itinerary,
+    user_role: 'owner' as const,
+  }));
+
+  const sharedWithRole = (sharedData || []).map((item: any) => ({
+    ...item.itineraries,
+    user_role: item.role as 'editor' | 'viewer',
+  }));
+
+  // Combine and sort by updated_at
+  return [...ownWithRole, ...sharedWithRole].sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+}
+
+/**
+ * Check if a user can edit an itinerary
+ * @param itineraryId - The itinerary ID
+ * @param userId - The user ID
+ * @returns true if user can edit (owner or editor)
+ */
+export async function canEditItinerary(
+  itineraryId: string,
+  userId: string
+): Promise<boolean> {
+  return checkEditPermission(itineraryId, userId);
+}
+
+/**
+ * Get the user's role for an itinerary
+ * @param itineraryId - The itinerary ID
+ * @param userId - The user ID
+ * @returns 'owner', 'editor', 'viewer', or null
+ */
+export async function getUserRole(
+  itineraryId: string,
+  userId: string
+): Promise<'owner' | 'editor' | 'viewer' | null> {
+  return getUserRoleForItinerary(itineraryId, userId);
+}
+
+/**
+ * Get itinerary with collaboration metadata
+ * @param itineraryId - The itinerary ID
+ * @param userId - The current user ID
+ * @returns Itinerary with collaborator count and user's role
+ */
+export async function getItineraryWithCollaborationInfo(
+  itineraryId: string,
+  userId: string | undefined
+): Promise<(Itinerary & {
+  collaborator_count: number;
+  current_user_role: 'owner' | 'editor' | 'viewer' | null;
+}) | null> {
+  // Get the itinerary
+  const { data: itinerary, error } = await supabase
+    .from('itineraries')
+    .select('*')
+    .eq('id', itineraryId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!itinerary) return null;
+
+  // Get collaborator count
+  const { count } = await supabase
+    .from('itinerary_collaborators')
+    .select('*', { count: 'exact', head: true })
+    .eq('itinerary_id', itineraryId);
+
+  // Get user's role
+  const userRole = userId ? await getUserRole(itineraryId, userId) : null;
+
+  return {
+    ...itinerary,
+    collaborator_count: count ?? 0,
+    current_user_role: userRole,
+  };
 }

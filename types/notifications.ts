@@ -166,6 +166,7 @@ export type NotificationTriggerEvent =
   | 'video_liked'
   | 'comment_received'
   | 'mention_received'
+  | 'itinerary_invite'
   | 'security_alert'
   | 'account_verified'
   | 'password_changed'

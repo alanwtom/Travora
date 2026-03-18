@@ -233,6 +233,36 @@ export async function triggerCommentReceived(
 }
 
 /**
+ * Trigger when a user is invited to collaborate on an itinerary
+ */
+export async function triggerItineraryInvite(
+  userId: string,
+  data: {
+    inviter: string;
+    itineraryTitle: string;
+    itineraryId: string;
+    role: 'editor' | 'viewer';
+  }
+): Promise<string | null> {
+  return createNotification({
+    userId,
+    triggerEvent: 'itinerary_invite',
+    titleData: { inviter: data.inviter },
+    bodyData: {
+      inviter: data.inviter,
+      itinerary_title: data.itineraryTitle,
+      role: data.role,
+    },
+    customData: {
+      inviter: data.inviter,
+      itineraryId: data.itineraryId,
+      itineraryTitle: data.itineraryTitle,
+      role: data.role,
+    },
+  });
+}
+
+/**
  * Trigger when a user is mentioned in a comment
  */
 export async function triggerMentionReceived(
