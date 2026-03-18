@@ -51,25 +51,12 @@ CREATE TRIGGER itinerary_comments_updated_at
 ALTER TABLE public.itinerary_collaborators ENABLE ROW LEVEL SECURITY;
 
 -- Users can see their own collaborations
+-- Note: A separate policy for "collaborations for accessible itineraries" would cause
+-- circular dependency with the itineraries table policies. The itineraries table
+-- policies already handle checking collaborator access, so this is not needed here.
 CREATE POLICY "Users can view own collaborations"
   ON public.itinerary_collaborators FOR SELECT
   USING (auth.uid()::text = user_id::text);
-
--- Users can see collaborations for itineraries they own or collaborate on
-CREATE POLICY "Users can view collaborations for accessible itineraries"
-  ON public.itinerary_collaborators FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.itineraries
-      WHERE itineraries.id = itinerary_collaborators.itinerary_id
-      AND (itineraries.user_id::text = auth.uid()::text
-           OR EXISTS (
-             SELECT 1 FROM public.itinerary_collaborators AS ic
-             WHERE ic.itinerary_id = itineraries.id
-             AND ic.user_id::text = auth.uid()::text
-           ))
-    )
-  );
 
 -- Owners can insert collaborators
 CREATE POLICY "Owners can add collaborators"
