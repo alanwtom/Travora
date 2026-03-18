@@ -170,10 +170,22 @@ CREATE POLICY "Collaborators can create comments"
     )
   );
 
--- Users can update own comments
+-- Users can update own comments (only while still a collaborator)
 CREATE POLICY "Users can update own comments"
   ON itinerary_comments FOR UPDATE
-  USING (auth.uid()::text = user_id::text);
+  USING (
+    auth.uid()::text = user_id::text
+    AND EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_comments.itinerary_id
+      AND (itineraries.user_id::text = auth.uid()::text
+           OR EXISTS (
+             SELECT 1 FROM itinerary_collaborators
+             WHERE itinerary_collaborators.itinerary_id = itineraries.id
+             AND itinerary_collaborators.user_id::text = auth.uid()::text
+           ))
+    )
+  );
 
 -- Users can delete own comments or itinerary owners can delete any
 CREATE POLICY "Users can delete own comments"
@@ -247,7 +259,7 @@ INSERT INTO notification_templates (
   'social',
   'itinerary_invite',
   'medium',
-  ARRAY['push', 'in_app'],
+  ARRAY['push'::notification_channel, 'in_app'::notification_channel],
   'You're invited to collaborate!',
   '{inviter} invited you to {itinerary_title} as a {role}.',
   false
@@ -271,6 +283,7 @@ removeCollaborator(itineraryId: string, userId: string)
 
 leaveItinerary(itineraryId: string)
   → User voluntarily leaves a shared itinerary
+  → CONSTRAINT: Owners cannot leave (must delete itinerary or transfer ownership)
 
 updateCollaboratorRole(itineraryId: string, userId: string, role: 'editor' | 'viewer')
   → Update role (owner only)
@@ -381,11 +394,58 @@ Refresh comment list
 | Notification fails | Log error, don't block collaboration |
 | Owner deletes itinerary | CASCADE delete collaborators/comments |
 | User deleted | CASCADE removes collaborations/comments |
+| Collaborator removed | Comments remain (attributed to user who left) |
+| User leaves itinerary | Comments remain (historical preservation) |
 
 ## Type Definitions
 
 ### `types/database.ts` additions
+
+**Note:** The `Itinerary` and `ItineraryRating` base types must be added to `types/database.ts` as they are currently missing despite existing in migration 007.
+
 ```typescript
+// Base types (need to be added - missing from current codebase)
+interface Itinerary {
+  id: string;
+  user_id: string;
+  title: string;
+  destination: string;
+  start_date: string | null;
+  end_date: string | null;
+  duration_days: number | null;
+  travel_style: string | null;
+  budget_level: string | null;
+  generated_by: string;
+  generation_time_ms: number | null;
+  days: ItineraryDay[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ItineraryRating {
+  id: string;
+  itinerary_id: string;
+  user_id: string;
+  rating: boolean;
+  feedback: string | null;
+  created_at: string;
+}
+
+interface ItineraryDay {
+  date: string;
+  activities: ItineraryActivity[];
+}
+
+interface ItineraryActivity {
+  time: string;
+  title: string;
+  location: string | null;
+  duration?: number;
+  description?: string;
+}
+
+// New collaborative types
 interface ItineraryCollaborator {
   id: string;
   itinerary_id: string;
@@ -411,11 +471,13 @@ type CollaborationRole = 'editor' | 'viewer';
 Add `itinerary_invite` to the notification trigger types:
 
 ```typescript
-// Add to NotificationTriggerEvent union type
-type NotificationTriggerEvent =
-  | 'itinerary_invite'  // NEW
+// Add to NotificationTriggerEvent union type (around line 154)
+export type NotificationTriggerEvent =
+  | 'follow_received'
   | 'like_received'
   | 'comment_received'
+  | 'itinerary_invite'  // NEW - add this line
+  | 'review_received'
   // ... existing events
 ```
 
@@ -447,6 +509,8 @@ type NotificationTriggerEvent =
 ## Migration Path
 
 **File:** `supabase/migrations/008_collaborative_itineraries.sql`
+
+**Note:** This migration builds upon `007_itinerary_system.sql` which created the base itineraries table. Verify the migration sequence is clean before proceeding.
 
 1. Create `itinerary_collaborators` table with RLS policies
 2. Create `itinerary_comments` table with RLS policies and updated_at trigger
