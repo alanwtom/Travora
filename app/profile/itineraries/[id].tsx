@@ -1,6 +1,7 @@
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { getItineraryById, getItineraryStats, rateItinerary, deleteItinerary } from '@/services/itineraries';
+import { getProfile } from '@/services/profiles';
 import { DayPlan } from '@/components/DayPlan';
 import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
 import { BackButton } from '@/components/BackButton';
@@ -30,10 +31,26 @@ export default function ItineraryDetailScreen() {
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [collaboratorsModalVisible, setCollaboratorsModalVisible] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadItinerary();
   }, [id]);
+
+  // Load current user's profile for notifications
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user?.id) {
+        try {
+          const profile = await getProfile(user.id);
+          setCurrentUsername(profile?.username);
+        } catch (error) {
+          console.error('Failed to load user profile:', error);
+        }
+      }
+    };
+    loadUserProfile();
+  }, [user?.id]);
 
   const loadItinerary = async () => {
     if (!id || typeof id !== 'string') return;
@@ -246,6 +263,7 @@ export default function ItineraryDetailScreen() {
         itineraryTitle={itinerary.title}
         isOwner={user?.id === itinerary.user_id}
         currentUserId={user?.id}
+        currentUsername={currentUsername}
         onClose={() => setCollaboratorsModalVisible(false)}
       />
     </ScrollView>

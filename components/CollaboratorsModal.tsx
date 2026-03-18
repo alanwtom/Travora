@@ -38,6 +38,7 @@ type Props = {
   itineraryTitle: string;
   isOwner: boolean;
   currentUserId?: string;
+  currentUsername?: string;
   onClose: () => void;
   onCollaboratorsChange?: () => void;
 };
@@ -48,6 +49,7 @@ export function CollaboratorsModal({
   itineraryTitle,
   isOwner,
   currentUserId,
+  currentUsername,
   onClose,
   onCollaboratorsChange,
 }: Props) {
@@ -110,7 +112,7 @@ export function CollaboratorsModal({
         itineraryId,
         profile.username || '',
         selectedRole,
-        currentUserId
+        currentUsername // Pass username for notifications, not user ID
       );
       setSearchQuery('');
       setSearchResults([]);
