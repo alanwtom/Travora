@@ -14,6 +14,7 @@ import {
   searchUsersToInvite,
   getCollaborators,
 } from '@/services/collaborators';
+import { getFollowing, ProfileWithFollowStatus } from '@/services/profiles';
 import { ItineraryCollaboratorWithProfile, Profile } from '@/types/database';
 import * as Icons from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -57,6 +58,8 @@ export function CollaboratorsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [suggestedUsers, setSuggestedUsers] = useState<Profile[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role>('editor');
   const [isInviting, setIsInviting] = useState(false);
@@ -64,6 +67,7 @@ export function CollaboratorsModal({
   useEffect(() => {
     if (visible) {
       loadCollaborators();
+      loadSuggestedUsers();
     }
   }, [visible]);
 
@@ -72,12 +76,35 @@ export function CollaboratorsModal({
       if (searchQuery.trim().length > 0) {
         performSearch(searchQuery);
       } else {
-        setSearchResults([]);
+        setSearchResults([]); // Clear search results, but keep suggestions
       }
     }, 500); // Debounce for 500ms
 
     return () => clearTimeout(searchTimer);
   }, [searchQuery]);
+
+  const loadSuggestedUsers = async () => {
+    if (!currentUserId) return;
+
+    try {
+      setIsLoadingSuggestions(true);
+      // Get users the current user is following as suggestions
+      const following = await getFollowing(currentUserId, 0, 10);
+
+      // Filter out users who are already collaborators or the owner
+      const collaboratorIds = new Set(collaborators.map(c => c.user_id));
+      const filtered = following.filter(
+        (f: ProfileWithFollowStatus) => f.id !== currentUserId && !collaboratorIds.has(f.id)
+      );
+
+      setSuggestedUsers(filtered as Profile[]);
+    } catch (error) {
+      console.error('Failed to load suggested users:', error);
+      setSuggestedUsers([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const loadCollaborators = async () => {
     try {
@@ -117,6 +144,7 @@ export function CollaboratorsModal({
       setSearchQuery('');
       setSearchResults([]);
       loadCollaborators();
+      loadSuggestedUsers(); // Refresh suggestions after inviting
       onCollaboratorsChange?.();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to invite user');
@@ -320,18 +348,28 @@ export function CollaboratorsModal({
                 {isSearching && <ActivityIndicator size="small" color={COLORS.primary} />}
               </View>
 
-              {/* Search Results */}
-              {searchResults.length > 0 && (
+              {/* Search Results or Suggested Users */}
+              {(searchResults.length > 0 || suggestedUsers.length > 0 || isLoadingSuggestions) && (
                 <View style={styles.searchResults}>
                   <FlatList
-                    data={searchResults}
+                    data={searchQuery.trim().length > 0 ? searchResults : suggestedUsers}
                     renderItem={renderSearchResult}
                     keyExtractor={(item) => item.id}
                     scrollEnabled={false}
                     ListHeaderComponent={
                       <View style={styles.searchResultsHeader}>
-                        <Text style={styles.searchResultsTitle}>Suggested Users</Text>
+                        <Text style={styles.searchResultsTitle}>
+                          {searchQuery.trim().length > 0 ? 'Search Results' : 'Suggested to Invite'}
+                        </Text>
                       </View>
+                    }
+                    ListEmptyComponent={
+                      isLoadingSuggestions ? (
+                        <View style={styles.suggestionsLoading}>
+                          <ActivityIndicator size="small" color={COLORS.primary} />
+                          <Text style={styles.loadingText}>Finding people to invite...</Text>
+                        </View>
+                      ) : null
                     }
                   />
                 </View>
@@ -622,5 +660,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.error,
+  },
+  suggestionsLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#999',
   },
 });
