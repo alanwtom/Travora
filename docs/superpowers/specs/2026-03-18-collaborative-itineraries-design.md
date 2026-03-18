@@ -35,6 +35,9 @@ Enable users to invite collaborators to their travel itineraries with role-based
 
 ## Database Schema
 
+### Migration File
+`supabase/migrations/008_collaborative_itineraries.sql`
+
 ### New Tables
 
 #### `itinerary_collaborators`
@@ -53,12 +56,62 @@ ALTER TABLE itinerary_collaborators ENABLE ROW LEVEL SECURITY;
 -- Indexes
 CREATE INDEX idx_collaborators_itinerary ON itinerary_collaborators(itinerary_id);
 CREATE INDEX idx_collaborators_user ON itinerary_collaborators(user_id);
-```
 
-**RLS Policies:**
-- Users can see collaborations they're part of
-- Owners can manage their itinerary's collaborators
-- Collaborators can view their own collaboration records
+-- RLS Policies
+-- Users can see their own collaborations
+CREATE POLICY "Users can view own collaborations"
+  ON itinerary_collaborators FOR SELECT
+  USING (auth.uid()::text = user_id::text);
+
+-- Users can see collaborations for itineraries they own or collaborate on
+CREATE POLICY "Users can view collaborations for accessible itineraries"
+  ON itinerary_collaborators FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_collaborators.itinerary_id
+      AND (itineraries.user_id::text = auth.uid()::text
+           OR EXISTS (
+             SELECT 1 FROM itinerary_collaborators AS ic
+             WHERE ic.itinerary_id = itineraries.id
+             AND ic.user_id::text = auth.uid()::text
+           ))
+    )
+  );
+
+-- Owners can insert collaborators
+CREATE POLICY "Owners can add collaborators"
+  ON itinerary_collaborators FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_id
+      AND itineraries.user_id::text = auth.uid()::text
+    )
+  );
+
+-- Owners can update collaborator roles
+CREATE POLICY "Owners can update collaborators"
+  ON itinerary_collaborators FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_id
+      AND itineraries.user_id::text = auth.uid()::text
+    )
+  );
+
+-- Owners can delete collaborators
+CREATE POLICY "Owners can remove collaborators"
+  ON itinerary_collaborators FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_id
+      AND itineraries.user_id::text = auth.uid()::text
+    )
+  );
+```
 
 #### `itinerary_comments`
 ```sql
@@ -73,14 +126,133 @@ CREATE TABLE itinerary_comments (
 
 ALTER TABLE itinerary_comments ENABLE ROW LEVEL SECURITY;
 
--- Index
+-- Indexes
 CREATE INDEX idx_comments_itinerary ON itinerary_comments(itinerary_id);
+CREATE INDEX idx_comments_itinerary_user ON itinerary_comments(itinerary_id, created_at DESC);
+
+-- Auto-update updated_at trigger
+CREATE TRIGGER itinerary_comments_updated_at
+  BEFORE UPDATE ON itinerary_comments
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_updated_at();
+
+-- RLS Policies
+-- Collaborators can read comments
+CREATE POLICY "Collaborators can read comments"
+  ON itinerary_comments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_comments.itinerary_id
+      AND (itineraries.user_id::text = auth.uid()::text
+           OR EXISTS (
+             SELECT 1 FROM itinerary_collaborators
+             WHERE itinerary_collaborators.itinerary_id = itineraries.id
+             AND itinerary_collaborators.user_id::text = auth.uid()::text
+           ))
+    )
+  );
+
+-- Collaborators can create comments
+CREATE POLICY "Collaborators can create comments"
+  ON itinerary_comments FOR INSERT
+  WITH CHECK (
+    auth.uid()::text = user_id::text
+    AND EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_id
+      AND (itineraries.user_id::text = auth.uid()::text
+           OR EXISTS (
+             SELECT 1 FROM itinerary_collaborators
+             WHERE itinerary_collaborators.itinerary_id = itineraries.id
+             AND itinerary_collaborators.user_id::text = auth.uid()::text
+           ))
+    )
+  );
+
+-- Users can update own comments
+CREATE POLICY "Users can update own comments"
+  ON itinerary_comments FOR UPDATE
+  USING (auth.uid()::text = user_id::text);
+
+-- Users can delete own comments or itinerary owners can delete any
+CREATE POLICY "Users can delete own comments"
+  ON itinerary_comments FOR DELETE
+  USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Owners can delete any comment"
+  ON itinerary_comments FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM itineraries
+      WHERE itineraries.id = itinerary_comments.itinerary_id
+      AND itineraries.user_id::text = auth.uid()::text
+    )
+  );
 ```
 
-**RLS Policies:**
-- Collaborators can read comments for their itineraries
-- All collaborators can create comments
-- Users can edit/delete their own comments
+### Update Existing `itineraries` RLS Policies
+
+The existing `itineraries` table RLS policies must be updated to allow collaborators to read shared itineraries:
+
+```sql
+-- Drop existing SELECT policy (if it only checks ownership)
+DROP POLICY IF EXISTS "Users can view own itineraries" ON itineraries;
+
+-- New policy: Users can view own itineraries OR shared itineraries
+CREATE POLICY "Users can view own and shared itineraries"
+  ON itineraries FOR SELECT
+  USING (
+    itineraries.user_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM itinerary_collaborators
+      WHERE itinerary_collaborators.itinerary_id = itineraries.id
+      AND itinerary_collaborators.user_id::text = auth.uid()::text
+    )
+  );
+
+-- Update UPDATE policy to allow editors
+CREATE POLICY "Owners and editors can update itineraries"
+  ON itineraries FOR UPDATE
+  USING (
+    itineraries.user_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM itinerary_collaborators
+      WHERE itinerary_collaborators.itinerary_id = itineraries.id
+      AND itinerary_collaborators.user_id::text = auth.uid()::text
+      AND itinerary_collaborators.role = 'editor'
+    )
+  );
+
+-- Update DELETE policy (owner only)
+CREATE POLICY "Owners can delete own itineraries"
+  ON itineraries FOR DELETE
+  USING (itineraries.user_id::text = auth.uid()::text);
+```
+
+### Notification Template
+
+Add the `itinerary_invite` notification template:
+
+```sql
+INSERT INTO notification_templates (
+  category,
+  trigger_event,
+  priority,
+  default_channels,
+  title_template,
+  body_template,
+  is_essential
+) VALUES (
+  'social',
+  'itinerary_invite',
+  'medium',
+  ARRAY['push', 'in_app'],
+  'You're invited to collaborate!',
+  '{inviter} invited you to {itinerary_title} as a {role}.',
+  false
+);
+```
 
 ## Services Layer
 
@@ -96,6 +268,9 @@ getCollaborators(itineraryId: string)
 
 removeCollaborator(itineraryId: string, userId: string)
   → Delete collaboration record (owner only)
+
+leaveItinerary(itineraryId: string)
+  → User voluntarily leaves a shared itinerary
 
 updateCollaboratorRole(itineraryId: string, userId: string, role: 'editor' | 'viewer')
   → Update role (owner only)
@@ -124,7 +299,10 @@ deleteComment(commentId: string)
 
 ### Updated `services/itineraries.ts`
 - Modify queries to include shared itineraries
-- Use `canEditItinerary()` before write operations
+- Permission enforcement occurs at TWO levels:
+  1. **Database RLS policies** - Primary security enforcement
+  2. **UI guards via `canEditItinerary()`** - User experience (disable controls)
+- Note: RLS is the authoritative permission check; UI checks are for UX only
 
 ## UI Components
 
@@ -135,6 +313,7 @@ deleteComment(commentId: string)
 - Display current collaborators with avatars and roles
 - Add collaborator with role selector
 - Remove collaborator button (owner only)
+- "Leave Itinerary" button for collaborators (non-owners)
 - Role badges (Editor/Viewer)
 
 #### `ItineraryComments.tsx`
@@ -227,6 +406,19 @@ interface ItineraryComment {
 type CollaborationRole = 'editor' | 'viewer';
 ```
 
+### `types/notifications.ts` additions
+
+Add `itinerary_invite` to the notification trigger types:
+
+```typescript
+// Add to NotificationTriggerEvent union type
+type NotificationTriggerEvent =
+  | 'itinerary_invite'  // NEW
+  | 'like_received'
+  | 'comment_received'
+  // ... existing events
+```
+
 ## Testing Strategy
 
 ### Unit Tests
@@ -242,22 +434,31 @@ type CollaborationRole = 'editor' | 'viewer';
 ### Manual Testing Checklist
 - [ ] Invite by username → notification received
 - [ ] Accept invite → access granted
+- [ ] Decline invite → no access granted
 - [ ] Viewer cannot edit itinerary
 - [ ] Editor can edit itinerary
 - [ ] Remove collaborator → access revoked
+- [ ] Leave itinerary (as collaborator) → access removed
 - [ ] Delete itinerary → collaborators cascade deleted
 - [ ] Comments visible to all collaborators
 - [ ] Own comment can be edited/deleted
+- [ ] RLS policies prevent unauthorized access
 
 ## Migration Path
 
-1. Create migration file for new tables
-2. Run migration in Supabase
-3. Update type definitions
-4. Implement service layer
-5. Create UI components
-6. Update existing screens
-7. Test end-to-end
+**File:** `supabase/migrations/008_collaborative_itineraries.sql`
+
+1. Create `itinerary_collaborators` table with RLS policies
+2. Create `itinerary_comments` table with RLS policies and updated_at trigger
+3. Update existing `itineraries` RLS policies to allow collaborator read/editor write
+4. Insert `itinerary_invite` notification template
+5. Run migration in Supabase
+6. Update type definitions in `types/database.ts`
+7. Update `types/notifications.ts` with `itinerary_invite` trigger event
+8. Implement service layer (`services/collaborators.ts`, `services/itineraryComments.ts`)
+9. Create UI components (`CollaboratorsModal.tsx`, `ItineraryComments.tsx`, `CollaboratorBadge.tsx`)
+10. Update existing screens (`app/profile/itineraries/[id].tsx`, `app/(tabs)/activity.tsx`)
+11. Test end-to-end
 
 ## Future Enhancements (Out of Scope)
 
