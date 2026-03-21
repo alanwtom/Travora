@@ -25,46 +25,57 @@ const TRAVEL_STYLES = ['Adventure', 'Relaxation', 'Cultural', 'Foodie', 'Mixed']
 const BUDGET_LEVELS = ['Budget', 'Moderate', 'Luxury'] as const;
 const INTEREST_OPTIONS = ['Museums', 'Food', 'Nightlife', 'Nature', 'Shopping', 'History', 'Art'] as const;
 
-// Comprehensive destinations list
+// Comprehensive destinations list - Includes major countries + popular cities
 const POPULAR_DESTINATIONS = [
+  // Major Countries (for broad searches)
+  'Japan', 'Thailand', 'Indonesia', 'Philippines', 'Vietnam', 'Singapore', 'Malaysia',
+  'South Korea', 'Taiwan', 'China', 'India', 'Cambodia', 'Laos', 'Myanmar', 'Bangladesh',
+  'USA', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Peru', 'Chile', 'Colombia',
+  'France', 'Italy', 'Spain', 'Germany', 'UK', 'United Kingdom', 'Greece', 'Portugal',
+  'Netherlands', 'Switzerland', 'Austria', 'Belgium', 'Ireland', 'Sweden', 'Norway', 'Denmark',
+  'Finland', 'Iceland', 'Czech Republic', 'Poland', 'Hungary', 'Croatia', 'Portugal',
+  'Turkey', 'Egypt', 'Morocco', 'South Africa', 'Kenya', 'Tanzania',
+  'Australia', 'New Zealand', 'Fiji', 'Maldives', 'Dubai', 'UAE', 'Israel', 'Jordan',
+
   // Europe - Western
   'Paris', 'London', 'Amsterdam', 'Brussels', 'Luxembourg', 'Geneva', 'Zurich', 'Basel',
   'Frankfurt', 'Munich', 'Hamburg', 'Cologne', 'Vienna', 'Salzburg', 'Innsbruck',
+  'Edinburgh', 'Glasgow', 'Dublin', 'Cardiff',
   // Europe - Southern
   'Rome', 'Venice', 'Florence', 'Milan', 'Naples', 'Bologna', 'Verona', 'Cinque Terre',
   'Barcelona', 'Madrid', 'Seville', 'Valencia', 'Granada', 'Malaga', 'Ibiza', 'Mallorca',
   'Lisbon', 'Porto', 'Faro', 'Athens', 'Santorini', 'Mykonos', 'Crete', 'Naxos', 'Paros',
   'Monaco', 'Nice', 'Cannes', 'Marseille', 'San Marino', 'Vatican City',
   // Europe - Eastern & Central
-  'Prague', 'Budapest', 'Warsaw', 'Krakow', 'Berlin', 'Dresden', 'Hamburg', 'Leipzig',
-  'Vienna', 'Salzburg', 'Bratislava', 'Ljubljana', 'Zagreb', 'Split', 'Dubrovnik', 'Plitvice',
+  'Prague', 'Budapest', 'Warsaw', 'Krakow', 'Berlin', 'Dresden', 'Leipzig',
+  'Bratislava', 'Ljubljana', 'Zagreb', 'Split', 'Dubrovnik', 'Plitvice',
   'Belgrade', 'Sarajevo', 'Mostar', 'Kotor', 'Tirana', 'Skopje', 'Sofia', 'Plovdiv',
-  'Bucharest', 'Cluj-Napoca', 'Budapest', 'Tallinn', 'Riga', 'Vilnius', 'Helsinki',
+  'Bucharest', 'Cluj-Napoca', 'Tallinn', 'Riga', 'Vilnius',
   // Europe - Nordic
-  'Stockholm', 'Oslo', 'Copenhagen', 'Reykjavik', 'Tromso', 'Bergen', 'Helsinki', 'Lapland',
+  'Stockholm', 'Oslo', 'Copenhagen', 'Reykjavik', 'Tromso', 'Bergen', 'Lapland',
   // Europe - Islands
-  'Malta', 'Cyprus', 'Corsica', 'Sardinia', 'Sicily', 'Crete', 'Madeira', 'Canary Islands',
+  'Malta', 'Cyprus', 'Corsica', 'Sardinia', 'Sicily', 'Madeira', 'Canary Islands',
   'Balearic Islands', 'Greek Islands', 'Azores', 'Faroe Islands', 'Isle of Skye', 'Highlands',
 
   // Asia - East Asia
-  'Tokyo', 'Kyoto', 'Osaka', 'Hiroshima', 'Nara', 'Kobe', 'Mount Fuji', 'Hakone', 'Kamakura',
-  'Seoul', 'Busan', 'Jeju Island', 'Gyeongju', 'Incheon', 'Pyongyang',
+  'Tokyo', 'Kyoto', 'Osaka', 'Hiroshima', 'Nara', 'Kobe', 'Mount Fuji', 'Hakone', 'Kamakura', 'Hokkaido', 'Okinawa',
+  'Seoul', 'Busan', 'Jeju Island', 'Gyeongju', 'Incheon',
   'Beijing', 'Shanghai', 'Hong Kong', 'Macau', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Xi\'an',
   'Hangzhou', 'Suzhou', 'Lhasa', 'Guilin', 'Yangshuo', 'Zhangjiajie', 'Great Wall',
   'Taipei', 'Kaohsiung', 'Tainan', 'Taroko Gorge', 'Sun Moon Lake',
   // Asia - Southeast Asia
-  'Bangkok', 'Chiang Mai', 'Phuket', 'Krabi', 'Koh Samui', 'Pattaya', 'Ayutthaya', 'Phi Phi Islands',
-  'Singapore', 'Kuala Lumpur', 'Penang', 'Langkawi', 'Borneo', 'Johor Bahru', 'Malacca',
-  'Bali', 'Lombok', 'Gili Islands', 'Ubud', 'Seminyak', 'Yogyakarta', 'Komodo Island', 'Raja Ampat',
-  'Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Hoi An', 'Halong Bay', 'Phong Nha', 'Mui Ne', 'Nha Trang',
+  'Bangkok', 'Chiang Mai', 'Phuket', 'Krabi', 'Koh Samui', 'Pattaya', 'Ayutthaya', 'Phi Phi Islands', 'Koh Tao', 'Koh Phangan', 'Hua Hin',
+  'Singapore', 'Kuala Lumpur', 'Penang', 'Langkawi', 'Borneo', 'Johor Bahru', 'Malacca', 'Putrajaya',
+  'Bali', 'Lombok', 'Gili Islands', 'Ubud', 'Seminyak', 'Yogyakarta', 'Komodo Island', 'Raja Ampat', 'Jakarta', 'Sumatra', 'Java',
+  'Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Hoi An', 'Halong Bay', 'Phong Nha', 'Mui Ne', 'Nha Trang', 'Sapa', 'Dalat',
   'Phnom Penh', 'Siem Reap', 'Angkor Wat', 'Sihanoukville',
   'Vientiane', 'Luang Prabang', 'Vang Vieng',
   'Yangon', 'Bagan', 'Mandalay', 'Inle Lake', 'Ngapali Beach',
-  'Manila', 'Cebu', 'Boracay', 'Palawan', 'El Nido', 'Coron', 'Bohol', 'Siargao',
+  'Manila', 'Cebu', 'Boracay', 'Palawan', 'El Nido', 'Coron', 'Bohol', 'Siargao', 'Davao',
   'Bandar Seri Begawan', 'Kota Kinabalu',
   // Asia - South Asia
   'Delhi', 'Mumbai', 'Goa', 'Jaipur', 'Udaipur', 'Jodhpur', 'Agra', 'Varanasi', 'Kolkata',
-  'Bangalore', 'Hyderabad', 'Chennai', 'Kerala', 'Mysore', 'Hampi', 'Rishikesh', 'Dharamshala',
+  'Bangalore', 'Hyderabad', 'Chennai', 'Kerala', 'Mysore', 'Hampi', 'Rishikesh', 'Dharamshala', 'New Delhi',
   'Kathmandu', 'Pokhara', 'Chitwan', 'Everest Base Camp',
   'Colombo', 'Kandy', 'Galle', 'Sigiriya', 'Ella', 'Nuwara Eliya',
   'Maldives', 'Male', 'Maafushi', 'Addu Atoll',
@@ -74,8 +85,8 @@ const POPULAR_DESTINATIONS = [
   // Asia - Central & West
   'Dubai', 'Abu Dhabi', 'Doha', 'Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Bahrain', 'Kuwait City',
   'Muscat', 'Dammam', 'Sharjah', 'Al Ain',
-  'Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat', 'Dead Sea', 'Masada', 'Nazareth', 'Petra', 'Wadi Rum',
-  'Amman', 'Beirut', 'Byblos', 'Baalbek',
+  'Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat', 'Dead Sea', 'Masada', 'Nazareth',
+  'Petra', 'Wadi Rum', 'Amman', 'Beirut', 'Byblos', 'Baalbek',
   'Ankara', 'Istanbul', 'Izmir', 'Cappadocia', 'Antalya', 'Bodrum', 'Pamukkale', 'Ephesus',
   'Tashkent', 'Samarkand', 'Bukhara', 'Almaty', 'Astana', 'Bishkek',
   'Ashgabat', 'Dushanbe',
@@ -83,11 +94,11 @@ const POPULAR_DESTINATIONS = [
   // Americas - North America
   'New York', 'Los Angeles', 'San Francisco', 'Las Vegas', 'Miami', 'Chicago', 'Boston',
   'Washington DC', 'Seattle', 'Portland', 'Austin', 'Denver', 'San Diego', 'Nashville',
-  'New Orleans', 'Atlanta', 'Philadelphia', 'Phoenix', 'Dallas', 'Houston', 'Honolulu', 'Maui',
+  'New Orleans', 'Atlanta', 'Philadelphia', 'Phoenix', 'Dallas', 'Houston', 'Honolulu', 'Maui', 'Oahu', 'Kauai',
   'Orlando', 'Tampa', 'Charlotte', 'San Antonio', 'Minneapolis', 'Detroit', 'Cleveland',
   'Yellowstone', 'Grand Canyon', 'Yosemite', 'Niagara Falls', 'Mount Rushmore',
   'Toronto', 'Vancouver', 'Montreal', 'Quebec City', 'Victoria', 'Banff', 'Jasper', 'Whistler',
-  'Niagara Falls', 'Ottawa', 'Calgary', 'Halifax', 'Prince Edward Island',
+  'Ottawa', 'Calgary', 'Halifax', 'Prince Edward Island', 'Niagara Falls',
   'Mexico City', 'Cancun', 'Playa del Carmen', 'Tulum', 'Cabo San Lucas', 'Puerto Vallarta',
   'Guadalajara', 'Oaxaca', 'San Miguel de Allende', 'Chichen Itza', 'Cozumel',
   // Americas - Central America & Caribbean
@@ -113,7 +124,6 @@ const POPULAR_DESTINATIONS = [
 
   // Africa - North
   'Cairo', 'Luxor', 'Aswan', 'Alexandria', 'Sharm El Sheikh', 'Hurghada', 'Abu Simbel',
-  'Tripoli', 'Benghazi',
   'Tunis', 'Carthage', 'Sousse', 'Hammamet',
   'Algiers', 'Oran',
   'Rabat', 'Casablanca', 'Marrakech', 'Fes', 'Chefchaouen', 'Essaouira', 'Atlas Mountains', 'Sahara Desert',
@@ -122,8 +132,6 @@ const POPULAR_DESTINATIONS = [
   'Kampala', 'Entebbe', 'Bwindi', 'Queen Elizabeth', 'Murchison Falls',
   'Kigali', 'Volcanoes National Park', 'Akagera',
   'Addis Ababa', 'Lalibela', 'Gondar', 'Axum', 'Simien Mountains',
-  'Djibouti City',
-  'Mogadishu',
   'Zanzibar', 'Dar es Salaam', 'Arusha', 'Serengeti', 'Ngorongoro', 'Mount Kilimanjaro', 'Lake Manyara',
   'Antananarivo',
   'Port Louis',
@@ -134,24 +142,17 @@ const POPULAR_DESTINATIONS = [
   'Abidjan', 'Yamoussoukro',
   'Lagos', 'Abuja', 'Calabar',
   'Yaounde', 'Douala',
-  'Libreville',
-  'Sao Tome', 'Principe',
   'Freetown', 'Conakry', 'Monrovia',
-  'Banjul', 'Bissau',
-  'Nouakchott',
+  'Dakar',
   // Africa - Central & South
   'Kinshasa', 'Lubumbashi', 'Virunga National Park',
   'Brazzaville', 'Pointe-Noire',
-  'Libreville', 'Franceville',
-  'Malabo',
   'Windhoek', 'Etosha National Park', 'Sossusvlei', 'Skeleton Coast',
   'Gaborone', 'Okavango Delta', 'Chobe National Park',
   'Harare', 'Victoria Falls',
   'Maputo', 'Bazaruto Archipelago',
   'Johannesburg', 'Cape Town', 'Durban', 'Garden Route', 'Kruger National Park',
   'Winelands', 'Drakensberg', 'Stellenbosch', 'Hermanus', 'Table Mountain',
-  'Maseru',
-  'Mbabane', 'Eswatini',
 
   // Oceania - Australia
   'Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Canberra', 'Gold Coast',
@@ -165,25 +166,16 @@ const POPULAR_DESTINATIONS = [
   'Bora Bora', 'Tahiti', 'Moorea', 'Papeete',
   'Rarotonga', 'Aitutaki',
   'Pago Pago',
-  'Honolulu', 'Waikiki', 'Maui', 'Kauai', 'Big Island', 'Lanai', 'Molokai',
   'Guam', 'Saipan', 'Palau', 'Yap', 'Chuuk',
   'Pohnpei', 'Kosrae',
   'Nuku\'alofa', 'Vava\'u',
-  'Funafuti',
+  'Vanuatu', 'Samoa', 'Tahiti',
 
-  // Additional popular destinations by category
-  // Island paradises
-  'Maldives', 'Seychelles', 'Mauritius', 'Fiji', 'Bora Bora', 'Santorini', 'Hawaii', 'Bali', 'Phuket',
-  // Cultural heritage sites
-  'Petra', 'Angkor Wat', 'Machu Picchu', 'Taj Mahal', 'Great Wall of China', 'Colosseum', 'Acropolis',
-  'Pyramids of Giza', 'Stonehenge', 'Easter Island', 'Chichen Itza', 'Alhambra', 'Versailles',
-  // Natural wonders
-  'Great Barrier Reef', 'Grand Canyon', 'Northern Lights', 'Victoria Falls', 'Mount Everest',
-  'Galapagos Islands', 'Amazon Rainforest', 'Serengeti', 'Yellowstone', 'Yosemite', 'Iguazu Falls',
-  'Plitvice Lakes', 'Norwegian Fjords', 'Swiss Alps', 'Patagonia', 'Torres del Paine', 'Banff',
-  // Food destinations
-  'San Sebastian', 'Bologna', 'Hanoi', 'Bangkok', 'Osaka', 'Mexico City', 'Lyon', 'Penang',
-  'Istanbul', 'Tel Aviv', 'New Orleans', 'San Francisco', 'Oaxaca',
+  // Popular tourist regions & experiences
+  'Swiss Alps', 'French Riviera', 'Amalfi Coast', 'Tuscany', 'Greek Islands', 'French Polynesia',
+  'Yucatan Peninsula', 'Patagonia', 'Andes Mountains', 'Amazon Rainforest',
+  'Serengeti', 'Masai Mara', 'Kruger National Park', 'Safari',
+  'Northern Lights', 'Aurora Borealis', 'Midnight Sun',
 ].sort();
 
 export default function GenerateItineraryScreen() {
@@ -217,6 +209,74 @@ export default function GenerateItineraryScreen() {
     );
   }, [destination]);
 
+  // Helper to check if destination and location share a country
+  const checkCountryMatch = (dest: string, loc: string): boolean => {
+    // Country/region mappings - expanded for better matching
+    const regions: Record<string, string[]> = {
+      'japan': ['tokyo', 'kyoto', 'osaka', 'hokkaido', 'fuji', 'nara', 'kobe', 'hiroshima', 'okinawa', 'yokohama'],
+      'taiwan': ['taipei', 'kaohsiung', 'tainan', 'taichung'],
+      'thailand': ['bangkok', 'phuket', 'chiang mai', 'krabi', 'pattaya', 'koh samui', 'hua hin', 'ayutthaya'],
+      'south korea': ['seoul', 'busan', 'jeju', 'gyeongju', 'incheon'],
+      'korea': ['seoul', 'busan', 'jeju', 'gyeongju', 'incheon'],
+      'vietnam': ['ho chi minh', 'hanoi', 'da nang', 'hue', 'nha trang', 'sapa', 'halong', 'hai phong'],
+      'indonesia': ['bali', 'jakarta', 'yogyakarta', 'lombok', 'sumatra', 'java', 'borneo', 'komodo', 'ubud'],
+      'philippines': ['manila', 'cebu', 'boracay', 'palawan', 'davao', 'el nido', 'coron', 'bohol'],
+      'singapore': ['singapore'],
+      'malaysia': ['kuala lumpur', 'penang', 'langkawi', 'borneo', 'johor', 'malacca', 'putrajaya'],
+      'china': ['beijing', 'shanghai', 'hong kong', 'guangzhou', 'chengdu', 'xi\'an', 'hangzhou', 'suzhou', 'lhasa'],
+      'india': ['delhi', 'mumbai', 'jaipur', 'goa', 'bangalore', 'kolkata', 'agra', 'kerala', 'chennai'],
+      'cambodia': ['siem reap', 'phnom penh', 'angkor wat', 'sihanoukville'],
+      'laos': ['vientiane', 'luang prabang', 'vang vieng'],
+      'myanmar': ['yangon', 'mandalay', 'bagan', 'inle lake'],
+      'usa': ['new york', 'los angeles', 'chicago', 'miami', 'san francisco', 'las vegas', 'seattle', 'boston', 'honolulu', 'orlando', 'denver', 'austin', 'nashville', 'new orleans'],
+      'united states': ['new york', 'los angeles', 'chicago', 'miami', 'san francisco', 'las vegas'],
+      'canada': ['toronto', 'vancouver', 'montreal', 'calgary', 'banff', 'quebec', 'ottawa', 'whistler'],
+      'mexico': ['mexico city', 'cancun', 'playa del carmen', 'tulum', 'cabo san lucas', 'oaxaca', 'guadalajara'],
+      'brazil': ['rio de janeiro', 'sao paulo', 'brasilia', 'salvador'],
+      'argentina': ['buenos aires', 'mendoza', 'bariloche', 'patagonia'],
+      'peru': ['lima', 'cusco', 'machu picchu'],
+      'chile': ['santiago', 'patagonia', 'valparaiso'],
+      'colombia': ['bogota', 'medellin', 'cartagena'],
+      'france': ['paris', 'nice', 'lyon', 'marseille', 'bordeaux', 'cannes', 'monaco'],
+      'italy': ['rome', 'venice', 'florence', 'milan', 'naples', 'cinque terre', 'tuscany'],
+      'spain': ['madrid', 'barcelona', 'seville', 'valencia', 'granada', 'ibiza', 'mallorca'],
+      'uk': ['london', 'manchester', 'edinburgh', 'birmingham', 'glasgow'],
+      'united kingdom': ['london', 'manchester', 'edinburgh', 'birmingham'],
+      'germany': ['berlin', 'munich', 'frankfurt', 'hamburg', 'cologne'],
+      'netherlands': ['amsterdam', 'rotterdam'],
+      'switzerland': ['zurich', 'geneva', 'basel', 'bern'],
+      'austria': ['vienna', 'salzburg', 'innsbruck'],
+      'greece': ['athens', 'santorini', 'mykonos', 'crete', 'zakynthos'],
+      'portugal': ['lisbon', 'porto', 'faro', 'madeira'],
+      'czech republic': ['prague'],
+      'poland': ['warsaw', 'krakow'],
+      'hungary': ['budapest'],
+      'croatia': ['zagreb', 'split', 'dubrovnik'],
+      'turkey': ['istanbul', 'ankara', 'izmir', 'cappadocia', 'antalya'],
+      'egypt': ['cairo', 'luxor', 'aswan', 'alexandria'],
+      'morocco': ['marrakech', 'casablanca', 'fes', 'rabat'],
+      'south africa': ['cape town', 'johannesburg', 'durban'],
+      'kenya': ['nairobi', 'mombasa', 'masai mara'],
+      'tanzania': ['dar es salaam', 'arusha', 'serengeti', 'zanzibar'],
+      'australia': ['sydney', 'melbourne', 'brisbane', 'perth', 'adelaide', 'cairns', 'gold coast'],
+      'new zealand': ['auckland', 'wellington', 'queenstown', 'christchurch'],
+      'fiji': ['fiji', 'nadi', 'suva'],
+      'maldives': ['maldives', 'male', 'maafushi'],
+      'uae': ['dubai', 'abu dhabi'],
+      'israel': ['tel aviv', 'jerusalem', 'haifa'],
+      'jordan': ['petra', 'amman', 'wadi rum'],
+    };
+
+    for (const [country, cities] of Object.entries(regions)) {
+      // Check if both destination and location match the same country
+      const destInCountry = cities.some(city => dest.includes(city)) || dest.includes(country);
+      const locInCountry = cities.some(city => loc.includes(city)) || loc.includes(country);
+      if (destInCountry && locInCountry) return true;
+    }
+
+    return false;
+  };
+
   // Check if user has locations matching the selected destination
   const hasMatchingLocations = useMemo(() => {
     if (!destination || locations.length === 0) return false;
@@ -236,44 +296,6 @@ export default function GenerateItineraryScreen() {
     return locationMatches.length >= 3;
   }, [destination, locations]);
 
-  // Helper to check if destination and location share a country
-  const checkCountryMatch = (dest: string, loc: string): boolean => {
-    // Country/region mappings
-    const regions: Record<string, string[]> = {
-      'japan': ['tokyo', 'kyoto', 'osaka', 'hokkaido', 'fuji', 'nara', 'kobe', 'hiroshima'],
-      'taiwan': ['taipei', 'kaohsiung', 'tainan', 'taichung'],
-      'thailand': ['bangkok', 'phuket', 'chiang mai', 'krabi', 'pattaya'],
-      'korea': ['seoul', 'busan', 'jeju', 'gyeongju'],
-      'vietnam': ['ho chi minh', 'hanoi', 'da nang', 'hue', 'nha trang'],
-      'indonesia': ['bali', 'jakarta', 'yogyakarta', 'lombok', 'sumatra'],
-      'philippines': ['manila', 'cebu', 'boracay', 'palawan', 'davao'],
-      'singapore': ['singapore'],
-      'malaysia': ['kuala lumpur', 'penang', 'langkawi', 'borneo', 'johor'],
-      'china': ['beijing', 'shanghai', 'hong kong', 'guangzhou', 'chengdu', 'xi\'an'],
-      'india': ['delhi', 'mumbai', 'jaipur', 'goa', 'bangalore', 'kolkata'],
-      'usa': ['new york', 'los angeles', 'chicago', 'miami', 'san francisco', 'las vegas'],
-      'france': ['paris', 'nice', 'lyon', 'marseille', 'bordeaux'],
-      'italy': ['rome', 'venice', 'florence', 'milan', 'naples'],
-      'spain': ['madrid', 'barcelona', 'seville', 'valencia'],
-      'uk': ['london', 'manchester', 'edinburgh', 'birmingham'],
-      'germany': ['berlin', 'munich', 'frankfurt', 'hamburg'],
-      'australia': ['sydney', 'melbourne', 'brisbane', 'perth'],
-      'canada': ['toronto', 'vancouver', 'montreal', 'calgary'],
-      'mexico': ['mexico city', 'cancun', 'playa del carmen', 'tulum'],
-      'brazil': ['rio de janeiro', 'sao paulo', 'brasilia'],
-      'argentina': ['buenos aires', 'mendoza', 'bariloche'],
-    };
-
-    for (const [country, cities] of Object.entries(regions)) {
-      // Check if both destination and location match the same country
-      const destInCountry = cities.some(city => dest.includes(city)) || dest.includes(country);
-      const locInCountry = cities.some(city => loc.includes(city)) || loc.includes(country);
-      if (destInCountry && locInCountry) return true;
-    }
-
-    return false;
-  };
-
   const getMismatchedMessage = () => {
     if (!destination || hasMatchingLocations) return null;
 
@@ -282,7 +304,7 @@ export default function GenerateItineraryScreen() {
 
     locations.forEach(loc => {
       const locLower = (loc.location || '').toLowerCase();
-      // Extract country from location string
+      // Extract country from location string - expanded list
       if (locLower.includes('japan')) locationCountries.add('Japan');
       else if (locLower.includes('taiwan')) locationCountries.add('Taiwan');
       else if (locLower.includes('thailand')) locationCountries.add('Thailand');
@@ -294,17 +316,44 @@ export default function GenerateItineraryScreen() {
       else if (locLower.includes('malaysia')) locationCountries.add('Malaysia');
       else if (locLower.includes('china')) locationCountries.add('China');
       else if (locLower.includes('india')) locationCountries.add('India');
+      else if (locLower.includes('cambodia')) locationCountries.add('Cambodia');
+      else if (locLower.includes('laos')) locationCountries.add('Laos');
+      else if (locLower.includes('myanmar')) locationCountries.add('Myanmar');
       else if (locLower.includes('usa') || locLower.includes('united states')) locationCountries.add('the USA');
+      else if (locLower.includes('canada')) locationCountries.add('Canada');
+      else if (locLower.includes('mexico')) locationCountries.add('Mexico');
+      else if (locLower.includes('brazil')) locationCountries.add('Brazil');
+      else if (locLower.includes('argentina')) locationCountries.add('Argentina');
+      else if (locLower.includes('peru')) locationCountries.add('Peru');
+      else if (locLower.includes('chile')) locationCountries.add('Chile');
+      else if (locLower.includes('colombia')) locationCountries.add('Colombia');
       else if (locLower.includes('france')) locationCountries.add('France');
       else if (locLower.includes('italy')) locationCountries.add('Italy');
       else if (locLower.includes('spain')) locationCountries.add('Spain');
       else if (locLower.includes('uk') || locLower.includes('united kingdom')) locationCountries.add('the UK');
       else if (locLower.includes('germany')) locationCountries.add('Germany');
+      else if (locLower.includes('netherlands')) locationCountries.add('the Netherlands');
+      else if (locLower.includes('switzerland')) locationCountries.add('Switzerland');
+      else if (locLower.includes('austria')) locationCountries.add('Austria');
+      else if (locLower.includes('greece')) locationCountries.add('Greece');
+      else if (locLower.includes('portugal')) locationCountries.add('Portugal');
+      else if (locLower.includes('czech')) locationCountries.add('Czech Republic');
+      else if (locLower.includes('poland')) locationCountries.add('Poland');
+      else if (locLower.includes('hungary')) locationCountries.add('Hungary');
+      else if (locLower.includes('croatia')) locationCountries.add('Croatia');
+      else if (locLower.includes('turkey')) locationCountries.add('Turkey');
+      else if (locLower.includes('egypt')) locationCountries.add('Egypt');
+      else if (locLower.includes('morocco')) locationCountries.add('Morocco');
+      else if (locLower.includes('south africa')) locationCountries.add('South Africa');
+      else if (locLower.includes('kenya')) locationCountries.add('Kenya');
+      else if (locLower.includes('tanzania')) locationCountries.add('Tanzania');
       else if (locLower.includes('australia')) locationCountries.add('Australia');
-      else if (locLower.includes('canada')) locationCountries.add('Canada');
-      else if (locLower.includes('mexico')) locationCountries.add('Mexico');
-      else if (locLower.includes('brazil')) locationCountries.add('Brazil');
-      else if (locLower.includes('argentina')) locationCountries.add('Argentina');
+      else if (locLower.includes('new zealand')) locationCountries.add('New Zealand');
+      else if (locLower.includes('fiji')) locationCountries.add('Fiji');
+      else if (locLower.includes('maldives')) locationCountries.add('Maldives');
+      else if (locLower.includes('uae') || locLower.includes('dubai')) locationCountries.add('the UAE');
+      else if (locLower.includes('israel')) locationCountries.add('Israel');
+      else if (locLower.includes('jordan')) locationCountries.add('Jordan');
     });
 
     const countries = Array.from(locationCountries);

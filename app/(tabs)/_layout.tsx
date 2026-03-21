@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-import { Ionicons } from '@expo/vector-icons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-=======
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Home, Compass, Plus, Bell, User } from 'lucide-react-native';
->>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';

@@ -1,13 +1,8 @@
 import { COLORS } from '@/lib/constants';
 import { addComment, getCommentReplies, getVideoComments, toggleCommentLike } from '@/services/comments';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
-<<<<<<< HEAD
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import React, { useEffect, useState } from 'react';
-=======
 import * as Icons from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
->>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
 import {
     ActivityIndicator,
     FlatList,

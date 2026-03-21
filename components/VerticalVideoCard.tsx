@@ -56,12 +56,9 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-<<<<<<< HEAD
   const [showRatingsModal, setShowRatingsModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
-=======
->>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
   const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
 
@@ -353,7 +350,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             onPress={handleRatingPress}
             activeOpacity={0.7}
           >
-            <FontAwesome name="star-o" size={28} color="rgba(255,255,255,0.8)" />
+            <Icons.Star size={28} color="rgba(255,255,255,0.8)" fill="none" strokeWidth={2} />
             <Text style={styles.actionLabel}>Rate</Text>
           </TouchableOpacity>
 
@@ -494,11 +491,7 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-<<<<<<< HEAD
-    paddingBottom: 80,
-=======
     paddingBottom: BOTTOM_SAFE_AREA + 16,
->>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
     justifyContent: 'space-between',
   },
   muteButton: {
@@ -596,15 +589,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   location: {
-<<<<<<< HEAD
-    fontSize: 13,
-    color: '#FFFFFF',
-    fontWeight: '500',
-=======
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
->>>>>>> 54bfa0dee317ce489c73bf1707c763ff1586f17c
   },
   actionButton: {
     alignItems: 'center',
