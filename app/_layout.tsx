@@ -33,7 +33,7 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [isAuthenticated, isLoading, segments]);
 
