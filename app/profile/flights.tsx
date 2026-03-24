@@ -154,7 +154,7 @@ export default function FlightsScreen() {
               <Text style={styles.price}>${item.price}</Text>
             </View>
             <Text style={styles.routeText}>
-              {item.from} -> {item.to}
+              {item.from} {'->'} {item.to}
             </Text>
             <Text style={styles.metaText}>
               {item.departAt} - {item.arriveAt} ({item.duration})

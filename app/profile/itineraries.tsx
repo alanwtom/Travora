@@ -3,7 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useUserItineraries } from '@/hooks/useUserItineraries';
 import { ItineraryCard } from '@/components/ItineraryCard';
 import { BackButton } from '@/components/BackButton';
-import { MapPin, AlertCircle, Plus } from 'lucide-react-native';
+import { MapPin, AlertCircle, Plus, Plane, Hotel } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -86,6 +86,26 @@ export default function ItinerariesScreen() {
         <BackButton />
       </View>
 
+      <View style={styles.travelToolsSection}>
+        <Text style={styles.travelToolsTitle}>Travel Bookings</Text>
+        <View style={styles.travelToolsRow}>
+          <TouchableOpacity
+            style={styles.travelToolCard}
+            onPress={() => router.push('/profile/flights' as any)}
+          >
+            <Plane size={20} color={COLORS.primary} strokeWidth={2.2} />
+            <Text style={styles.travelToolLabel}>Flights</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.travelToolCard}
+            onPress={() => router.push('/profile/hotels' as any)}
+          >
+            <Hotel size={20} color={COLORS.primary} strokeWidth={2.2} />
+            <Text style={styles.travelToolLabel}>Hotels</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Content */}
       {error ? (
         renderErrorState()
@@ -129,6 +149,37 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
     backgroundColor: COLORS.background,
+  },
+  travelToolsSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  travelToolsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 10,
+  },
+  travelToolsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  travelToolCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  travelToolLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
   },
   listContent: {
     padding: 16,
