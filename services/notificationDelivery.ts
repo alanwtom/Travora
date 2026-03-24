@@ -5,18 +5,49 @@ import {
     NotificationPriority,
     NotificationStatus,
 } from '@/types/notifications';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-// Configure expo-notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+type ExpoNotifications = typeof import('expo-notifications');
+
+let notificationsModule: ExpoNotifications | null | undefined;
+let notificationsModuleFailed = false;
+
+/**
+ * expo-notifications throws on import in Expo Go on Android (SDK 53+).
+ * Load it only outside StoreClient, or after a failed load skip permanently.
+ */
+function getNotifications(): ExpoNotifications | null {
+  if (notificationsModuleFailed) {
+    return null;
+  }
+  if (notificationsModule !== undefined) {
+    return notificationsModule;
+  }
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    notificationsModule = null;
+    return null;
+  }
+  try {
+    notificationsModule = require('expo-notifications') as ExpoNotifications;
+  } catch {
+    notificationsModuleFailed = true;
+    notificationsModule = null;
+  }
+  return notificationsModule ?? null;
+}
+
+const initialNotifications = getNotifications();
+if (initialNotifications) {
+  initialNotifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * Notification Delivery Service
@@ -150,8 +181,15 @@ class NotificationDeliveryService {
    * Deliver push notification using Expo Notifications
    */
   private async deliverPushNotification(notification: Notification): Promise<void> {
+    const N = getNotifications();
+    if (!N) {
+      console.warn(
+        'Push not scheduled: expo-notifications is unavailable (e.g. Expo Go on Android). Use a development build for push.'
+      );
+      return;
+    }
     try {
-      await Notifications.scheduleNotificationAsync({
+      await N.scheduleNotificationAsync({
         content: {
           title: notification.title,
           body: notification.body,
@@ -159,8 +197,8 @@ class NotificationDeliveryService {
           sound: notification.priority === 'high' ? 'default' : undefined,
           priority:
             notification.priority === 'high'
-              ? Notifications.AndroidNotificationPriority.HIGH
-              : Notifications.AndroidNotificationPriority.DEFAULT,
+              ? N.AndroidNotificationPriority.HIGH
+              : N.AndroidNotificationPriority.DEFAULT,
         },
         trigger: null, // Show immediately
       });
@@ -286,11 +324,14 @@ class NotificationDeliveryService {
    * Request push notification permissions
    */
   async requestPushPermissions(): Promise<boolean> {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const N = getNotifications();
+    if (!N) return false;
+
+    const { status: existingStatus } = await N.getPermissionsAsync();
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await N.requestPermissionsAsync();
       finalStatus = status;
     }
 
@@ -301,13 +342,16 @@ class NotificationDeliveryService {
    * Get push notification token
    */
   async getPushToken(): Promise<string | undefined> {
+    const N = getNotifications();
+    if (!N) return undefined;
+
     const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
     if (!projectId) {
       console.error('EXPO_PUBLIC_PROJECT_ID not set');
       return undefined;
     }
 
-    const token = await Notifications.getExpoPushTokenAsync({ projectId });
+    const token = await N.getExpoPushTokenAsync({ projectId });
     return token.data;
   }
 
@@ -315,7 +359,10 @@ class NotificationDeliveryService {
    * Setup push notification listener
    */
   setupPushNotificationListener(callback: (notification: Notification) => void): void {
-    Notifications.addNotificationReceivedListener((notification) => {
+    const N = getNotifications();
+    if (!N) return;
+
+    N.addNotificationReceivedListener((notification) => {
       const { title, body, data } = notification.request.content;
       callback({
         id: data?.id || '',
@@ -338,7 +385,7 @@ class NotificationDeliveryService {
       } as Notification);
     });
 
-    Notifications.addNotificationResponseReceivedListener((response) => {
+    N.addNotificationResponseReceivedListener((response) => {
       // Handle notification tap
       const { data } = response.notification.request.content;
       console.log('Notification tapped:', data);
@@ -354,15 +401,21 @@ export const notificationDeliveryService = new NotificationDeliveryService();
  * Call this on app startup
  */
 export async function initializeNotificationDelivery(): Promise<void> {
-  const hasPermission = await notificationDeliveryService.requestPushPermissions();
-  if (!hasPermission) {
-    console.warn('Push notification permissions not granted');
-  }
+  if (!getNotifications()) {
+    console.warn(
+      'Notification delivery: push disabled in this environment (Expo Go on Android has no remote push). In-app/email handlers still run. Use a development build for full push support.'
+    );
+  } else {
+    const hasPermission = await notificationDeliveryService.requestPushPermissions();
+    if (!hasPermission) {
+      console.warn('Push notification permissions not granted');
+    }
 
-  const token = await notificationDeliveryService.getPushToken();
-  if (token) {
-    console.log('Push notification token:', token);
-    // Store token in user profile for later use
+    const token = await notificationDeliveryService.getPushToken();
+    if (token) {
+      console.log('Push notification token:', token);
+      // Store token in user profile for later use
+    }
   }
 
   // Subscribe to new notifications and queue them for delivery

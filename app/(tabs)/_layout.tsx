@@ -5,8 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Home, Compass, Plus, Bell, User } from 'lucide-react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
 import { COLORS } from '@/lib/constants';
+import { SwipeItineraryProvider } from '@/providers/SwipeItineraryProvider';
 
 function TabBarIcon(props: {
   name: 'Home' | 'Compass' | 'Bell' | 'User';
@@ -30,6 +30,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <SwipeItineraryProvider>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.accent,
@@ -78,6 +79,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="discover-itinerary"
+        options={{
+          href: null,
+          title: 'Itinerary',
+        }}
+      />
+      <Tabs.Screen
         name="upload"
         options={{
           title: '',
@@ -114,6 +122,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </SwipeItineraryProvider>
   );
 }
 
