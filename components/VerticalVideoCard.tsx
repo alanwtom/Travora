@@ -2,9 +2,9 @@ import { useFollow } from '@/hooks/useFollow';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { toggleLike } from '@/services/likes';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
-import { VideoWithProfile } from '@/types/database';
 import * as Icons from 'lucide-react-native';
 import { Video } from 'expo-av';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -26,7 +26,7 @@ import { ReviewsModal } from './ReviewsModal';
 import { ReviewSubmitModal } from './ReviewSubmitModal';
 
 type Props = {
-  video: VideoWithProfile;
+  video: PersonalizedFeedVideo;
   isActive: boolean;
 };
 

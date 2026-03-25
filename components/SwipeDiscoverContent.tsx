@@ -2,8 +2,8 @@ import { SwipeVideoDeck } from '@/components/SwipeVideoDeck';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { useSwipeItinerary } from '@/providers/SwipeItineraryProvider';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { recordSwipe, removeDislikedVideo, removeSwipe, saveDislikedVideo } from '@/services/swipes';
-import { VideoWithProfile } from '@/types/database';
 import { useRouter } from 'expo-router';
 import * as Icons from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -19,7 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type SwipeDiscoverContentProps = {
-  videos: VideoWithProfile[];
+  videos: PersonalizedFeedVideo[];
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
@@ -51,7 +51,7 @@ export function SwipeDiscoverContent({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastAction, setLastAction] = useState<{
     type: 'like' | 'dislike';
-    video: VideoWithProfile;
+    video: PersonalizedFeedVideo;
   } | null>(null);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function SwipeDiscoverContent({
   const next = videos[currentIndex + 1];
 
   const completeSwipe = useCallback(
-    (direction: 'like' | 'dislike', video: VideoWithProfile) => {
+    (direction: 'like' | 'dislike', video: PersonalizedFeedVideo) => {
       if (direction === 'like') {
         addToItinerary(video);
         if (user?.id) {

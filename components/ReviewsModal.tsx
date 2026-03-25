@@ -1,5 +1,6 @@
 import { COLORS } from '@/lib/constants';
 import { getVideoReviews, voteReviewHelpfulness, removeReviewHelpfulnessVote, SortBy, deleteReview } from '@/services/reviews';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { VideoWithProfile, ReviewWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
@@ -19,7 +20,7 @@ import {
 
 type Props = {
   visible: boolean;
-  video: VideoWithProfile;
+  video: VideoWithProfile | PersonalizedFeedVideo;
   userId?: string;
   onClose: () => void;
 };

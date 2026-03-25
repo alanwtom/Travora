@@ -1,6 +1,6 @@
 import { COLORS } from '@/lib/constants';
 import { useSwipeItinerary } from '@/providers/SwipeItineraryProvider';
-import { VideoWithProfile } from '@/types/database';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { useRouter } from 'expo-router';
 import { Heart, Trash2 } from 'lucide-react-native';
 import React from 'react';
@@ -24,7 +24,7 @@ export default function DiscoverItineraryScreen() {
     router.push({ pathname: '/video/[id]', params: { id } } as any);
   };
 
-  const confirmRemove = (video: VideoWithProfile) => {
+  const confirmRemove = (video: PersonalizedFeedVideo) => {
     Alert.alert('Remove from itinerary?', video.title || 'This video will be removed from your saved list.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -35,7 +35,7 @@ export default function DiscoverItineraryScreen() {
     ]);
   };
 
-  const renderItem = ({ item }: { item: VideoWithProfile }) => (
+  const renderItem = ({ item }: { item: PersonalizedFeedVideo }) => (
     <TouchableOpacity style={styles.row} onPress={() => openVideo(item.id)} activeOpacity={0.85}>
       {item.thumbnail_url ? (
         <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />

@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import { VideoWithProfile } from '@/types/database';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import * as Icons from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
@@ -20,8 +20,8 @@ const THRESHOLD = SCREEN_W * 0.22;
 const MAX_ROTATE = 14;
 
 type Props = {
-  current: VideoWithProfile;
-  next: VideoWithProfile | undefined;
+  current: PersonalizedFeedVideo;
+  next: PersonalizedFeedVideo | undefined;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
 };

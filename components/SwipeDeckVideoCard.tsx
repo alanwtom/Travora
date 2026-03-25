@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import { VideoWithProfile } from '@/types/database';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { Video } from 'expo-av';
 import * as Icons from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -16,7 +16,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 const { width } = Dimensions.get('window');
 
 type Props = {
-  video: VideoWithProfile;
+  video: PersonalizedFeedVideo;
   isActive: boolean;
   dimmed?: boolean;
 };

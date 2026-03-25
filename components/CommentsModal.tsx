@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { addComment, getCommentReplies, getVideoComments, toggleCommentLike } from '@/services/comments';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
 import * as Icons from 'lucide-react-native';
@@ -17,7 +18,7 @@ import {
 
 type Props = {
   visible: boolean;
-  video: VideoWithProfile;
+  video: VideoWithProfile | PersonalizedFeedVideo;
   userId?: string;
   onClose: () => void;
 };

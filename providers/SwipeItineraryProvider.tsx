@@ -1,4 +1,4 @@
-import { VideoWithProfile } from '@/types/database';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,
@@ -12,9 +12,9 @@ import React, {
 const ITINERARY_STORAGE_KEY = 'travora:swipe_itinerary_v1';
 
 type SwipeItineraryContextValue = {
-  itinerary: VideoWithProfile[];
+  itinerary: PersonalizedFeedVideo[];
   hydrated: boolean;
-  addToItinerary: (video: VideoWithProfile) => void;
+  addToItinerary: (video: PersonalizedFeedVideo) => void;
   removeFromItineraryById: (videoId: string) => void;
   clearItinerary: () => void;
 };
@@ -22,7 +22,7 @@ type SwipeItineraryContextValue = {
 const SwipeItineraryContext = createContext<SwipeItineraryContextValue | null>(null);
 
 export function SwipeItineraryProvider({ children }: { children: React.ReactNode }) {
-  const [itinerary, setItinerary] = useState<VideoWithProfile[]>([]);
+  const [itinerary, setItinerary] = useState<PersonalizedFeedVideo[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function SwipeItineraryProvider({ children }: { children: React.ReactNode
         const raw = await AsyncStorage.getItem(ITINERARY_STORAGE_KEY);
         if (cancelled) return;
         if (raw) {
-          const parsed = JSON.parse(raw) as VideoWithProfile[];
+          const parsed = JSON.parse(raw) as PersonalizedFeedVideo[];
           if (Array.isArray(parsed)) {
             setItinerary(parsed);
           }
@@ -53,7 +53,7 @@ export function SwipeItineraryProvider({ children }: { children: React.ReactNode
     AsyncStorage.setItem(ITINERARY_STORAGE_KEY, JSON.stringify(itinerary)).catch(() => {});
   }, [itinerary, hydrated]);
 
-  const addToItinerary = useCallback((video: VideoWithProfile) => {
+  const addToItinerary = useCallback((video: PersonalizedFeedVideo) => {
     setItinerary((prev) => {
       if (prev.some((v) => v.id === video.id)) return prev;
       return [...prev, video];

@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { submitReview, updateReview } from '@/services/reviews';
 import { VideoWithProfile, ReviewWithProfile } from '@/types/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -16,7 +17,7 @@ import {
 
 type Props = {
   visible: boolean;
-  video: VideoWithProfile;
+  video: VideoWithProfile | PersonalizedFeedVideo;
   userId?: string;
   initialReview?: ReviewWithProfile | null;
   onClose: () => void;

@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants';
-import { VideoWithProfile } from '@/types/database';
+import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalVideoCard } from './VerticalVideoCard';
 
 type Props = {
-  videos: VideoWithProfile[];
+  videos: PersonalizedFeedVideo[];
   isLoading: boolean;
   isRefreshing: boolean;
   onLoadMore: () => void;
@@ -56,7 +56,7 @@ export function VerticalVideoFeed({
   }
 
   const renderVideoItem = useCallback(
-    ({ item }: { item: VideoWithProfile }) => (
+    ({ item }: { item: PersonalizedFeedVideo }) => (
       <VerticalVideoCard
         video={item}
         isActive={activeVideoId === item.id}
