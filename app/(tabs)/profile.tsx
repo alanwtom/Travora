@@ -151,6 +151,16 @@ export default function ProfileScreen() {
               <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
             </TouchableOpacity>
 
+            {/* Notification Settings Button */}
+            <TouchableOpacity
+              style={styles.itinerariesButton}
+              onPress={() => router.push('/settings/notifications' as any)}
+            >
+              <Icons.Bell size={20} color={COLORS.primary} strokeWidth={2} />
+              <Text style={styles.itinerariesButtonText}>Notification Settings</Text>
+              <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+            </TouchableOpacity>
+
             {/* Action Buttons */}
             <View style={styles.actions}>
               <TouchableOpacity
