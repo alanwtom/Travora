@@ -4,22 +4,16 @@
  * Shows social activity from your network:
  * - Videos from people you follow
  * - Comments on your videos
- * - Itinerary collaboration invitations
  */
 
 import { Text, useThemeColor } from '@/components/Themed';
 import { useActivityFeed } from '@/hooks/useActivityFeed';
-import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/providers/AuthProvider';
 import { ActivityItem } from '@/services/profiles';
-import { acceptItineraryInvitation, declineItineraryInvitation } from '@/services/collaborators';
-import { Notification } from '@/types/notifications';
-import * as Icons from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ActivityIndicator,
@@ -106,79 +100,9 @@ function ActivityRow({
   );
 }
 
-function NotificationRow({
-  notification,
-  onAccept,
-  onDecline,
-}: {
-  notification: Notification;
-  onAccept: (itineraryId: string, role: string) => void;
-  onDecline: (itineraryId: string) => void;
-}) {
-  const textColor = useThemeColor({}, 'text');
-  const textMutedColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'text');
-  const surfaceColor = useThemeColor({ light: '#F3F4F6', dark: '#1C1C1E' }, 'background');
-  const primaryColor = useThemeColor({}, 'tint');
-  const borderColor = useThemeColor({ light: '#E5E5E5', dark: '#38383A' }, 'text');
-
-  // Check if this is an itinerary invite
-  const isItineraryInvite = notification.category === 'social' &&
-    notification.data?.itineraryId;
-
-  const handleAccept = () => {
-    if (isItineraryInvite && notification.data) {
-      onAccept(notification.data.itineraryId, notification.data.role);
-    }
-  };
-
-  const handleDecline = () => {
-    if (isItineraryInvite && notification.data) {
-      onDecline(notification.data.itineraryId);
-    }
-  };
-
-  return (
-    <View style={[styles.row, { borderBottomColor: borderColor }]}>
-      <View style={[styles.avatar, styles.notificationIcon, { backgroundColor: surfaceColor }]}>
-        {isItineraryInvite ? (
-          <Icons.Users size={24} color={primaryColor} />
-        ) : (
-          <Icons.Bell size={24} color={textMutedColor} />
-        )}
-      </View>
-      <View style={styles.content}>
-        <Text style={[styles.text, { color: textColor }]} numberOfLines={3}>
-          <Text style={[styles.name, { color: textColor }]}>{notification.title}</Text>
-        </Text>
-        <Text style={[styles.comment, { color: textMutedColor }]} numberOfLines={2}>
-          {notification.body}
-        </Text>
-        <Text style={[styles.time, { color: textMutedColor }]}>{formatTimeAgo(notification.created_at)}</Text>
-        {isItineraryInvite && (
-          <View style={styles.inviteActions}>
-            <TouchableOpacity
-              style={[styles.inviteButton, styles.acceptButton, { backgroundColor: primaryColor }]}
-              onPress={handleAccept}
-            >
-              <Text style={styles.acceptButtonText}>Accept</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.inviteButton, styles.declineButton, { borderColor: borderColor }]}
-              onPress={handleDecline}
-            >
-              <Text style={[styles.declineButtonText, { color: textMutedColor }]}>Decline</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
-
 export default function ActivityScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
 
   const textColor = useThemeColor({}, 'text');
   const tintColor = useThemeColor({}, 'tint');
@@ -190,70 +114,16 @@ export default function ActivityScreen() {
     isLoading: isActivityLoading,
     isRefreshing: isActivityRefreshing,
     error: activityError,
-    hasMore: hasMoreActivities,
+    hasMore,
     loadMore,
-    refresh: refreshActivities,
+    refresh,
   } = useActivityFeed(user?.id);
-
-  const {
-    notifications,
-    markAsRead,
-    loadNotifications,
-    loading: notificationsLoading,
-  } = useNotifications();
-
-  // Combine activities and notifications into a single feed
-  // Activities don't have a direct notification equivalent, so we keep them separate
-  const feedItems: Array<{ type: 'activity' | 'notification'; id: string; data: any }> = [
-    ...activities.map(a => ({ type: 'activity' as const, id: a.id, data: a })),
-    ...notifications.map(n => ({ type: 'notification' as const, id: n.id, data: n })),
-  ].sort((a, b) => {
-    const aDate = a.type === 'activity' ? a.data.created_at : a.data.created_at;
-    const bDate = b.type === 'notification' ? b.data.created_at : b.data.created_at;
-    return new Date(bDate).getTime() - new Date(aDate).getTime();
-  });
 
   const handlePress = (item: ActivityItem) => {
     router.push({
       pathname: '/video/[id]',
       params: { id: item.video_id },
     } as any);
-  };
-
-  const handleAcceptInvitation = async (itineraryId: string, role: string) => {
-    if (!user?.id) return;
-
-    try {
-      await acceptItineraryInvitation(itineraryId, user.id);
-      // Navigate to itinerary detail page
-      // For now, just show an alert since the itinerary detail page doesn't exist yet
-      Alert.alert(
-        'Invitation Accepted',
-        `You now have ${role} access to this itinerary.`
-      );
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to accept invitation');
-    }
-  };
-
-  const handleDeclineInvitation = async (itineraryId: string) => {
-    if (!user?.id) return;
-
-    try {
-      await declineItineraryInvitation(itineraryId, user.id);
-      loadNotifications(); // Refresh notifications
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to decline invitation');
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([
-      refreshActivities(),
-      loadNotifications(),
-    ]);
-    setRefreshing(false);
   };
 
   if (!user) {
@@ -264,10 +134,9 @@ export default function ActivityScreen() {
     );
   }
 
-  const isLoading = isActivityLoading || notificationsLoading || refreshing;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
+      {/* Activity Feed */}
       <View style={styles.contentContainer}>
         {activityError && (
           <View style={[styles.errorBanner, { backgroundColor: '#EF444420' }]}>
@@ -275,31 +144,20 @@ export default function ActivityScreen() {
           </View>
         )}
         <FlatList
-          data={feedItems}
-          keyExtractor={(item) => `${item.type}-${item.id}`}
-          renderItem={({ item }) =>
-            item.type === 'activity' ? (
-              <ActivityRow
-                item={item.data}
-                onPress={() => handlePress(item.data)}
-              />
-            ) : (
-              <NotificationRow
-                notification={item.data}
-                onAccept={handleAcceptInvitation}
-                onDecline={handleDeclineInvitation}
-              />
-            )
-          }
+          data={activities}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <ActivityRow item={item} onPress={() => handlePress(item)} />
+          )}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            <RefreshControl refreshing={isActivityRefreshing} onRefresh={refresh} />
           }
           onEndReached={() => {
-            if (hasMoreActivities && !isActivityLoading) loadMore();
+            if (hasMore && !isActivityLoading) loadMore();
           }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
-            !isLoading ? (
+            !isActivityLoading ? (
               <View style={styles.empty}>
                 <Ionicons name="people-outline" size={48} color={borderColor} />
                 <Text style={[styles.emptyText, { color: textColor }]}>No activity yet</Text>
@@ -310,7 +168,7 @@ export default function ActivityScreen() {
             ) : null
           }
           ListFooterComponent={
-            isLoading && feedItems.length > 0 ? (
+            isActivityLoading && activities.length > 0 ? (
               <View style={styles.footer}>
                 <ActivityIndicator size="small" color={tintColor} />
               </View>
@@ -403,37 +261,5 @@ const styles = StyleSheet.create({
   footer: {
     padding: 16,
     alignItems: 'center',
-  },
-  notificationIcon: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inviteActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  inviteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  acceptButton: {
-    // backgroundColor is set dynamically via style prop in JSX
-  },
-  acceptButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  declineButton: {
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  declineButtonText: {
-    fontWeight: '600',
-    fontSize: 14,
   },
 });
