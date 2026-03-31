@@ -41,13 +41,20 @@ export type FlightData = {
   flight_number: string;
   departure_time: string;
   arrival_time: string;
-  price: number;
+  estimated_price: number;
   currency: string;
 };
 
 export type FlightSearchResponse = {
   flights: FlightData[];
-  next_cursor?: string;
+  next_cursor: string | null;
+  pagination: {
+    cursor: string | null;
+    next_cursor: string | null;
+    limit: number;
+    total: number | null;
+  };
+  source: 'api' | 'cache' | 'fallback';
 };
 
 export type CachedFlightSearch = {

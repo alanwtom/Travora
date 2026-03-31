@@ -152,6 +152,7 @@ export type Database = {
           destination: string
           duration_days: number
           end_date: string | null
+          estimated_flight_price: number | null
           generated_by: string
           generation_time_ms: number | null
           id: string
@@ -169,6 +170,7 @@ export type Database = {
           destination: string
           duration_days: number
           end_date?: string | null
+          estimated_flight_price?: number | null
           generated_by?: string
           generation_time_ms?: number | null
           id?: string

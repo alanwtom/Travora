@@ -64,7 +64,7 @@ export default function FlightsScreen() {
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <Text style={styles.airline}>{item.airline}</Text>
-        <Text style={styles.price}>${item.price} {item.currency}</Text>
+        <Text style={styles.price}>${item.estimated_price} {item.currency}</Text>
       </View>
       <Text style={styles.flightNumber}>{item.flight_number}</Text>
       <Text style={styles.routeText}>
@@ -268,7 +268,19 @@ const styles = StyleSheet.create({
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   airline: { color: COLORS.text, fontWeight: '700', fontSize: 16 },
+  flightNumber: { color: COLORS.textMuted, marginTop: 4, fontSize: 12, fontWeight: '600' },
   price: { color: COLORS.primary, fontWeight: '700', fontSize: 18 },
   routeText: { color: COLORS.text, fontWeight: '600', marginTop: 8 },
   metaText: { color: COLORS.textMuted, marginTop: 4 },
+  loadMoreButton: {
+    marginTop: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loadMoreText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

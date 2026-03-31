@@ -1,7 +1,7 @@
 import type {
-  LocationWithCoordinates,
-  ItineraryPreferences,
-  ItineraryDay,
+    ItineraryDay,
+    ItineraryPreferences,
+    LocationWithCoordinates,
 } from '@/types/database';
 
 // LLM provider configuration
@@ -246,7 +246,7 @@ function getLLMConfig(): LLMConfig {
         : provider === 'anthropic'
         ? 'claude-3-5-sonnet-20241022'
         : provider === 'gemini'
-        ? 'gemini-2.0-flash-exp'
+        ? 'gemini-2.5-flash' // updated to supported model
         : 'gpt-4o'),
   };
 }
@@ -345,7 +345,7 @@ async function callGemini(config: LLMConfig, prompt: string): Promise<string> {
   }
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-2.0-flash-exp'}:generateContent?key=${config.apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`,
     {
       method: 'POST',
       headers: {

@@ -16,14 +16,14 @@ export function useFlights(): UseFlightsReturn {
   const [flights, setFlights] = useState<FlightData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | undefined>();
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [currentParams, setCurrentParams] = useState<FlightSearchParams | null>(null);
 
   const search = useCallback(async (params: Omit<FlightSearchParams, 'cursor'>) => {
     setLoading(true);
     setError(null);
     setFlights([]);
-    setNextCursor(undefined);
+    setNextCursor(null);
 
     const searchParams: FlightSearchParams = { ...params };
 
@@ -67,7 +67,7 @@ export function useFlights(): UseFlightsReturn {
     setFlights([]);
     setLoading(false);
     setError(null);
-    setNextCursor(undefined);
+    setNextCursor(null);
     setCurrentParams(null);
   }, []);
 
@@ -75,7 +75,7 @@ export function useFlights(): UseFlightsReturn {
     flights,
     loading,
     error,
-    hasMore: !!nextCursor,
+    hasMore: Boolean(nextCursor),
     loadMore,
     search,
     reset,
