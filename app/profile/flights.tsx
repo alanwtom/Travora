@@ -1,9 +1,10 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BackButton } from '@/components/BackButton';
 import { COLORS } from '@/lib/constants';
+import { searchGoogleFlights, SerpApiFlightOption } from '@/services/serpapiFlights';
 import { useRouter } from 'expo-router';
 import { Plane, Search } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,55 +19,7 @@ import {
   View,
 } from 'react-native';
 
-type FlightOption = {
-  id: string;
-  airline: string;
-  from: string;
-  to: string;
-  departAt: string;
-  arriveAt: string;
-  duration: string;
-  className: 'Economy' | 'Premium Economy' | 'Business';
-  price: number;
-};
-
-const DUMMY_FLIGHTS: FlightOption[] = [
-  {
-    id: 'f-1',
-    airline: 'Sky Pacific',
-    from: 'SFO',
-    to: 'NRT',
-    departAt: '08:20 AM',
-    arriveAt: '12:40 PM',
-    duration: '11h 20m',
-    className: 'Economy',
-    price: 629,
-  },
-  {
-    id: 'f-2',
-    airline: 'Northwind Air',
-    from: 'SFO',
-    to: 'NRT',
-    departAt: '03:10 PM',
-    arriveAt: '07:25 PM',
-    duration: '11h 15m',
-    className: 'Premium Economy',
-    price: 899,
-  },
-  {
-    id: 'f-3',
-    airline: 'AeroOne',
-    from: 'SFO',
-    to: 'NRT',
-    departAt: '10:55 PM',
-    arriveAt: '02:30 AM',
-    duration: '10h 35m',
-    className: 'Business',
-    price: 1499,
-  },
-];
-
-const TRAVEL_CLASSES: Array<FlightOption['className']> = ['Economy', 'Premium Economy', 'Business'];
+const TRAVEL_CLASSES: Array<SerpApiFlightOption['className']> = ['Economy', 'Premium Economy', 'Business'];
 
 export default function FlightsScreen() {
   const router = useRouter();
@@ -74,7 +27,7 @@ export default function FlightsScreen() {
   const [to, setTo] = useState('');
   const [isRoundTrip, setIsRoundTrip] = useState(true);
   const [travelers, setTravelers] = useState(1);
-  const [selectedClass, setSelectedClass] = useState<FlightOption['className']>('Economy');
+  const [selectedClass, setSelectedClass] = useState<SerpApiFlightOption['className']>('Economy');
   const [departDate, setDepartDate] = useState(new Date());
   const [returnDate, setReturnDate] = useState(new Date(Date.now() + 4 * 24 * 60 * 60 * 1000));
   const [departTime, setDepartTime] = useState(new Date());
@@ -82,15 +35,8 @@ export default function FlightsScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  const filteredFlights = useMemo(() => {
-    return DUMMY_FLIGHTS.filter((flight) => {
-      const validClass = flight.className === selectedClass;
-      const validFrom = from.trim().length === 0 || flight.from.toLowerCase().includes(from.toLowerCase());
-      const validTo = to.trim().length === 0 || flight.to.toLowerCase().includes(to.toLowerCase());
-      return validClass && validFrom && validTo;
-    });
-  }, [from, to, selectedClass]);
+  const [results, setResults] = useState<SerpApiFlightOption[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const formatDate = (value: Date) =>
     value.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -121,10 +67,28 @@ export default function FlightsScreen() {
     setDepartTime(selected);
   };
 
-  const runSearch = () => {
+  const runSearch = async () => {
     setHasSearched(true);
+    setSearchError(null);
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 500);
+    setResults([]);
+    try {
+      const flights = await searchGoogleFlights({
+        departureId: from,
+        arrivalId: to,
+        outboundDate: departDate,
+        returnDate: isRoundTrip ? returnDate : null,
+        roundTrip: isRoundTrip,
+        adults: travelers,
+        travelClass: selectedClass,
+      });
+      setResults(flights);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Something went wrong. Try again.';
+      setSearchError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -144,7 +108,7 @@ export default function FlightsScreen() {
       </View>
 
       <FlatList
-        data={hasSearched ? filteredFlights : []}
+        data={hasSearched ? results : []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         renderItem={({ item }) => (
@@ -157,7 +121,9 @@ export default function FlightsScreen() {
               {item.from} {'->'} {item.to}
             </Text>
             <Text style={styles.metaText}>
-              {item.departAt} - {item.arriveAt} ({item.duration})
+              {item.departAt} – {item.arriveAt}
+              {item.stops > 0 ? ` · ${item.stops} stop${item.stops > 1 ? 's' : ''}` : ' · Nonstop'} ·{' '}
+              {item.duration}
             </Text>
             <Text style={styles.metaText}>
               {item.className} · {travelers} traveler{travelers > 1 ? 's' : ''}
@@ -169,14 +135,14 @@ export default function FlightsScreen() {
             <Text style={styles.sectionTitle}>Flights</Text>
             <TextInput
               style={styles.input}
-              placeholder="Starting destination (e.g. SFO)"
+              placeholder="Origin airport code (e.g. SFO)"
               placeholderTextColor={COLORS.textMuted}
               value={from}
               onChangeText={setFrom}
             />
             <TextInput
               style={styles.input}
-              placeholder="Ending destination (e.g. NRT)"
+              placeholder="Destination airport code (e.g. NRT)"
               placeholderTextColor={COLORS.textMuted}
               value={to}
               onChangeText={setTo}
@@ -250,12 +216,16 @@ export default function FlightsScreen() {
                 <ActivityIndicator size="small" color={COLORS.primary} />
                 <Text style={styles.stateText}>Loading flight options...</Text>
               </>
+            ) : searchError ? (
+              <>
+                <Text style={[styles.stateText, styles.stateError]}>{searchError}</Text>
+              </>
             ) : (
               <>
                 <Plane size={36} color={COLORS.textMuted} />
                 <Text style={styles.stateText}>
                   {hasSearched
-                    ? 'No flights match your filters.'
+                    ? 'No flights found for this search.'
                     : 'Search by route, date, class, and travelers.'}
                 </Text>
               </>
@@ -363,6 +333,7 @@ const styles = StyleSheet.create({
   searchButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   stateWrap: { alignItems: 'center', paddingVertical: 36, gap: 10 },
   stateText: { color: COLORS.textMuted, textAlign: 'center' },
+  stateError: { color: COLORS.error, paddingHorizontal: 12 },
   card: {
     marginTop: 12,
     borderWidth: 1,

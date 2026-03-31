@@ -16,42 +16,44 @@ type HotelDetail = {
   amenities: string[];
 };
 
-const DUMMY_HOTELS: HotelDetail[] = [
-  {
-    id: 'h-1',
-    name: 'Harbor View Suites',
-    destination: 'Tokyo',
-    stars: 5,
-    pricePerNight: 249,
-    thumbnail: 'https://picsum.photos/seed/hotel-1/900/600',
-    description: 'Modern suites near city-center nightlife and transit lines.',
-    amenities: ['Pool', 'Spa', 'Free WiFi', 'Breakfast'],
-  },
-  {
-    id: 'h-2',
-    name: 'Sakura Stay',
-    destination: 'Tokyo',
-    stars: 4,
-    pricePerNight: 169,
-    thumbnail: 'https://picsum.photos/seed/hotel-2/900/600',
-    description: 'Comfort-focused stay with family rooms and cozy lounge.',
-    amenities: ['Gym', 'Breakfast', 'Airport Shuttle'],
-  },
-  {
-    id: 'h-3',
-    name: 'Shinjuku Central Inn',
-    destination: 'Tokyo',
-    stars: 3,
-    pricePerNight: 112,
-    thumbnail: 'https://picsum.photos/seed/hotel-3/900/600',
-    description: 'Budget-friendly rooms with easy train access.',
-    amenities: ['Free WiFi', 'Laundry'],
-  },
-];
-
 export default function HotelDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const hotel = DUMMY_HOTELS.find((item) => item.id === id) ?? DUMMY_HOTELS[0];
+  const {
+    id,
+    name,
+    destination,
+    stars,
+    pricePerNight,
+    thumbnail,
+    description,
+    amenities,
+  } = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+    destination?: string;
+    stars?: string;
+    pricePerNight?: string;
+    thumbnail?: string;
+    description?: string;
+    amenities?: string;
+  }>();
+
+  const parsedStars = stars ? Number.parseInt(stars, 10) : 0;
+  const parsedPrice = pricePerNight ? Number.parseFloat(pricePerNight) : 0;
+  const parsedAmenities =
+    typeof amenities === 'string' && amenities.length > 0
+      ? amenities.split('||').filter(Boolean)
+      : [];
+
+  const hotel: HotelDetail = {
+    id: id ?? 'unknown',
+    name: name ?? 'Hotel details',
+    destination: destination ?? 'Destination',
+    stars: Number.isFinite(parsedStars) ? parsedStars : 0,
+    pricePerNight: Number.isFinite(parsedPrice) ? parsedPrice : 0,
+    thumbnail: thumbnail ?? '',
+    description: description ?? '',
+    amenities: parsedAmenities,
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,7 +71,7 @@ export default function HotelDetailScreen() {
         </View>
         <View style={styles.infoRow}>
           <Users size={14} color={COLORS.textMuted} />
-          <Text style={styles.infoText}>Dummy capacity: up to 4 guests per room</Text>
+          <Text style={styles.infoText}>Capacity depends on the listing.</Text>
         </View>
         <View style={styles.starRow}>
           {Array.from({ length: hotel.stars }).map((_, index) => (

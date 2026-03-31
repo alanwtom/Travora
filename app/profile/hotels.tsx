@@ -1,9 +1,10 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BackButton } from '@/components/BackButton';
 import { COLORS } from '@/lib/constants';
+import { searchGoogleHotels, SerpApiHotelOption } from '@/services/serpapiHotels';
 import { useRouter } from 'expo-router';
 import { Hotel, Search, Star } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,50 +19,6 @@ import {
   View,
 } from 'react-native';
 
-type HotelOption = {
-  id: string;
-  name: string;
-  destination: string;
-  stars: number;
-  pricePerNight: number;
-  thumbnail: string;
-  description: string;
-  amenities: string[];
-};
-
-const DUMMY_HOTELS: HotelOption[] = [
-  {
-    id: 'h-1',
-    name: 'Harbor View Suites',
-    destination: 'Tokyo',
-    stars: 5,
-    pricePerNight: 249,
-    thumbnail: 'https://picsum.photos/seed/hotel-1/900/600',
-    description: 'Modern suites near city-center nightlife and transit lines.',
-    amenities: ['Pool', 'Spa', 'Free WiFi', 'Breakfast'],
-  },
-  {
-    id: 'h-2',
-    name: 'Sakura Stay',
-    destination: 'Tokyo',
-    stars: 4,
-    pricePerNight: 169,
-    thumbnail: 'https://picsum.photos/seed/hotel-2/900/600',
-    description: 'Comfort-focused stay with family rooms and cozy lounge.',
-    amenities: ['Gym', 'Breakfast', 'Airport Shuttle'],
-  },
-  {
-    id: 'h-3',
-    name: 'Shinjuku Central Inn',
-    destination: 'Tokyo',
-    stars: 3,
-    pricePerNight: 112,
-    thumbnail: 'https://picsum.photos/seed/hotel-3/900/600',
-    description: 'Budget-friendly rooms with easy train access.',
-    amenities: ['Free WiFi', 'Laundry'],
-  },
-];
-
 export default function HotelsScreen() {
   const router = useRouter();
   const [destination, setDestination] = useState('');
@@ -72,15 +29,8 @@ export default function HotelsScreen() {
   const [showDatePicker, setShowDatePicker] = useState<null | 'checkIn' | 'checkOut'>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  const filteredHotels = useMemo(() => {
-    return DUMMY_HOTELS.filter((hotel) =>
-      destination.trim().length === 0
-        ? true
-        : hotel.destination.toLowerCase().includes(destination.toLowerCase()) ||
-          hotel.name.toLowerCase().includes(destination.toLowerCase()),
-    );
-  }, [destination]);
+  const [results, setResults] = useState<SerpApiHotelOption[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const formatDate = (value: Date) =>
     value.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -99,10 +49,25 @@ export default function HotelsScreen() {
     }
   };
 
-  const runSearch = () => {
+  const runSearch = async () => {
     setHasSearched(true);
+    setSearchError(null);
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 500);
+    setResults([]);
+    try {
+      const hotels = await searchGoogleHotels({
+        query: destination,
+        checkInDate,
+        checkOutDate,
+        adults: guests,
+      });
+      setResults(hotels);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Something went wrong. Try again.';
+      setSearchError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -122,14 +87,28 @@ export default function HotelsScreen() {
       </View>
 
       <FlatList
-        data={hasSearched ? filteredHotels : []}
+        data={hasSearched ? results : []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
             onPress={() =>
-              router.push({ pathname: '/profile/hotels/[id]', params: { id: item.id } } as any)
+              router.push(
+                {
+                  pathname: '/profile/hotels/[id]',
+                  params: {
+                    id: item.id,
+                    name: item.name,
+                    destination: item.destination,
+                    stars: String(item.stars),
+                    pricePerNight: String(item.pricePerNight),
+                    thumbnail: item.thumbnail,
+                    description: item.description,
+                    amenities: item.amenities.join('||'),
+                  },
+                } as any
+              )
             }
           >
             <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
@@ -213,6 +192,8 @@ export default function HotelsScreen() {
                 <ActivityIndicator size="small" color={COLORS.primary} />
                 <Text style={styles.stateText}>Loading hotel options...</Text>
               </>
+            ) : searchError ? (
+              <Text style={[styles.stateText, styles.stateError]}>{searchError}</Text>
             ) : (
               <>
                 <Hotel size={36} color={COLORS.textMuted} />
@@ -311,6 +292,7 @@ const styles = StyleSheet.create({
   searchButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   stateWrap: { alignItems: 'center', paddingVertical: 36, gap: 10 },
   stateText: { color: COLORS.textMuted, textAlign: 'center' },
+  stateError: { color: COLORS.error, paddingHorizontal: 12 },
   card: {
     marginTop: 12,
     borderWidth: 1,
