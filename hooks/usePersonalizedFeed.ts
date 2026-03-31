@@ -50,6 +50,7 @@ export function usePersonalizedFeed(
           updated_at: v.updated_at,
           media_type: v.media_type,
           score: v.score,
+          tags: v.tags ?? [],
           profiles: {
             username: v.profile_username,
             display_name: v.profile_username,

@@ -180,6 +180,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   };
 
   const timeAgo = getTimeAgo(video.created_at);
+  const tags = (video.tags ?? []).filter(Boolean);
 
   return (
     <View style={[styles.container, { height: availableHeight }]}>
@@ -316,6 +317,20 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             <View style={styles.locationRow}>
               <Icons.MapPin size={14} color="#FF3B30" strokeWidth={2.5} fill="rgba(255,59,48,0.2)" />
               <Text style={styles.location}>{video.location}</Text>
+            </View>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <View style={styles.tagsRow}>
+              {tags.slice(0, 3).map((tag) => (
+                <View key={tag} style={styles.tagChip}>
+                  <Text style={styles.tagText}>#{tag}</Text>
+                </View>
+              ))}
+              {tags.length > 3 && (
+                <Text style={styles.tagMore}>+{tags.length - 3}</Text>
+              )}
             </View>
           )}
         </View>
@@ -592,6 +607,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  tagChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(15,23,42,0.7)',
+  },
+  tagText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  tagMore: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
   },
   actionButton: {
     alignItems: 'center',
