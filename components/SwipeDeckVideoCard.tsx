@@ -130,6 +130,18 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
                 </Text>
               </View>
             ) : null}
+            {!!(video.tags && video.tags.length) && (
+              <View style={styles.tagsRow}>
+                {video.tags.slice(0, 3).map((tag) => (
+                  <View key={tag} style={styles.tagChip}>
+                    <Text style={styles.tagText}>#{tag}</Text>
+                  </View>
+                ))}
+                {video.tags.length > 3 && (
+                  <Text style={styles.tagMore}>+{video.tags.length - 3}</Text>
+                )}
+              </View>
+            )}
           </View>
           <TouchableOpacity style={styles.footerIconBtn} onPress={togglePlay}>
             {isPlaying ? (
@@ -253,5 +265,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 4,
+  },
+  tagChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 999,
+    backgroundColor: 'rgba(15,23,42,0.7)',
+  },
+  tagText: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  tagMore: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
   },
 });

@@ -2,9 +2,10 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { uploadThumbnail, uploadVideo } from '@/services/storage';
 import { createVideo } from '@/services/videos';
+import { ensureTags, setVideoTags } from '@/services/mediaTags';
 import * as ImagePicker from 'expo-image-picker';
 import { CheckCircle, Image as LucideImage, MapPin, UploadCloud, Video } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react'; // UPDATED: added useEffect, useRef
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +26,7 @@ export default function UploadScreen() {
   const [description, setDescription] = useState('');
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
+  const [tagsText, setTagsText] = useState('');
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -99,8 +101,8 @@ export default function UploadScreen() {
           : Promise.resolve(undefined),
       ]);
 
-      // Create video record in database
-      await createVideo({
+      // 1) Create video record in database
+      const video = await createVideo({
         user_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
@@ -110,6 +112,22 @@ export default function UploadScreen() {
         location: location.trim() || null,
       });
 
+      // 2) Parse and attach tags (best-effort; don't fail whole upload)
+      const tagNames = tagsText
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      if (video?.id && tagNames.length > 0) {
+        try {
+          const tags = await ensureTags(tagNames);
+          const tagIds = tags.map((t) => t.id);
+          await setVideoTags(video.id, tagIds);
+        } catch (tagErr) {
+          console.warn('Failed to save tags', tagErr);
+        }
+      }
+
       Alert.alert('Success', 'Your video has been uploaded!');
 
       // Reset form
@@ -117,6 +135,7 @@ export default function UploadScreen() {
       setDescription('');
       setCaption('');
       setLocation('');
+      setTagsText('');
       setVideoUri(null);
       setThumbnailUri(null);
     } catch (error: any) {
@@ -179,6 +198,13 @@ export default function UploadScreen() {
           placeholderTextColor={COLORS.textMuted}
           value={caption}
           onChangeText={setCaption}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Tags (comma separated, e.g. beach, food, nightlife)"
+          placeholderTextColor={COLORS.textMuted}
+          value={tagsText}
+          onChangeText={setTagsText}
         />
         {/* GPS ADDITION: modified location input with GPS button */}
         <View style={styles.locationInput}>
