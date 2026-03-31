@@ -2,6 +2,66 @@ import { FEED_PAGE_SIZE } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 import { Video, VideoInsert, VideoUpdate, VideoWithProfile } from '@/types/database';
 
+export async function getVideosByIds(
+  videoIds: string[],
+  userId?: string
+): Promise<VideoWithProfile[]> {
+  if (videoIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('videos')
+    .select(`
+      *,
+      profiles!videos_user_id_fkey(*),
+      like_count:likes(count),
+      comment_count:comments(count)
+    `)
+    .in('id', videoIds);
+
+  if (error) throw error;
+
+  // Transform the count aggregates and check if user liked each video
+  const videos = (data ?? []).map((video: any) => ({
+    ...video,
+    profiles: video.profiles,
+    like_count: video.like_count?.[0]?.count ?? 0,
+    comment_count: video.comment_count?.[0]?.count ?? 0,
+  }));
+
+  // If user is logged in, check which videos they've liked and saved
+  if (userId && videos.length > 0) {
+    const { data: likedData } = await supabase
+      .from('likes')
+      .select('video_id')
+      .eq('user_id', userId)
+      .in('video_id', videoIds);
+
+    const likedSet = new Set((likedData ?? []).map((l: any) => l.video_id));
+    
+    videos.forEach((v: any) => {
+      v.is_liked = likedSet.has(v.id);
+      v.is_saved = false; // Default to false until saves table is available
+    });
+
+    // Try to fetch saves, but don't fail if the table doesn't exist yet
+    try {
+      const { data: savedData } = await supabase
+        .from('saves')
+        .select('video_id')
+        .eq('user_id', userId)
+        .in('video_id', videoIds);
+
+      const savedSet = new Set((savedData ?? []).map((s: any) => s.video_id));
+      videos.forEach((v: any) => {
+        v.is_saved = savedSet.has(v.id);
+      });
+    } catch (saveError) {
+      // Saves table might not exist yet, ignore
+    }
+  }
+
+  return videos as VideoWithProfile[];
+}
 export async function getFeedVideos(
   page: number = 0,
   userId?: string
