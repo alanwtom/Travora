@@ -77,7 +77,10 @@ export default function ProfileScreen() {
         keyExtractor={(item) => item.id}
         numColumns={3}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.videoThumbnail}>
+          <TouchableOpacity
+            style={styles.videoThumbnail}
+            onPress={() => router.push({ pathname: '/video/[id]', params: { id: item.id } } as any)}
+          >
             {item.thumbnail_url ? (
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
             ) : (
