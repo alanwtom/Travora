@@ -1,10 +1,11 @@
 import { SearchBar } from '@/components/SearchBar';
+import { EscapeButton } from '@/components/EscapeButton';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProfileWithFollowStatus } from '@/services/profiles';
 import { COLORS } from '@/lib/constants';
 import { User, Users } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -94,6 +95,7 @@ function FollowerRow({
 export default function FollowersScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const {
     followers,
@@ -109,6 +111,15 @@ export default function FollowersScreen() {
     setSearchQuery(query);
   }, []);
 
+  const handleEscape = useCallback(() => {
+    if (!userId) return;
+    if (user?.id && userId === user.id) {
+      router.replace('/(tabs)/profile' as any);
+      return;
+    }
+    router.replace({ pathname: '/user/[userId]', params: { userId } } as any);
+  }, [router, user?.id, userId]);
+
   if (!userId) {
     return (
       <View style={styles.centered}>
@@ -119,6 +130,11 @@ export default function FollowersScreen() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerLeft: () => <EscapeButton onPress={handleEscape} />,
+        }}
+      />
       <View style={styles.searchContainer}>
         <SearchBar
           onSearch={handleSearch}
