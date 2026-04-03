@@ -608,7 +608,7 @@ export default function GenerateItineraryScreen() {
 
           {/* Travel Style */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Travel Style (Optional)</Text>
+            <Text style={styles.label}>Travel Style</Text>
             <View style={styles.segmentContainer}>
               {TRAVEL_STYLES.map((style) => (
                 <TouchableOpacity
@@ -634,7 +634,7 @@ export default function GenerateItineraryScreen() {
 
           {/* Budget Level */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Budget Level (Optional)</Text>
+            <Text style={styles.label}>Budget Level</Text>
             <View style={styles.segmentContainer}>
               {BUDGET_LEVELS.map((budget) => (
                 <TouchableOpacity
@@ -660,7 +660,7 @@ export default function GenerateItineraryScreen() {
 
           {/* Interests */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Special Interests (Optional)</Text>
+            <Text style={styles.label}>Special Interests</Text>
             <View style={styles.interestsContainer}>
               {INTEREST_OPTIONS.map((interest) => (
                 <TouchableOpacity
@@ -995,13 +995,14 @@ const styles = StyleSheet.create({
   },
   segmentContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   segmentButton: {
-    flex: 1,
     backgroundColor: COLORS.card,
     borderRadius: 8,
     paddingVertical: 10,
+    paddingHorizontal: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
