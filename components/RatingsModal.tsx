@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { useModalBackHandler } from '@/hooks/useModalBackHandler';
 import { getAverageRating, getUserRating, removeRating, submitRating } from '@/services/ratings';
 import { getUserReviewForVideo, getReviewStats } from '@/services/reviews';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
@@ -37,6 +38,8 @@ export function RatingsModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
+
+  useModalBackHandler(visible, onClose);
   const [reviewCount, setReviewCount] = useState(0);
   const [userHasReview, setUserHasReview] = useState(false);
 

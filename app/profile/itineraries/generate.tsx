@@ -1,10 +1,12 @@
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
-import type { ItineraryPreferences } from '@/types/database';
+import type { ItineraryPreferences, ItinerarySuggestion } from '@/types/database';
 import { useItineraryGeneration } from '@/hooks/useItineraryGeneration';
 import { useLikedLocations } from '@/hooks/useLikedLocations';
+import { useItinerarySuggestions } from '@/hooks/useItinerarySuggestions';
+import { ItinerarySuggestionCard } from '@/components/ItinerarySuggestionCard';
 import { BackButton } from '@/components/BackButton';
-import { Heart, Settings, MapPin, Search, Check, Plus, Minus, X, Wand2, ChevronDown, AlertTriangle, AlertCircle } from 'lucide-react-native';
+import { Heart, Settings, MapPin, Search, Check, Plus, Minus, X, Wand2, ChevronDown, ChevronRight, AlertTriangle, AlertCircle, Sparkles, Compass } from 'lucide-react-native';
 import { router } from 'expo-router';
 import React, { useState, useMemo } from 'react';
 import {
@@ -181,7 +183,10 @@ const POPULAR_DESTINATIONS = [
 export default function GenerateItineraryScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { locations, isLoading: loadingLocations } = useLikedLocations(user?.id);
+  const { locations, clusters, isLoading: loadingLocations } = useLikedLocations(user?.id);
+  const suggestions = useItinerarySuggestions(locations, clusters);
+  const hasSuggestions = suggestions.length > 0;
+  const [showCustomForm, setShowCustomForm] = useState(false);
   const {
     generate,
     itinerary,
@@ -434,6 +439,25 @@ export default function GenerateItineraryScreen() {
     }
   };
 
+  const handleSuggestionGenerate = async (suggestion: ItinerarySuggestion) => {
+    const preferences: ItineraryPreferences = {
+      destination: suggestion.destinationName,
+      durationDays: suggestion.recommendedDuration,
+      travelStyle: suggestion.inferredTravelStyle,
+      budgetLevel: suggestion.inferredBudgetLevel,
+      interests: suggestion.inferredInterests.length > 0 ? suggestion.inferredInterests : undefined,
+    };
+
+    const result = await generate(preferences);
+
+    if (result) {
+      router.push({
+        pathname: '/profile/itineraries/[id]',
+        params: { id: result.id },
+      });
+    }
+  };
+
   if (loadingLocations) {
     return (
       <View style={styles.loadingContainer}>
@@ -484,8 +508,58 @@ export default function GenerateItineraryScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        /* Generation Form */
         <>
+          {/* Section A: Smart Suggestions */}
+          <View style={styles.suggestionsSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Sparkles size={16} color={COLORS.accent} strokeWidth={2.5} />
+              <Text style={styles.sectionHeaderText}>Suggested Trips</Text>
+            </View>
+
+            {hasSuggestions ? (
+              suggestions.map((suggestion) => (
+                <ItinerarySuggestionCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  onGenerate={handleSuggestionGenerate}
+                  isGenerating={generating}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Compass size={32} color={COLORS.textMuted} strokeWidth={2} />
+                <Text style={styles.emptyStateText}>No suggestions yet</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Like videos from destinations you want to visit and we'll suggest trips for you.
+                </Text>
+                <TouchableOpacity
+                  style={styles.exploreButton}
+                  onPress={() => router.push('/explore')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.exploreButtonText}>Explore Videos</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Section B: Custom Itinerary (collapsible) */}
+          <TouchableOpacity
+            style={styles.customFormToggle}
+            onPress={() => setShowCustomForm(!showCustomForm)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.customFormToggleText}>Custom Itinerary</Text>
+            <ChevronRight
+              size={18}
+              color={COLORS.textMuted}
+              strokeWidth={2.5}
+              style={{ transform: [{ rotate: showCustomForm ? '90deg' : '0deg' }] }}
+            />
+          </TouchableOpacity>
+
+          {(showCustomForm || !hasSuggestions) && (
+            <>
           {/* Destination Dropdown */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Destination *</Text>
@@ -717,6 +791,8 @@ export default function GenerateItineraryScreen() {
             <Wand2 size={18} color="white" strokeWidth={2.5} />
             <Text style={styles.generateButtonText}>Generate Itinerary</Text>
           </TouchableOpacity>
+            </>
+          )}
         </>
       )}
     </ScrollView>
@@ -1096,5 +1172,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  // Smart suggestions section
+  suggestionsSection: {
+    marginBottom: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 10,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  emptyStateSubtext: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 24,
+  },
+  exploreButton: {
+    marginTop: 8,
+    backgroundColor: COLORS.accent,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  exploreButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+  },
+  // Custom form toggle
+  customFormToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  customFormToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textMuted,
   },
 });

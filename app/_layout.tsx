@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -26,10 +26,20 @@ function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const initialLoadDone = useRef(false);
 
+  // Handle auth state changes after initial load
+  // (index.tsx handles the initial redirect)
   useEffect(() => {
     if (isLoading) return;
 
+    // Skip the first auth resolution - let index.tsx handle it
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+      return;
+    }
+
+    // After initial load, handle auth state changes (e.g., sign out)
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {

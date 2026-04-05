@@ -96,11 +96,16 @@ export function useItineraryGeneration(
 
             setProgress(80);
 
-            // Get estimated flight price
-            const flightPrice = await getFlightPriceEstimate(
-              preferences.destination,
-              preferences.startDate ?? null
-            );
+            // Get estimated flight price (non-blocking - don't let failure kill generation)
+            let flightPrice: number | null = null;
+            try {
+              flightPrice = await getFlightPriceEstimate(
+                preferences.destination,
+                preferences.startDate ?? null
+              );
+            } catch (flightError) {
+              console.warn('Flight price estimation failed:', flightError);
+            }
 
             // Save LLM-generated itinerary
             resultItinerary = await saveItinerary({
@@ -136,11 +141,16 @@ export function useItineraryGeneration(
 
             setProgress(80);
 
-            // Get estimated flight price
-            const flightPrice = await getFlightPriceEstimate(
-              preferences.destination,
-              preferences.startDate ?? null
-            );
+            // Get estimated flight price (non-blocking)
+            let flightPrice: number | null = null;
+            try {
+              flightPrice = await getFlightPriceEstimate(
+                preferences.destination,
+                preferences.startDate ?? null
+              );
+            } catch (flightError) {
+              console.warn('Flight price estimation failed:', flightError);
+            }
 
             resultItinerary = await saveItinerary({
               ...ruleBasedResult,
@@ -162,10 +172,16 @@ export function useItineraryGeneration(
 
           setProgress(80);
 
-          const flightPrice = await getFlightPriceEstimate(
-            preferences.destination,
-            preferences.startDate ?? null
-          );
+          // Get estimated flight price (non-blocking)
+          let flightPrice: number | null = null;
+          try {
+            flightPrice = await getFlightPriceEstimate(
+              preferences.destination,
+              preferences.startDate ?? null
+            );
+          } catch (flightError) {
+            console.warn('Flight price estimation failed:', flightError);
+          }
 
           resultItinerary = await saveItinerary({
             ...ruleBasedResult,

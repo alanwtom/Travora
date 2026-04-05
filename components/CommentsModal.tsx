@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { useModalBackHandler } from '@/hooks/useModalBackHandler';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { addComment, getCommentReplies, getVideoComments, toggleCommentLike } from '@/services/comments';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
@@ -31,6 +32,8 @@ export function CommentsModal({ visible, video, userId, onClose }: Props) {
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<string>>(new Set());
+
+  useModalBackHandler(visible, onClose);
 
   useEffect(() => {
     if (visible) {

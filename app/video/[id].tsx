@@ -15,6 +15,7 @@ import {
   FlatList,
   Image,
   ListRenderItem,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -100,6 +101,19 @@ export default function VideoDetailScreen() {
     } catch (error) {
       // Silently ignore save errors (table may not exist yet)
       console.log('Save not available:', error);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!video) return;
+
+    try {
+      const username = video.profiles?.display_name || video.profiles?.username || 'a creator';
+      const title = video.title ? ` "${video.title}"` : '';
+      const message = `Check out${title} by ${username} on Travora! ${video.video_url}`;
+      await Share.share({ message });
+    } catch {
+      // Silently fail if share sheet is unavailable
     }
   };
 
@@ -594,7 +608,7 @@ export default function VideoDetailScreen() {
               {isSaved ? 'Saved' : 'Save'}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
             <Share2 size={24} color={COLORS.text} strokeWidth={2.5} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>

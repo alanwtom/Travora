@@ -14,6 +14,7 @@ import {
     Dimensions,
     Image,
     Platform,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -159,6 +160,17 @@ export function VerticalVideoCard({ video, isActive }: Props) {
       pathname: '/video/[id]',
       params: { id: video.id },
     });
+  };
+
+  const handleShare = async () => {
+    try {
+      const username = video.profiles?.display_name || video.profiles?.username || 'a creator';
+      const title = video.title ? ` "${video.title}"` : '';
+      const message = `Check out${title} by ${username} on Travora! ${video.video_url}`;
+      await Share.share({ message });
+    } catch {
+      // Silently fail if share sheet is unavailable
+    }
   };
 
   const handleCommentPress = () => {
@@ -385,7 +397,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleVideoPress}
+            onPress={handleShare}
             activeOpacity={0.7}
           >
             <Icons.Share2 size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />

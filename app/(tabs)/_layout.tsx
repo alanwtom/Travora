@@ -79,6 +79,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="itinerary"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="discover-itinerary"
         options={{
           href: null,

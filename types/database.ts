@@ -1102,3 +1102,15 @@ export type LocationCluster = {
   };
   locations: LocationWithCoordinates[];
 };
+
+export type ItinerarySuggestion = {
+  id: string;
+  destinationName: string;
+  locationCount: number;
+  locations: LocationWithCoordinates[];
+  center: { latitude: number; longitude: number };
+  inferredTravelStyle: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'mixed';
+  inferredBudgetLevel: 'budget' | 'moderate' | 'luxury';
+  recommendedDuration: number;
+  inferredInterests: string[];
+};
