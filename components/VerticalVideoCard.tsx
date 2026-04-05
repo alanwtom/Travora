@@ -14,17 +14,17 @@ import {
     Dimensions,
     Image,
     Platform,
-    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommentsModal } from './CommentsModal';
 import { RatingsModal } from './RatingsModal';
 import { ReviewsModal } from './ReviewsModal';
 import { ReviewSubmitModal } from './ReviewSubmitModal';
+import { ShareModal } from './ShareModal';
 
 type Props = {
   video: PersonalizedFeedVideo;
@@ -60,6 +60,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [showRatingsModal, setShowRatingsModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
 
@@ -162,15 +163,8 @@ export function VerticalVideoCard({ video, isActive }: Props) {
     });
   };
 
-  const handleShare = async () => {
-    try {
-      const username = video.profiles?.display_name || video.profiles?.username || 'a creator';
-      const title = video.title ? ` "${video.title}"` : '';
-      const message = `Check out${title} by ${username} on Travora! ${video.video_url}`;
-      await Share.share({ message });
-    } catch {
-      // Silently fail if share sheet is unavailable
-    }
+  const handleShare = () => {
+    setShowShareModal(true);
   };
 
   const handleCommentPress = () => {
@@ -441,6 +435,14 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             handleReviewsPress();
           }
         }}
+      />
+      
+      <ShareModal
+        visible={showShareModal}
+        contentType="video"
+        contentId={video.id}
+        contentTitle={video.title}
+        onClose={() => setShowShareModal(false)}
       />
     </View>
   );

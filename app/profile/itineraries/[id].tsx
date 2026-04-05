@@ -3,6 +3,7 @@ import { CollaboratorsModal } from '@/components/CollaboratorsModal';
 import { DayPlan } from '@/components/DayPlan';
 import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
 import { useItineraryTravelTotals } from '@/hooks/useItineraryTravelTotals';
+import { ShareModal } from '@/components/ShareModal';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { deleteItinerary, getItineraryById, getItineraryStats, rateItinerary } from '@/services/itineraries';
@@ -35,6 +36,7 @@ export default function ItineraryDetailScreen() {
   const [collaboratorsModalVisible, setCollaboratorsModalVisible] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string | undefined>(undefined);
   const [videos, setVideos] = useState<any[]>([]);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const { totalUsd, loading: travelLoading } = useItineraryTravelTotals(videos);
 
@@ -123,7 +125,7 @@ export default function ItineraryDetailScreen() {
 
   const handleShare = () => {
     if (!itinerary) return;
-    setCollaboratorsModalVisible(true);
+    setShareModalVisible(true);
   };
 
   if (loading) {
@@ -265,6 +267,15 @@ export default function ItineraryDetailScreen() {
           <Text style={[styles.actionButtonText, styles.shareButtonText]}>Share</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Share Modal */}
+      <ShareModal
+        visible={shareModalVisible}
+        contentType="itinerary"
+        contentId={itinerary.id}
+        contentTitle={itinerary.title}
+        onClose={() => setShareModalVisible(false)}
+      />
 
       {/* Rating Modal */}
       <ItineraryRatingModal

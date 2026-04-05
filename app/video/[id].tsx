@@ -15,7 +15,6 @@ import {
   FlatList,
   Image,
   ListRenderItem,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -23,6 +22,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ShareModal } from '@/components/ShareModal';
 
 export default function VideoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +38,7 @@ export default function VideoDetailScreen() {
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     loadVideo();
@@ -104,18 +105,11 @@ export default function VideoDetailScreen() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     if (!video) return;
-
-    try {
-      const username = video.profiles?.display_name || video.profiles?.username || 'a creator';
-      const title = video.title ? ` "${video.title}"` : '';
-      const message = `Check out${title} by ${username} on Travora! ${video.video_url}`;
-      await Share.share({ message });
-    } catch {
-      // Silently fail if share sheet is unavailable
-    }
+    setShowShareModal(true);
   };
+
 
   const handleAddComment = async () => {
     if (!user || !video || !commentText.trim()) return;
@@ -688,6 +682,15 @@ export default function VideoDetailScreen() {
         contentContainerStyle={styles.flatListContent}
         scrollEventThrottle={16}
       />
+      {video && (
+        <ShareModal
+          visible={showShareModal}
+          contentType="video"
+          contentId={video.id}
+          contentTitle={video.title}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </View>
   );
 }

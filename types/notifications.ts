@@ -175,7 +175,8 @@ export type NotificationTriggerEvent =
   | 'check_in_open'
   | '24_hour_flight'
   | 'trip_end_reminder'
-  | 'review_request';
+  | 'review_request'
+  | 'content_shared';
 
 // Notification category metadata
 export const NOTIFICATION_CATEGORIES: Record<
