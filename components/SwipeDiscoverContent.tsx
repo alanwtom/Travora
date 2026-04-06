@@ -4,7 +4,6 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useSwipeItinerary } from '@/providers/SwipeItineraryProvider';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { recordSwipe, removeDislikedVideo, removeSwipe, saveDislikedVideo } from '@/services/swipes';
-import { useRouter } from 'expo-router';
 import * as Icons from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -44,7 +43,6 @@ export function SwipeDiscoverContent({
   compactHeader = false,
 }: SwipeDiscoverContentProps) {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useAuth();
   const { addToItinerary, removeFromItineraryById } = useSwipeItinerary();
 
@@ -107,10 +105,6 @@ export function SwipeDiscoverContent({
     setLastAction(null);
   }, [lastAction, currentIndex, removeFromItineraryById, user?.id]);
 
-  const openItinerary = () => {
-    router.push('/(tabs)/discover-itinerary' as any);
-  };
-
   const topPad = insets.top + topInsetExtra;
 
   if (error && videos.length === 0) {
@@ -148,14 +142,6 @@ export function SwipeDiscoverContent({
             accessibilityLabel="Undo last swipe"
           >
             <Icons.Undo2 size={22} color={lastAction ? COLORS.primary : COLORS.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerBtnPrimary}
-            onPress={openItinerary}
-            accessibilityLabel="Open swipe itinerary"
-          >
-            <Icons.BookmarkCheck size={22} color={COLORS.accent} />
-            <Text style={styles.itineraryLink}>Itinerary</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -230,18 +216,6 @@ const styles = StyleSheet.create({
   },
   headerBtnDisabled: {
     opacity: 0.45,
-  },
-  headerBtnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  itineraryLink: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.accent,
   },
   hint: {
     textAlign: 'center',
