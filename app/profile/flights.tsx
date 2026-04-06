@@ -1,207 +1,119 @@
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BackButton } from '@/components/BackButton';
+import { useFlights } from '@/hooks/useFlights';
 import { COLORS } from '@/lib/constants';
-import { searchGoogleFlights, SerpApiFlightOption } from '@/services/serpapiFlights';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import { Plane, Search } from 'lucide-react-native';
+import { ChevronDown, Plane, Search } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Platform,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-
-const TRAVEL_CLASSES: Array<SerpApiFlightOption['className']> = ['Economy', 'Premium Economy', 'Business'];
 
 export default function FlightsScreen() {
   const router = useRouter();
+  const { flights, loading, error, hasMore, loadMore, search, reset } = useFlights();
+
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [isRoundTrip, setIsRoundTrip] = useState(true);
-  const [travelers, setTravelers] = useState(1);
-  const [selectedClass, setSelectedClass] = useState<SerpApiFlightOption['className']>('Economy');
   const [departDate, setDepartDate] = useState(new Date());
-  const [returnDate, setReturnDate] = useState(new Date(Date.now() + 4 * 24 * 60 * 60 * 1000));
-  const [departTime, setDepartTime] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState<null | 'depart' | 'return'>(null);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [results, setResults] = useState<SerpApiFlightOption[]>([]);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const formatDate = (value: Date) =>
     value.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  const formatTime = (value: Date) =>
-    value.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   const onDateChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
-      setShowDatePicker(null);
-    }
-    if (event.type === 'dismissed' || !selected || !showDatePicker) {
-      return;
-    }
-    if (showDatePicker === 'depart') {
-      setDepartDate(selected);
-    } else {
-      setReturnDate(selected);
-    }
-  };
-
-  const onTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
+      setShowDatePicker(false);
     }
     if (event.type === 'dismissed' || !selected) {
       return;
     }
-    setDepartTime(selected);
+    setDepartDate(selected);
   };
 
   const runSearch = async () => {
+    if (!from.trim() || !to.trim()) {
+      return;
+    }
+
     setHasSearched(true);
-    setSearchError(null);
-    setIsLoading(true);
-    setResults([]);
+    reset();
+
     try {
-      const flights = await searchGoogleFlights({
-        departureId: from,
-        arrivalId: to,
-        outboundDate: departDate,
-        returnDate: isRoundTrip ? returnDate : null,
-        roundTrip: isRoundTrip,
-        adults: travelers,
-        travelClass: selectedClass,
+      await search({
+        origin: from.toUpperCase(),
+        destination: to.toUpperCase(),
+        date: departDate.toISOString().slice(0, 10),
       });
-      setResults(flights);
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Something went wrong. Try again.';
-      setSearchError(message);
-    } finally {
-      setIsLoading(false);
+      // Error handled by hook
     }
   };
+
+  const renderFlight = ({ item }: { item: any }) => (
+    <View style={styles.card}>
+      <View style={styles.cardTop}>
+        <Text style={styles.airline}>{item.airline}</Text>
+        <Text style={styles.price}>${item.estimated_price} {item.currency}</Text>
+      </View>
+      <Text style={styles.flightNumber}>{item.flight_number}</Text>
+      <Text style={styles.routeText}>
+        {from} → {to}
+      </Text>
+      <Text style={styles.metaText}>
+        Departs: {new Date(item.departure_time).toLocaleString()}
+      </Text>
+      <Text style={styles.metaText}>
+        Arrives: {new Date(item.arrival_time).toLocaleString()}
+      </Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <BackButton />
-        <Text style={styles.headerTitle}>Travel Search</Text>
-      </View>
-
-      <View style={styles.routeTabs}>
-        <TouchableOpacity style={[styles.routeTab, styles.routeTabActive]}>
-          <Text style={[styles.routeTabText, styles.routeTabTextActive]}>Flights</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.routeTab} onPress={() => router.push('/profile/hotels' as any)}>
-          <Text style={styles.routeTabText}>Hotels</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Flight Search</Text>
       </View>
 
       <FlatList
-        data={hasSearched ? results : []}
+        data={hasSearched ? flights : []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardTop}>
-              <Text style={styles.airline}>{item.airline}</Text>
-              <Text style={styles.price}>${item.price}</Text>
-            </View>
-            <Text style={styles.routeText}>
-              {item.from} {'->'} {item.to}
-            </Text>
-            <Text style={styles.metaText}>
-              {item.departAt} – {item.arriveAt}
-              {item.stops > 0 ? ` · ${item.stops} stop${item.stops > 1 ? 's' : ''}` : ' · Nonstop'} ·{' '}
-              {item.duration}
-            </Text>
-            <Text style={styles.metaText}>
-              {item.className} · {travelers} traveler{travelers > 1 ? 's' : ''}
-            </Text>
-          </View>
-        )}
+        renderItem={renderFlight}
         ListHeaderComponent={
           <View style={styles.form}>
-            <Text style={styles.sectionTitle}>Flights</Text>
+            <Text style={styles.sectionTitle}>Search Flights</Text>
             <TextInput
               style={styles.input}
-              placeholder="Origin airport code (e.g. SFO)"
+              placeholder="Origin airport code (e.g. JFK)"
               placeholderTextColor={COLORS.textMuted}
               value={from}
               onChangeText={setFrom}
+              autoCapitalize="characters"
             />
             <TextInput
               style={styles.input}
-              placeholder="Destination airport code (e.g. NRT)"
+              placeholder="Destination airport code (e.g. LAX)"
               placeholderTextColor={COLORS.textMuted}
               value={to}
               onChangeText={setTo}
+              autoCapitalize="characters"
             />
 
-            <View style={styles.inlineRow}>
-              <Text style={styles.inlineLabel}>Round trip</Text>
-              <Switch value={isRoundTrip} onValueChange={setIsRoundTrip} />
-            </View>
-
-            <Pressable style={styles.inputButton} onPress={() => setShowDatePicker('depart')}>
+            <Pressable style={styles.inputButton} onPress={() => setShowDatePicker(true)}>
               <Text style={styles.inputButtonText}>Departure date: {formatDate(departDate)}</Text>
             </Pressable>
-
-            {isRoundTrip && (
-              <Pressable style={styles.inputButton} onPress={() => setShowDatePicker('return')}>
-                <Text style={styles.inputButtonText}>Return date: {formatDate(returnDate)}</Text>
-              </Pressable>
-            )}
-
-            <Pressable style={styles.inputButton} onPress={() => setShowTimePicker(true)}>
-              <Text style={styles.inputButtonText}>Preferred departure time: {formatTime(departTime)}</Text>
-            </Pressable>
-
-            <View style={styles.inlineRow}>
-              <Text style={styles.inlineLabel}>Travelers</Text>
-              <View style={styles.stepper}>
-                <TouchableOpacity
-                  style={styles.stepButton}
-                  onPress={() => setTravelers((prev) => Math.max(1, prev - 1))}
-                >
-                  <Text style={styles.stepText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.stepValue}>{travelers}</Text>
-                <TouchableOpacity style={styles.stepButton} onPress={() => setTravelers((prev) => prev + 1)}>
-                  <Text style={styles.stepText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <Text style={styles.inlineLabel}>Ticket class</Text>
-            <View style={styles.classRow}>
-              {TRAVEL_CLASSES.map((className) => (
-                <TouchableOpacity
-                  key={className}
-                  style={[styles.classPill, selectedClass === className && styles.classPillActive]}
-                  onPress={() => setSelectedClass(className)}
-                >
-                  <Text
-                    style={[
-                      styles.classPillText,
-                      selectedClass === className && styles.classPillTextActive,
-                    ]}
-                  >
-                    {className}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
 
             <TouchableOpacity style={styles.searchButton} onPress={runSearch}>
               <Search size={18} color="#fff" />
@@ -211,39 +123,51 @@ export default function FlightsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.stateWrap}>
-            {isLoading ? (
+            {loading ? (
               <>
                 <ActivityIndicator size="small" color={COLORS.primary} />
-                <Text style={styles.stateText}>Loading flight options...</Text>
+                <Text style={styles.stateText}>Searching flights...</Text>
               </>
-            ) : searchError ? (
+            ) : error ? (
               <>
-                <Text style={[styles.stateText, styles.stateError]}>{searchError}</Text>
+                <Text style={[styles.stateText, styles.stateError]}>{error}</Text>
+              </>
+            ) : hasSearched ? (
+              <>
+                <Plane size={36} color={COLORS.textMuted} />
+                <Text style={styles.stateText}>No flights found for this route.</Text>
               </>
             ) : (
               <>
                 <Plane size={36} color={COLORS.textMuted} />
-                <Text style={styles.stateText}>
-                  {hasSearched
-                    ? 'No flights found for this search.'
-                    : 'Search by route, date, class, and travelers.'}
-                </Text>
+                <Text style={styles.stateText}>Enter origin, destination, and date to search flights.</Text>
               </>
             )}
           </View>
+        }
+        ListFooterComponent={
+          hasMore && flights.length > 0 ? (
+            <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <ChevronDown size={18} color="#fff" />
+                  <Text style={styles.loadMoreText}>Load More</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : null
         }
       />
 
       {showDatePicker && (
         <DateTimePicker
           mode="date"
-          value={showDatePicker === 'depart' ? departDate : returnDate}
+          value={departDate}
           minimumDate={new Date()}
           onChange={onDateChange}
         />
-      )}
-      {showTimePicker && (
-        <DateTimePicker mode="time" value={departTime} onChange={onTimeChange} is24Hour={false} />
       )}
     </SafeAreaView>
   );
@@ -344,7 +268,19 @@ const styles = StyleSheet.create({
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   airline: { color: COLORS.text, fontWeight: '700', fontSize: 16 },
+  flightNumber: { color: COLORS.textMuted, marginTop: 4, fontSize: 12, fontWeight: '600' },
   price: { color: COLORS.primary, fontWeight: '700', fontSize: 18 },
   routeText: { color: COLORS.text, fontWeight: '600', marginTop: 8 },
   metaText: { color: COLORS.textMuted, marginTop: 4 },
+  loadMoreButton: {
+    marginTop: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loadMoreText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

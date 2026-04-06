@@ -22,6 +22,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ShareModal } from '@/components/ShareModal';
 
 export default function VideoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,6 +38,7 @@ export default function VideoDetailScreen() {
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     loadVideo();
@@ -102,6 +104,12 @@ export default function VideoDetailScreen() {
       console.log('Save not available:', error);
     }
   };
+
+  const handleShare = () => {
+    if (!video) return;
+    setShowShareModal(true);
+  };
+
 
   const handleAddComment = async () => {
     if (!user || !video || !commentText.trim()) return;
@@ -594,7 +602,7 @@ export default function VideoDetailScreen() {
               {isSaved ? 'Saved' : 'Save'}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
             <Share2 size={24} color={COLORS.text} strokeWidth={2.5} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
@@ -674,6 +682,15 @@ export default function VideoDetailScreen() {
         contentContainerStyle={styles.flatListContent}
         scrollEventThrottle={16}
       />
+      {video && (
+        <ShareModal
+          visible={showShareModal}
+          contentType="video"
+          contentId={video.id}
+          contentTitle={video.title}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </View>
   );
 }

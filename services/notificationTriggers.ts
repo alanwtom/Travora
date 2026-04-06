@@ -263,6 +263,37 @@ export async function triggerItineraryInvite(
 }
 
 /**
+ * Trigger when a user shares content with another user
+ */
+export async function triggerContentShared(
+  userId: string,
+  data: {
+    senderName: string;
+    senderId: string;
+    contentType: string;
+    contentId: string;
+    message?: string;
+  }
+): Promise<string | null> {
+  return createNotification({
+    userId,
+    triggerEvent: 'content_shared',
+    titleData: { sender_name: data.senderName, content_type: data.contentType },
+    bodyData: {
+      sender_name: data.senderName,
+      content_type: data.contentType,
+      ...(data.message && { message: data.message }),
+    },
+    customData: {
+      senderId: data.senderId,
+      contentType: data.contentType,
+      contentId: data.contentId,
+      ...(data.message && { message: data.message }),
+    },
+  });
+}
+
+/**
  * Trigger when a user is mentioned in a comment
  */
 export async function triggerMentionReceived(

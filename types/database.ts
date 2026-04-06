@@ -4,13 +4,38 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -107,6 +132,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      flight_searches: {
+        Row: {
+          created_at: string
+          date: string
+          destination: string
+          id: string
+          origin: string
+          results: Json
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          destination: string
+          id?: string
+          origin: string
+          results: Json
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          destination?: string
+          id?: string
+          origin?: string
+          results?: Json
+        }
+        Relationships: []
       }
       follows: {
         Row: {
@@ -818,6 +870,147 @@ export type Database = {
           },
         ]
       }
+      shared_content: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_content_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_content_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swipes: {
+        Row: {
+          created_at: string
+          id: string
+          swipe_type: string
+          updated_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          swipe_type: string
+          updated_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          swipe_type?: string
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swipes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swipes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      video_tags: {
+        Row: {
+          created_at: string
+          tag_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          tag_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          tag_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_tags_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
           caption: string | null
@@ -827,6 +1020,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          media_type: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -842,6 +1036,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          media_type?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -857,6 +1052,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          media_type?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
@@ -889,6 +1085,29 @@ export type Database = {
         }
         Returns: string
       }
+      get_personalized_feed: {
+        Args: { p_limit?: number; p_media_type?: string; p_user_id: string }
+        Returns: {
+          caption: string
+          created_at: string
+          description: string
+          id: string
+          latitude: number
+          location: string
+          longitude: number
+          media_type: string
+          profile_avatar_url: string
+          profile_username: string
+          score: number
+          tags: string[]
+          thumbnail_url: string
+          title: string
+          updated_at: string
+          user_id: string
+          video_url: string
+          view_count: number
+        }[]
+      }
       get_unread_notification_count: {
         Args: { user_id_param: string }
         Returns: number
@@ -896,6 +1115,10 @@ export type Database = {
       initialize_notification_preferences: {
         Args: { user_id_param: string }
         Returns: undefined
+      }
+      is_itinerary_owner: {
+        Args: { itinerary_id: string; user_id: string }
+        Returns: boolean
       }
       mark_all_notifications_read: {
         Args: { user_id_param: string }
@@ -933,170 +1156,141 @@ export type Database = {
   }
 }
 
-// Convenience types
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type Video = Database['public']['Tables']['videos']['Row'];
-export type VideoInsert = Database['public']['Tables']['videos']['Insert'];
-export type VideoUpdate = Database['public']['Tables']['videos']['Update'];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-export type Like = Database['public']['Tables']['likes']['Row'];
-export type LikeInsert = Database['public']['Tables']['likes']['Insert'];
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
-export type Comment = Database['public']['Tables']['comments']['Row'];
-export type CommentInsert = Database['public']['Tables']['comments']['Insert'];
-export type CommentUpdate = Database['public']['Tables']['comments']['Update'];
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
-export type CommentLike = Database['public']['Tables']['comment_likes']['Row'];
-export type CommentLikeInsert = Database['public']['Tables']['comment_likes']['Insert'];
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export type Follow = Database['public']['Tables']['follows']['Row'];
-export type FollowInsert = Database['public']['Tables']['follows']['Insert'];
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
-export type Save = Database['public']['Tables']['saves']['Row'];
-export type SaveInsert = Database['public']['Tables']['saves']['Insert'];
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
-export type Rating = Database['public']['Tables']['ratings']['Row'];
-export type RatingInsert = Database['public']['Tables']['ratings']['Insert'];
-export type RatingUpdate = Database['public']['Tables']['ratings']['Update'];
-
-export type Review = Database['public']['Tables']['reviews']['Row'];
-export type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
-export type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
-
-export type ReviewPhoto = Database['public']['Tables']['review_photos']['Row'];
-export type ReviewPhotoInsert = Database['public']['Tables']['review_photos']['Insert'];
-
-export type ReviewHelpfulness = Database['public']['Tables']['review_helpfulness']['Row'];
-export type ReviewHelpfulnessInsert = Database['public']['Tables']['review_helpfulness']['Insert'];
-export type ReviewHelpfulnessUpdate = Database['public']['Tables']['review_helpfulness']['Update'];
-
-// Itineraries
-export type Itinerary = Database['public']['Tables']['itineraries']['Row'];
-export type ItineraryInsert = Database['public']['Tables']['itineraries']['Insert'];
-export type ItineraryUpdate = Database['public']['Tables']['itineraries']['Update'];
-
-// Itinerary Ratings
-export type ItineraryRating = Database['public']['Tables']['itinerary_ratings']['Row'];
-export type ItineraryRatingInsert = Database['public']['Tables']['itinerary_ratings']['Insert'];
-export type ItineraryRatingUpdate = Database['public']['Tables']['itinerary_ratings']['Update'];
-
-// Itinerary Collaborators
-export type ItineraryCollaborator = Database['public']['Tables']['itinerary_collaborators']['Row'];
-export type ItineraryCollaboratorInsert = Database['public']['Tables']['itinerary_collaborators']['Insert'];
-export type ItineraryCollaboratorUpdate = Database['public']['Tables']['itinerary_collaborators']['Update'];
-
-// Itinerary Comments
-export type ItineraryComment = Database['public']['Tables']['itinerary_comments']['Row'];
-export type ItineraryCommentInsert = Database['public']['Tables']['itinerary_comments']['Insert'];
-export type ItineraryCommentUpdate = Database['public']['Tables']['itinerary_comments']['Update'];
-
-// Extended types for itineraries
-export type ItineraryDay = {
-  day: number;
-  date?: string;
-  morning?: {
-    time: string;
-    activity: string;
-    location: string;
-    description?: string;
-    duration: string;
-  };
-  afternoon?: {
-    time: string;
-    activity: string;
-    location: string;
-    description?: string;
-    duration: string;
-  };
-  evening?: {
-    time: string;
-    activity: string;
-    location: string;
-    description?: string;
-    duration: string;
-  };
-  activities?: Array<{
-    time: string;
-    activity: string;
-    location: string;
-    description?: string;
-    duration: string;
-  }>;
-};
-
-export type CollaborationRole = 'editor' | 'viewer';
-
-export type ItineraryWithProfile = Itinerary & {
-  profiles: Profile;
-  user_rating?: ItineraryRating;
-  average_rating?: number;
-  total_ratings?: number;
-  collaborator_count?: number;
-  current_user_role?: CollaborationRole;
-};
-
-export type ItineraryCollaboratorWithProfile = ItineraryCollaborator & {
-  profiles: Profile;
-};
-
-export type ItineraryCommentWithProfile = ItineraryComment & {
-  profiles: Profile;
-};
-
-// Extended types with relations
-export type VideoWithProfile = Video & {
-  profiles: Profile;
-  like_count: number;
-  comment_count: number;
-  is_liked?: boolean;
-  is_saved?: boolean;
-  user_rating?: number;
-  average_rating?: number;
-  review_count?: number;
-};
-
-export type ReviewWithProfile = Review & {
-  profiles: Profile;
-  review_photos?: ReviewPhoto[];
-  user_helpfulness?: boolean | null;
-};
-
-export type CommentWithProfile = Comment & {
-  profiles: Profile;
-  is_liked?: boolean;
-  replies?: CommentWithProfile[];
-};
-
-// Extended types for itineraries
-export type LocationWithCoordinates = {
-  id: string;
-  title: string;
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  caption: string | null;
-  description: string | null;
-};
-
-export type ItineraryPreferences = {
-  destination: string;
-  durationDays: number;
-  travelStyle?: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'mixed';
-  budgetLevel?: 'budget' | 'moderate' | 'luxury';
-  interests?: string[];
-  startDate?: string;
-  endDate?: string;
-};
-
-export type LocationCluster = {
-  id: string;
-  name: string;
-  center: {
-    latitude: number;
-    longitude: number;
-  };
-  locations: LocationWithCoordinates[];
-};
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      notification_category: [
+        "trip_updates",
+        "price_alerts",
+        "promotions",
+        "social",
+        "system",
+        "booking",
+        "reminder",
+      ],
+      notification_channel: ["push", "email", "in_app"],
+      notification_priority: ["high", "medium", "low"],
+      notification_status: ["pending", "sent", "delivered", "failed", "read"],
+    },
+  },
+} as const

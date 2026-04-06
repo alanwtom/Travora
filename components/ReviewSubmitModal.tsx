@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { useModalBackHandler } from '@/hooks/useModalBackHandler';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { submitReview, updateReview } from '@/services/reviews';
 import { VideoWithProfile, ReviewWithProfile } from '@/types/database';
@@ -41,6 +42,8 @@ export function ReviewSubmitModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+
+  useModalBackHandler(visible, onClose);
 
   const isValid = rating > 0 && content.length >= MIN_CHARS && content.length <= MAX_CHARS;
   const displayRating = hoverRating || rating;

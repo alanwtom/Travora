@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
-import type { Itinerary, ItineraryPreferences, LocationWithCoordinates } from '@/types/database';
+import { getEstimatedFlightPrice } from '@/services/flightService';
 import { generateRuleBasedItinerary, saveItinerary } from '@/services/itineraries';
 import { generateItineraryWithLLM, isLLMConfigured } from '@/services/llm';
+import { coordinatesToAirportCode, getTravelOrigin } from '@/services/travelOrigin';
+import type { Itinerary, ItineraryPreferences, LocationWithCoordinates } from '@/types/database';
+import { useCallback, useState } from 'react';
 
 export interface UseItineraryGenerationReturn {
   generate: (preferences: ItineraryPreferences) => Promise<Itinerary | null>;
@@ -25,6 +27,41 @@ export function useItineraryGeneration(
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [usingFallback, setUsingFallback] = useState(false);
+
+  /**
+   * Get estimated flight price for the itinerary
+   */
+  const getFlightPriceEstimate = useCallback(async (
+    destination: string,
+    startDate: string | null
+  ): Promise<number | null> => {
+    if (!startDate) return null;
+
+    try {
+      // Get user's origin location
+      const originLocation = await getTravelOrigin();
+      const originCode = coordinatesToAirportCode(
+        originLocation.latitude,
+        originLocation.longitude,
+        originLocation.label
+      );
+
+      // Convert destination to airport code (simplified - use destination name)
+      const destinationCode = coordinatesToAirportCode(0, 0, destination) || 'JFK';
+
+      // Get flight price estimate
+      const estimatedPrice = await getEstimatedFlightPrice(
+        originCode,
+        destinationCode,
+        startDate
+      );
+
+      return estimatedPrice;
+    } catch (error) {
+      console.warn('Failed to get flight price estimate:', error);
+      return null;
+    }
+  }, []);
 
   const generate = useCallback(
     async (preferences: ItineraryPreferences): Promise<Itinerary | null> => {
@@ -54,10 +91,21 @@ export function useItineraryGeneration(
             const llmResult = await generateItineraryWithLLM(
               likedLocations,
               preferences,
-              10000 // 10 second timeout
+              30000 // 30 second timeout (increased from 10s)
             );
 
             setProgress(80);
+
+            // Get estimated flight price (non-blocking - don't let failure kill generation)
+            let flightPrice: number | null = null;
+            try {
+              flightPrice = await getFlightPriceEstimate(
+                preferences.destination,
+                preferences.startDate ?? null
+              );
+            } catch (flightError) {
+              console.warn('Flight price estimation failed:', flightError);
+            }
 
             // Save LLM-generated itinerary
             resultItinerary = await saveItinerary({
@@ -72,6 +120,7 @@ export function useItineraryGeneration(
               generated_by: 'llm',
               generation_time_ms: llmResult.generationTime,
               days: llmResult.days,
+              estimated_flight_price: flightPrice,
               metadata: {
                 source_video_ids: likedLocations.map((l) => l.id),
                 llm_provider: process.env.EXPO_PUBLIC_LLM_PROVIDER,
@@ -92,9 +141,21 @@ export function useItineraryGeneration(
 
             setProgress(80);
 
+            // Get estimated flight price (non-blocking)
+            let flightPrice: number | null = null;
+            try {
+              flightPrice = await getFlightPriceEstimate(
+                preferences.destination,
+                preferences.startDate ?? null
+              );
+            } catch (flightError) {
+              console.warn('Flight price estimation failed:', flightError);
+            }
+
             resultItinerary = await saveItinerary({
               ...ruleBasedResult,
               user_id: userId,
+              estimated_flight_price: flightPrice,
             });
 
             setProgress(100);
@@ -111,9 +172,21 @@ export function useItineraryGeneration(
 
           setProgress(80);
 
+          // Get estimated flight price (non-blocking)
+          let flightPrice: number | null = null;
+          try {
+            flightPrice = await getFlightPriceEstimate(
+              preferences.destination,
+              preferences.startDate ?? null
+            );
+          } catch (flightError) {
+            console.warn('Flight price estimation failed:', flightError);
+          }
+
           resultItinerary = await saveItinerary({
             ...ruleBasedResult,
             user_id: userId,
+            estimated_flight_price: flightPrice,
           });
 
           setProgress(100);

@@ -1,7 +1,7 @@
-import { COLORS } from '@/lib/constants';
 import type { ItineraryWithStats } from '@/hooks/useUserItineraries';
-import * as Icons from 'lucide-react-native';
+import { COLORS } from '@/lib/constants';
 import { useRouter } from 'expo-router';
+import * as Icons from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -88,6 +88,17 @@ export function ItineraryCard({ itinerary, onPress, onDelete }: Props) {
           <Text style={styles.separator}>·</Text>
           <Text style={styles.timeAgo}>{timeAgo}</Text>
         </View>
+
+        {/* Flight price row */}
+        {itinerary.estimated_flight_price && (
+          <View style={styles.flightPriceRow}>
+            <Icons.Plane size={12} color={COLORS.primary} strokeWidth={2} />
+            <Text style={styles.flightPriceText}>
+              Estimated Flight: ${itinerary.estimated_flight_price}
+            </Text>
+            <Text style={styles.flightPriceLabel}> (based on live data)</Text>
+          </View>
+        )}
 
         {/* Badges row */}
         <View style={styles.badgesRow}>
@@ -233,6 +244,22 @@ const styles = StyleSheet.create({
   timeAgo: {
     fontSize: 13,
     color: COLORS.textMuted,
+  },
+  flightPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  flightPriceText: {
+    fontSize: 13,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  flightPriceLabel: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
   },
   badgesRow: {
     flexDirection: 'row',

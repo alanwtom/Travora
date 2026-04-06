@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants';
+import { useModalBackHandler } from '@/hooks/useModalBackHandler';
 import { getVideoReviews, voteReviewHelpfulness, removeReviewHelpfulnessVote, SortBy, deleteReview } from '@/services/reviews';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { VideoWithProfile, ReviewWithProfile } from '@/types/database';
@@ -34,6 +35,8 @@ export function ReviewsModal({ visible, video, userId, onClose }: Props) {
   const [sortBy, setSortBy] = useState<SortBy>('recent');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
+  useModalBackHandler(visible, onClose);
 
   console.log('ReviewsModal props:', { visible, videoId: video.id, userId, videoObject: video });
 
@@ -139,13 +142,13 @@ export function ReviewsModal({ visible, video, userId, onClose }: Props) {
     );
   };
 
-  const handleUserProfile = (userId: string) => {
-    if (userId === userId) {
+  const handleUserProfile = (profileUserId: string) => {
+    if (profileUserId === userId) {
       router.push('/(tabs)/profile');
     } else {
       router.push({
         pathname: '/user/[userId]',
-        params: { userId },
+        params: { userId: profileUserId },
       } as any);
     }
   };

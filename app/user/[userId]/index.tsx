@@ -32,7 +32,9 @@ function CustomHeader({ username, displayName }: { username?: string; displayNam
       <Text style={headerStyles.title} numberOfLines={1}>
         {title}
       </Text>
-      <View style={headerStyles.placeholder} />
+      <TouchableOpacity onPress={onClose} style={headerStyles.shareButton}>
+        <Icons.Share size={22} color={COLORS.text} strokeWidth={2.5} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -55,6 +57,11 @@ const headerStyles = StyleSheet.create({
     color: COLORS.text,
     textAlign: 'center',
     marginHorizontal: 16,
+  },
+  shareButton: {
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   placeholder: {
     width: 40,

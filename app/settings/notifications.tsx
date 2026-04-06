@@ -14,6 +14,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useThemeColor } from '@/components/Themed';
 import { useAuth } from '@/providers/AuthProvider';
 import { NotificationSettingsScreen } from '@/components/NotificationSettings';
+import { EscapeButton } from '@/components/EscapeButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Bug, ChevronRight } from 'lucide-react-native';
@@ -35,18 +36,23 @@ export default function NotificationSettingsPage() {
       {/* Header */}
       <View
         style={{
+          flexDirection: 'row',
+          alignItems: 'center',
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderBottomWidth: 1,
           borderBottomColor: textColor + '20',
         }}
       >
-        <Text style={{ fontSize: 24, fontWeight: '700', color: textColor }}>
-          Notification Settings
-        </Text>
-        <Text style={{ fontSize: 14, color: textColor + '60', marginTop: 4 }}>
-          Customize how you receive notifications via push and email
-        </Text>
+        <EscapeButton onPress={() => router.replace('/(tabs)/profile' as any)} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: textColor }}>
+            Notification Settings
+          </Text>
+          <Text style={{ fontSize: 14, color: textColor + '60', marginTop: 4 }}>
+            Customize how you receive notifications via push and email
+          </Text>
+        </View>
       </View>
 
       {/* Debug History Link */}

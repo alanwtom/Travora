@@ -1,23 +1,26 @@
-import { COLORS } from '@/lib/constants';
-import { useAuth } from '@/providers/AuthProvider';
-import { getItineraryById, getItineraryStats, rateItinerary, deleteItinerary } from '@/services/itineraries';
-import { getProfile } from '@/services/profiles';
-import { DayPlan } from '@/components/DayPlan';
-import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
 import { BackButton } from '@/components/BackButton';
 import { CollaboratorsModal } from '@/components/CollaboratorsModal';
-import { AlertCircle, Trash2, Bot, Settings, Calendar, Compass, Wallet, ThumbsUp, ThumbsDown, Star, Share2 } from 'lucide-react-native';
+import { DayPlan } from '@/components/DayPlan';
+import { ItineraryRatingModal } from '@/components/ItineraryRatingModal';
+import { useItineraryTravelTotals } from '@/hooks/useItineraryTravelTotals';
+import { ShareModal } from '@/components/ShareModal';
+import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { deleteItinerary, getItineraryById, getItineraryStats, rateItinerary } from '@/services/itineraries';
+import { getProfile } from '@/services/profiles';
+import { getVideosByIds } from '@/services/videos';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { AlertCircle, Bot, Calendar, Compass, Settings, Share2, Star, ThumbsDown, ThumbsUp, Trash2, Wallet } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 export default function ItineraryDetailScreen() {
@@ -32,6 +35,10 @@ export default function ItineraryDetailScreen() {
   const [submittingRating, setSubmittingRating] = useState(false);
   const [collaboratorsModalVisible, setCollaboratorsModalVisible] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string | undefined>(undefined);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+
+  const { totalUsd, loading: travelLoading } = useItineraryTravelTotals(videos);
 
   useEffect(() => {
     loadItinerary();
@@ -63,6 +70,13 @@ export default function ItineraryDetailScreen() {
       ]);
       setItinerary(itineraryData);
       setStats(statsData);
+
+      // Load videos for travel totals
+      if (itineraryData?.metadata?.source_video_ids) {
+        const videoIds = itineraryData.metadata.source_video_ids;
+        const videosData = await getVideosByIds(videoIds, user?.id);
+        setVideos(videosData);
+      }
     } catch (error) {
       console.error('Failed to load itinerary:', error);
       Alert.alert('Error', 'Failed to load itinerary');
@@ -111,7 +125,7 @@ export default function ItineraryDetailScreen() {
 
   const handleShare = () => {
     if (!itinerary) return;
-    setCollaboratorsModalVisible(true);
+    setShareModalVisible(true);
   };
 
   if (loading) {
@@ -199,6 +213,13 @@ export default function ItineraryDetailScreen() {
           )}
         </View>
 
+        {totalUsd > 0 && (
+          <View style={styles.metaItem}>
+            <Wallet size={14} color={COLORS.primary} strokeWidth={2.5} />
+            <Text style={styles.metaText}>Est. ${totalUsd} round-trip</Text>
+          </View>
+        )}
+
         {/* Stats */}
         {stats && stats.totalRatings > 0 && (
           <View style={styles.statsRow}>
@@ -246,6 +267,15 @@ export default function ItineraryDetailScreen() {
           <Text style={[styles.actionButtonText, styles.shareButtonText]}>Share</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Share Modal */}
+      <ShareModal
+        visible={shareModalVisible}
+        contentType="itinerary"
+        contentId={itinerary.id}
+        contentTitle={itinerary.title}
+        onClose={() => setShareModalVisible(false)}
+      />
 
       {/* Rating Modal */}
       <ItineraryRatingModal

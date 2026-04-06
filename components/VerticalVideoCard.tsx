@@ -17,13 +17,14 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommentsModal } from './CommentsModal';
 import { RatingsModal } from './RatingsModal';
 import { ReviewsModal } from './ReviewsModal';
 import { ReviewSubmitModal } from './ReviewSubmitModal';
+import { ShareModal } from './ShareModal';
 
 type Props = {
   video: PersonalizedFeedVideo;
@@ -59,6 +60,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [showRatingsModal, setShowRatingsModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
 
@@ -159,6 +161,10 @@ export function VerticalVideoCard({ video, isActive }: Props) {
       pathname: '/video/[id]',
       params: { id: video.id },
     });
+  };
+
+  const handleShare = () => {
+    setShowShareModal(true);
   };
 
   const handleCommentPress = () => {
@@ -385,7 +391,7 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleVideoPress}
+            onPress={handleShare}
             activeOpacity={0.7}
           >
             <Icons.Share2 size={28} color="rgba(255,255,255,0.8)" strokeWidth={2} />
@@ -429,6 +435,14 @@ export function VerticalVideoCard({ video, isActive }: Props) {
             handleReviewsPress();
           }
         }}
+      />
+      
+      <ShareModal
+        visible={showShareModal}
+        contentType="video"
+        contentId={video.id}
+        contentTitle={video.title}
+        onClose={() => setShowShareModal(false)}
       />
     </View>
   );

@@ -20,6 +20,10 @@ export default {
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           "Travora uses your location to tag your videos with where they were taken.",
+        NSCameraUsageDescription: "Travora needs camera access to record videos.",
+        NSMicrophoneUsageDescription: "Travora needs microphone access to record audio with videos.",
+        NSPhotoLibraryUsageDescription: "Travora needs access to your photo library to upload videos.",
+        NSPhotoLibraryAddUsageDescription: "Travora needs to save videos to your photo library.",
       },
     },
     android: {
@@ -29,7 +33,14 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: "com.travora.app",
-      permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      permissions: [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+      ],
     },
     web: {
       bundler: "metro",
