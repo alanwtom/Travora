@@ -1,12 +1,18 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BackButton } from '@/components/BackButton';
 import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import {
+  addHotelPin,
+  type HotelPinSearchContext,
+} from '@/services/itineraryTravelPins';
 import { searchGoogleHotels, SerpApiHotelOption } from '@/services/serpapiHotels';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Hotel, Search, Star } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   Platform,
@@ -21,6 +27,11 @@ import {
 
 export default function HotelsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { itineraryId, itineraryTitle } = useLocalSearchParams<{
+    itineraryId?: string;
+    itineraryTitle?: string;
+  }>();
   const [destination, setDestination] = useState('');
   const [guests, setGuests] = useState(2);
   const [rooms, setRooms] = useState(1);
@@ -70,6 +81,29 @@ export default function HotelsScreen() {
     }
   };
 
+  const addHotelToItinerary = async (item: SerpApiHotelOption) => {
+    if (!itineraryId || !user?.id) return;
+    const ctx: HotelPinSearchContext = {
+      query: destination.trim(),
+      checkIn: checkInDate.toISOString().slice(0, 10),
+      checkOut: checkOutDate.toISOString().slice(0, 10),
+      adults: guests,
+      rooms,
+    };
+    try {
+      await addHotelPin(itineraryId, user.id, item, ctx);
+      Alert.alert('Saved', `Added to ${itineraryTitle ?? 'your trip'}. You can add more options.`);
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+            ? (e as { message: string }).message
+            : 'Could not add this hotel.';
+      Alert.alert('Error', msg);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -91,46 +125,74 @@ export default function HotelsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() =>
-              router.push(
-                {
-                  pathname: '/profile/hotels/[id]',
-                  params: {
-                    id: item.id,
-                    name: item.name,
-                    destination: item.destination,
-                    stars: String(item.stars),
-                    pricePerNight: String(item.pricePerNight),
-                    thumbnail: item.thumbnail,
-                    description: item.description,
-                    amenities: item.amenities.join('||'),
-                  },
-                } as any
-              )
-            }
-          >
-            <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
-            <View style={styles.cardBody}>
-              <View style={styles.cardTop}>
-                <Text style={styles.hotelName}>{item.name}</Text>
-                <Text style={styles.price}>${item.pricePerNight}/night</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push(
+                  {
+                    pathname: '/profile/hotels/[id]',
+                    params: {
+                      id: item.id,
+                      name: item.name,
+                      destination: item.destination,
+                      stars: String(item.stars),
+                      pricePerNight: String(item.pricePerNight),
+                      thumbnail: item.thumbnail,
+                      description: item.description,
+                      amenities: item.amenities.join('||'),
+                      ...(itineraryId
+                        ? {
+                            itineraryId,
+                            itineraryTitle: itineraryTitle ?? '',
+                            pinCheckIn: checkInDate.toISOString().slice(0, 10),
+                            pinCheckOut: checkOutDate.toISOString().slice(0, 10),
+                            pinAdults: String(guests),
+                            pinRooms: String(rooms),
+                            pinQuery: destination.trim(),
+                          }
+                        : {}),
+                    },
+                  } as any
+                )
+              }
+            >
+              <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
+              <View style={styles.cardBody}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.hotelName}>{item.name}</Text>
+                  <Text style={styles.price}>${item.pricePerNight}/night</Text>
+                </View>
+                <View style={styles.starRow}>
+                  {Array.from({ length: item.stars }).map((_, index) => (
+                    <Star key={`${item.id}-${index}`} size={13} color="#f4b400" fill="#f4b400" />
+                  ))}
+                </View>
+                <Text style={styles.cardMeta}>
+                  {item.destination} · {rooms} room{rooms > 1 ? 's' : ''} · {guests} guest
+                  {guests > 1 ? 's' : ''}
+                </Text>
               </View>
-              <View style={styles.starRow}>
-                {Array.from({ length: item.stars }).map((_, index) => (
-                  <Star key={`${item.id}-${index}`} size={13} color="#f4b400" fill="#f4b400" />
-                ))}
-              </View>
-              <Text style={styles.cardMeta}>
-                {item.destination} · {rooms} room{rooms > 1 ? 's' : ''} · {guests} guest
-                {guests > 1 ? 's' : ''}
-              </Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            {itineraryId && user?.id ? (
+              <TouchableOpacity style={styles.addToTripBtn} onPress={() => addHotelToItinerary(item)}>
+                <Text style={styles.addToTripBtnText}>Add to trip</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         )}
         ListHeaderComponent={
           <View style={styles.form}>
+            {itineraryId ? (
+              <View style={styles.tripBanner}>
+                <Text style={styles.tripBannerText}>
+                  Saving to: {itineraryTitle ?? 'your trip'}
+                </Text>
+                <Text style={styles.tripBannerSub}>
+                  Add multiple hotels; saved details match what you see in search.
+                </Text>
+              </View>
+            ) : null}
             <Text style={styles.sectionTitle}>Hotels</Text>
             <TextInput
               style={styles.input}
@@ -293,6 +355,16 @@ const styles = StyleSheet.create({
   stateWrap: { alignItems: 'center', paddingVertical: 36, gap: 10 },
   stateText: { color: COLORS.textMuted, textAlign: 'center' },
   stateError: { color: COLORS.error, paddingHorizontal: 12 },
+  tripBanner: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 4,
+  },
+  tripBannerText: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  tripBannerSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 4, lineHeight: 17 },
   card: {
     marginTop: 12,
     borderWidth: 1,
@@ -308,4 +380,12 @@ const styles = StyleSheet.create({
   price: { color: COLORS.primary, fontWeight: '700' },
   starRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
   cardMeta: { marginTop: 8, color: COLORS.textMuted, fontSize: 13 },
+  addToTripBtn: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  addToTripBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

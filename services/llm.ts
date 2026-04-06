@@ -1,3 +1,14 @@
+/**
+ * Itinerary LLM (restart Expo after env changes):
+ * - OpenRouter: EXPO_PUBLIC_OPENROUTER_API_KEY (preferred if set; bypasses direct Gemini).
+ *   Optional: EXPO_PUBLIC_OPENROUTER_MODEL (default openai/gpt-4o-mini; see openrouter.ai/models).
+ * - Direct Gemini: EXPO_PUBLIC_GEMINI_API_KEY, optional EXPO_PUBLIC_GEMINI_MODEL.
+ * - OpenAI / Anthropic: EXPO_PUBLIC_LLM_PROVIDER + EXPO_PUBLIC_LLM_API_KEY.
+ *
+ * Plain OPENROUTER_API_KEY is wired through app.config.js → extra.openrouterApiKey (expo-constants).
+ * Prefer EXPO_PUBLIC_OPENROUTER_API_KEY when possible.
+ */
+import Constants from 'expo-constants';
 import type {
     ItineraryDay,
     ItineraryPreferences,
@@ -5,13 +16,28 @@ import type {
 } from '@/types/database';
 
 // LLM provider configuration
-type LLMProvider = 'openai' | 'anthropic' | 'gemini';
+type LLMProvider = 'openai' | 'anthropic' | 'gemini' | 'openrouter';
 
 interface LLMConfig {
   provider: LLMProvider;
   apiKey: string;
   model?: string;
   baseURL?: string;
+}
+
+async function invokeLLM(config: LLMConfig, prompt: string): Promise<string> {
+  switch (config.provider) {
+    case 'openrouter':
+      return await callOpenRouter(config, prompt);
+    case 'openai':
+      return await callOpenAI(config, prompt);
+    case 'anthropic':
+      return await callAnthropic(config, prompt);
+    case 'gemini':
+      return await callGemini(config, prompt);
+    default:
+      throw new Error(`Unsupported LLM provider: ${config.provider}`);
+  }
 }
 
 /**
@@ -25,19 +51,26 @@ export async function callLLM(prompt: string): Promise<string> {
   }
 
   try {
-    switch (config.provider) {
-      case 'openai':
-        return await callOpenAI(config, prompt);
-      case 'anthropic':
-        return await callAnthropic(config, prompt);
-      case 'gemini':
-        return await callGemini(config, prompt);
-      default:
-        throw new Error(`Unsupported LLM provider: ${config.provider}`);
+    return await invokeLLM(config, prompt);
+  } catch (primaryError) {
+    const or = resolveOpenRouterCredentials();
+    if (config.provider === 'gemini' && or.key) {
+      try {
+        console.warn('Direct Gemini failed; retrying via OpenRouter.');
+        return await invokeLLM(
+          {
+            provider: 'openrouter',
+            apiKey: or.key,
+            model: or.model,
+          },
+          prompt
+        );
+      } catch (fallbackErr) {
+        console.error('OpenRouter fallback failed:', fallbackErr);
+      }
     }
-  } catch (error) {
-    console.error('LLM API call failed:', error);
-    throw error;
+    console.error('LLM API call failed:', primaryError);
+    throw primaryError;
   }
 }
 
@@ -104,9 +137,8 @@ Create a ${preferences.durationDays}-day itinerary that:
 
 ## Response Format
 
-IMPORTANT: Return ONLY a valid JSON object (no markdown, no code blocks, no explanations outside the JSON).
+Return a single JSON object (no markdown fences, no commentary) with exactly this shape:
 
-\`\`\`json
 {
   "title": "Catchy trip title",
   "days": [
@@ -136,7 +168,6 @@ IMPORTANT: Return ONLY a valid JSON object (no markdown, no code blocks, no expl
     }
   ]
 }
-\`\`\`
 
 Additional days should follow the same structure. If a time period has no activity, omit that field.
 
@@ -154,7 +185,18 @@ export function parseItineraryResponse(
     let jsonStr = response.trim();
 
     // Remove markdown code blocks if present
-    jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    jsonStr = jsonStr.replace(/```json\n?/gi, '').replace(/```\n?/g, '');
+
+    // If extra prose wrapped the object, take outermost { ... }
+    try {
+      JSON.parse(jsonStr);
+    } catch {
+      const start = jsonStr.indexOf('{');
+      const end = jsonStr.lastIndexOf('}');
+      if (start >= 0 && end > start) {
+        jsonStr = jsonStr.slice(start, end + 1);
+      }
+    }
 
     // Parse JSON
     const parsed = JSON.parse(jsonStr);
@@ -228,27 +270,238 @@ function withTimeout<T>(
   ]);
 }
 
-/**
- * Get LLM configuration from environment variables
- */
-function getLLMConfig(): LLMConfig {
-  const provider = (process.env.EXPO_PUBLIC_LLM_PROVIDER ||
-    'openai') as LLMProvider;
-  const apiKey = process.env.EXPO_PUBLIC_LLM_API_KEY || '';
+/** Models known to work widely on generativelanguage.googleapis.com v1beta */
+const GEMINI_DEFAULT_MODEL = 'gemini-1.5-flash';
 
+/** Default model on OpenRouter — stable; override with EXPO_PUBLIC_OPENROUTER_MODEL */
+const OPENROUTER_DEFAULT_MODEL = 'openai/gpt-4o-mini';
+
+const OPENROUTER_MODEL_FALLBACKS = [
+  'openai/gpt-4o-mini',
+  'google/gemini-2.0-flash-001',
+  'google/gemini-flash-1.5-8b',
+  'meta-llama/llama-3.3-70b-instruct',
+  'anthropic/claude-3.5-haiku',
+];
+
+function sanitizeOpenRouterModelId(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\.+$/g, '')
+    .replace(/\s+/g, '');
+}
+
+type ExpoExtra = {
+  openrouterApiKey?: string;
+  openrouterModel?: string;
+};
+
+/** OPENROUTER_API_KEY from .env is injected at build time via app.config.js → extra */
+function openRouterFromExpoExtra(): { key: string; model: string } {
+  const extra = Constants.expoConfig?.extra as ExpoExtra | undefined;
+  return {
+    key: (extra?.openrouterApiKey || '').trim(),
+    model: (extra?.openrouterModel || '').trim(),
+  };
+}
+
+/** Resolve OpenRouter key/model: EXPO_PUBLIC_* first, then app.config extra, then OPENROUTER_API_KEY */
+function resolveOpenRouterCredentials(): { key: string; model: string } {
+  const fromExtra = openRouterFromExpoExtra();
+  const key =
+    (process.env.EXPO_PUBLIC_OPENROUTER_API_KEY || '').trim() ||
+    fromExtra.key ||
+    (process.env.OPENROUTER_API_KEY || '').trim();
+  const modelRaw =
+    sanitizeOpenRouterModelId(
+      (process.env.EXPO_PUBLIC_OPENROUTER_MODEL || '').trim() ||
+        fromExtra.model ||
+        OPENROUTER_DEFAULT_MODEL
+    ) || OPENROUTER_DEFAULT_MODEL;
+  return {
+    key,
+    model: modelRaw,
+  };
+}
+
+/**
+ * Experimental IDs (e.g. gemini-2.0-flash-exp) often 404 on v1beta; map to stable IDs.
+ */
+function normalizeGeminiModelId(raw: string | undefined): string {
+  const m = (raw || '').trim();
+  if (!m) return GEMINI_DEFAULT_MODEL;
+  const lower = m.toLowerCase();
+  if (lower.includes('flash-exp') || /-exp$/i.test(m) || /-experimental$/i.test(m)) {
+    return 'gemini-2.0-flash';
+  }
+  if (lower.endsWith('-preview') || lower.includes('preview-')) {
+    return GEMINI_DEFAULT_MODEL;
+  }
+  return m;
+}
+
+function getLLMConfig(): LLMConfig {
+  const orCreds = resolveOpenRouterCredentials();
+  const openrouterKey = orCreds.key;
+  const geminiKey = (process.env.EXPO_PUBLIC_GEMINI_API_KEY || '').trim();
+  const llmKey = (process.env.EXPO_PUBLIC_LLM_API_KEY || '').trim();
+  const providerOverride = (process.env.EXPO_PUBLIC_LLM_PROVIDER || '').trim().toLowerCase();
+
+  const openrouterModel = orCreds.model || OPENROUTER_DEFAULT_MODEL;
+
+  const geminiRawModel =
+    (process.env.EXPO_PUBLIC_GEMINI_MODEL || '').trim() ||
+    (process.env.EXPO_PUBLIC_LLM_MODEL || '').trim() ||
+    GEMINI_DEFAULT_MODEL;
+
+  if (providerOverride === 'openrouter') {
+    const key = openrouterKey || llmKey;
+    return {
+      provider: 'openrouter',
+      apiKey: key,
+      model: openrouterModel,
+    };
+  }
+
+  if (providerOverride === 'openai') {
+    return {
+      provider: 'openai',
+      apiKey: llmKey,
+      model: (process.env.EXPO_PUBLIC_LLM_MODEL || '').trim() || 'gpt-4o',
+    };
+  }
+
+  if (providerOverride === 'anthropic') {
+    return {
+      provider: 'anthropic',
+      apiKey: llmKey,
+      model:
+        (process.env.EXPO_PUBLIC_LLM_MODEL || '').trim() ||
+        'claude-3-5-sonnet-20241022',
+    };
+  }
+
+  if (providerOverride === 'gemini') {
+    const key = geminiKey || llmKey;
+    return {
+      provider: 'gemini',
+      apiKey: key,
+      model: normalizeGeminiModelId(geminiRawModel),
+    };
+  }
+
+  // No explicit provider: prefer OpenRouter when configured (common when direct Gemini fails)
+  if (openrouterKey) {
+    return {
+      provider: 'openrouter',
+      apiKey: openrouterKey,
+      model: openrouterModel,
+    };
+  }
+
+  if (geminiKey) {
+    return {
+      provider: 'gemini',
+      apiKey: geminiKey,
+      model: normalizeGeminiModelId(geminiRawModel),
+    };
+  }
+
+  const provider = (providerOverride || 'openai') as LLMProvider;
   return {
     provider,
-    apiKey,
+    apiKey: llmKey,
     model:
-      process.env.EXPO_PUBLIC_LLM_MODEL ||
+      (process.env.EXPO_PUBLIC_LLM_MODEL || '').trim() ||
       (provider === 'openai'
         ? 'gpt-4o'
         : provider === 'anthropic'
-        ? 'claude-3-5-sonnet-20241022'
-        : provider === 'gemini'
-        ? 'gemini-2.5-flash' // updated to supported model
-        : 'gpt-4o'),
+          ? 'claude-3-5-sonnet-20241022'
+          : provider === 'gemini'
+            ? GEMINI_DEFAULT_MODEL
+            : 'gpt-4o'),
   };
+}
+
+/**
+ * OpenRouter — OpenAI-compatible chat completions API
+ * @see https://openrouter.ai/docs
+ */
+async function callOpenRouter(config: LLMConfig, prompt: string): Promise<string> {
+  if (typeof fetch === 'undefined') {
+    throw new Error('fetch is not available in this environment');
+  }
+
+  if (!config.apiKey) {
+    throw new Error(
+      'OpenRouter API key missing. Set OPENROUTER_API_KEY or EXPO_PUBLIC_OPENROUTER_API_KEY in .env and restart Expo (see app.config.js extra).'
+    );
+  }
+
+  const primary = sanitizeOpenRouterModelId(config.model || OPENROUTER_DEFAULT_MODEL);
+  const modelCandidates = [...new Set([primary, ...OPENROUTER_MODEL_FALLBACKS])];
+
+  const bodyBase = {
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an expert travel itinerary planner. Always respond with valid JSON only: a single object with "title" (string) and "days" (array). No markdown code fences.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    temperature: 0.7,
+    max_tokens: 8192,
+  };
+
+  let lastError = '';
+
+  for (const model of modelCandidates) {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+        'HTTP-Referer': 'https://travora.app',
+        'X-Title': 'Travora',
+      },
+      body: JSON.stringify({
+        model,
+        ...bodyBase,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      const isNoEndpoint =
+        response.status === 404 &&
+        (err.includes('No endpoints found') || err.includes('"code":404'));
+      if (isNoEndpoint) {
+        lastError = err;
+        continue;
+      }
+      throw new Error(`OpenRouter API error (${model}): ${response.status} - ${err}`);
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+      error?: { message?: string };
+    };
+
+    const content = data.choices?.[0]?.message?.content;
+    if (typeof content === 'string' && content.length > 0) {
+      return content;
+    }
+
+    lastError = data.error?.message || `Empty content from ${model}`;
+  }
+
+  throw new Error(
+    `OpenRouter: no model worked. Set EXPO_PUBLIC_OPENROUTER_MODEL to an id from openrouter.ai/models. Last error: ${lastError}`
+  );
 }
 
 /**
@@ -336,54 +589,132 @@ IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, cod
   return data.content[0].text;
 }
 
+const GEMINI_FALLBACK_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+];
+
+function geminiModelsToTry(primary: string | undefined): string[] {
+  const first = normalizeGeminiModelId(primary);
+  const rest = GEMINI_FALLBACK_MODELS.filter((m) => m !== first);
+  return [...new Set([first, ...rest])];
+}
+
 /**
- * Call Google Gemini API
+ * Call Google Gemini API (Generative Language API v1beta).
+ * Retries other models on 404 (wrong model id for this API version).
  */
 async function callGemini(config: LLMConfig, prompt: string): Promise<string> {
   if (typeof fetch === 'undefined') {
     throw new Error('fetch is not available in this environment');
   }
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `${prompt}
+  const userText = `${prompt}
 
-IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, code blocks, or any text outside the JSON object. Return the raw JSON object directly.`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2000,
+Output: a single JSON object with "title" (string) and "days" (array). No markdown, no code fences, no text before or after the JSON.`;
+
+  const baseBody = {
+    systemInstruction: {
+      parts: [
+        {
+          text: 'You are an expert travel itinerary planner. You must respond with valid JSON only (application/json). The root object has "title" and "days" keys.',
         },
-      }),
+      ],
+    },
+    contents: [{ parts: [{ text: userText }] }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+      responseMimeType: 'application/json',
+    },
+  };
+
+  const bodyNoMime = {
+    systemInstruction: baseBody.systemInstruction,
+    contents: baseBody.contents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+    },
+  };
+
+  let lastError = '';
+
+  for (const modelId of geminiModelsToTry(config.model)) {
+    const modelEnc = encodeURIComponent(modelId);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelEnc}:generateContent?key=${encodeURIComponent(config.apiKey)}`;
+
+    let response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(baseBody),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      if (response.status === 400 && errText.includes('responseMimeType')) {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyNoMime),
+        });
+      } else if (response.status === 404) {
+        lastError = errText;
+        continue;
+      } else {
+        throw new Error(`Gemini API error (${modelId}): ${response.status} - ${errText}`);
+      }
     }
+
+    if (!response.ok) {
+      const errText = await response.text();
+      if (response.status === 404) {
+        lastError = errText;
+        continue;
+      }
+      throw new Error(`Gemini API error (${modelId}): ${response.status} - ${errText}`);
+    }
+
+    const data = (await response.json()) as {
+      promptFeedback?: { blockReason?: string };
+      candidates?: Array<{
+        finishReason?: string;
+        content?: { parts?: Array<{ text?: string }> };
+      }>;
+      error?: { message?: string };
+    };
+
+    if (data.promptFeedback?.blockReason) {
+      throw new Error(`Gemini blocked the request: ${data.promptFeedback.blockReason}`);
+    }
+
+    const candidate = data.candidates?.[0];
+    if (!candidate) {
+      lastError =
+        data.error?.message ||
+        `No candidates for ${modelId}.`;
+      continue;
+    }
+
+    if (candidate.finishReason === 'MAX_TOKENS') {
+      throw new Error(
+        'Itinerary response was cut off. Try fewer days or set EXPO_PUBLIC_GEMINI_MODEL=gemini-1.5-pro.'
+      );
+    }
+
+    const text = candidate.content?.parts?.[0]?.text;
+    if (typeof text === 'string' && text.length > 0) {
+      return text;
+    }
+
+    lastError = `Empty text from ${modelId}`;
+  }
+
+  throw new Error(
+    `Gemini: no working model. Last error: ${lastError || 'unknown'}. Set EXPO_PUBLIC_GEMINI_MODEL to gemini-1.5-flash and restart Expo.`
   );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Gemini API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  // Gemini returns the text in candidates[0].content.parts[0].text
-  if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-    return data.candidates[0].content.parts[0].text;
-  }
-
-  throw new Error('Unexpected Gemini API response format');
 }
 
 /**
@@ -392,4 +723,10 @@ IMPORTANT: Respond with valid JSON only. Do not include markdown formatting, cod
 export function isLLMConfigured(): boolean {
   const config = getLLMConfig();
   return !!config.apiKey;
+}
+
+/** Which provider will be used (after resolving Gemini key vs LLM_* vars) */
+export function getResolvedLLMProvider(): LLMProvider | null {
+  const config = getLLMConfig();
+  return config.apiKey ? config.provider : null;
 }

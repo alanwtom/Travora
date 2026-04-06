@@ -1,9 +1,49 @@
 import { getEstimatedFlightPrice } from '@/services/flightService';
 import { generateRuleBasedItinerary, saveItinerary } from '@/services/itineraries';
-import { generateItineraryWithLLM, isLLMConfigured } from '@/services/llm';
+import { generateItineraryWithLLM, getResolvedLLMProvider, isLLMConfigured } from '@/services/llm';
 import { coordinatesToAirportCode, getTravelOrigin } from '@/services/travelOrigin';
 import type { Itinerary, ItineraryPreferences, LocationWithCoordinates } from '@/types/database';
 import { useCallback, useState } from 'react';
+
+const ERROR_PREVIEW_MAX = 450;
+
+function formatGenerationError(err: unknown): string {
+  if (err instanceof Error && err.message) {
+    return truncateError(err.message);
+  }
+  if (typeof err === 'string') {
+    return truncateError(err);
+  }
+  if (err && typeof err === 'object') {
+    const o = err as Record<string, unknown>;
+    if (typeof o.message === 'string' && o.message) {
+      return truncateError(o.message);
+    }
+    if (typeof o.error === 'string' && o.error) {
+      return truncateError(o.error);
+    }
+    const nested = o.error;
+    if (nested && typeof nested === 'object') {
+      const m = (nested as { message?: string }).message;
+      if (typeof m === 'string' && m) return truncateError(m);
+    }
+    if (typeof o.details === 'string' && o.details) {
+      return truncateError(`${o.message ?? 'Request failed'}: ${o.details}`);
+    }
+    try {
+      return truncateError(JSON.stringify(err));
+    } catch {
+      return truncateError(String(err));
+    }
+  }
+  return 'Something went wrong while generating. Check the Metro/console logs for details.';
+}
+
+function truncateError(s: string): string {
+  const t = s.trim();
+  if (t.length <= ERROR_PREVIEW_MAX) return t;
+  return `${t.slice(0, ERROR_PREVIEW_MAX)}…`;
+}
 
 export interface UseItineraryGenerationReturn {
   generate: (preferences: ItineraryPreferences) => Promise<Itinerary | null>;
@@ -123,7 +163,7 @@ export function useItineraryGeneration(
               estimated_flight_price: flightPrice,
               metadata: {
                 source_video_ids: likedLocations.map((l) => l.id),
-                llm_provider: process.env.EXPO_PUBLIC_LLM_PROVIDER,
+                llm_provider: getResolvedLLMProvider() ?? process.env.EXPO_PUBLIC_LLM_PROVIDER,
               },
             });
 
@@ -195,9 +235,8 @@ export function useItineraryGeneration(
         setItinerary(resultItinerary);
         return resultItinerary;
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to generate itinerary';
-        setError(errorMessage);
+        console.error('Itinerary generation failed:', err);
+        setError(formatGenerationError(err));
         setProgress(0);
         return null;
       } finally {

@@ -4,12 +4,18 @@ import type {
   ItineraryInsert,
   ItineraryRating,
   ItineraryRatingInsert,
+  Json,
   LocationWithCoordinates,
   ItineraryPreferences,
   ItineraryDay,
   LocationCluster,
   CollaborationRole,
 } from '@/types/database';
+
+/** Payload from hooks may include flight estimate before migration 011 is applied */
+export type ItineraryInsertWithFlight = ItineraryInsert & {
+  estimated_flight_price?: number | null;
+};
 import {
   clusterLocations,
   optimizeRoute,
@@ -162,13 +168,43 @@ export async function generateRuleBasedItinerary(
  * Save a new itinerary
  */
 export async function saveItinerary(
-  itinerary: ItineraryInsert
+  itinerary: ItineraryInsertWithFlight
 ): Promise<Itinerary> {
   const { data, error } = await supabase
     .from('itineraries')
-    .insert(itinerary)
+    .insert(itinerary as ItineraryInsert)
     .select()
     .single();
+
+  if (
+    error?.code === 'PGRST204' &&
+    typeof error.message === 'string' &&
+    error.message.includes('estimated_flight_price')
+  ) {
+    const { estimated_flight_price, ...rest } = itinerary;
+    let metadata: Json | null | undefined = rest.metadata as Json | null | undefined;
+    if (estimated_flight_price != null) {
+      const base =
+        metadata !== null &&
+        metadata !== undefined &&
+        typeof metadata === 'object' &&
+        !Array.isArray(metadata)
+          ? { ...(metadata as Record<string, unknown>) }
+          : {};
+      metadata = {
+        ...base,
+        estimated_flight_price_usd: estimated_flight_price,
+      } as Json;
+    }
+    const fallbackInsert = { ...rest, metadata } as ItineraryInsert;
+    const retry = await supabase
+      .from('itineraries')
+      .insert(fallbackInsert)
+      .select()
+      .single();
+    if (retry.error) throw retry.error;
+    return retry.data;
+  }
 
   if (error) throw error;
   return data;
