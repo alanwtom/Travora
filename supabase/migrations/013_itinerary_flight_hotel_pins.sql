@@ -1,4 +1,5 @@
--- Pins for flights and hotels saved to an itinerary (exact search result JSON preserved)
+-- Pins for flights and hotels saved to an itinerary (exact search result JSON preserved).
+-- itinerary_id FK uses ON DELETE CASCADE: deleting the parent itinerary removes all pins automatically.
 
 CREATE TABLE public.itinerary_flight_pins (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

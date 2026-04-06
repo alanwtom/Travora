@@ -412,8 +412,20 @@ export default function ItineraryDetailScreen() {
                 {(ctx?.origin ?? '—') + ' → ' + (ctx?.destination ?? '—')}
                 {ctx?.date ? ` · ${ctx.date}` : ''}
               </Text>
-              <Text style={styles.pinMeta}>Departs: {new Date(f.departure_time).toLocaleString()}</Text>
-              <Text style={styles.pinMeta}>Arrives: {new Date(f.arrival_time).toLocaleString()}</Text>
+              <Text style={styles.pinMeta}>
+                Departs:{' '}
+                {f.display_depart_label ??
+                  (Number.isFinite(Date.parse(f.departure_time))
+                    ? new Date(f.departure_time).toLocaleString()
+                    : f.departure_time)}
+              </Text>
+              <Text style={styles.pinMeta}>
+                Arrives:{' '}
+                {f.display_arrive_label ??
+                  (Number.isFinite(Date.parse(f.arrival_time))
+                    ? new Date(f.arrival_time).toLocaleString()
+                    : f.arrival_time)}
+              </Text>
               <Text style={styles.pinPrice}>
                 ${f.estimated_price} {f.currency}
               </Text>

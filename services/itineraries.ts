@@ -58,6 +58,29 @@ export async function getItineraryById(
   return data;
 }
 
+const ITINERARY_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Ensures an itinerary row exists before saving flight/hotel pins.
+ * Pins store JSON snapshots on `itinerary_flight_pins` / `itinerary_hotel_pins` (or metadata fallback);
+ * there is no separate content_id join — validation is on itinerary_id + payload shape.
+ */
+export async function assertItineraryExistsForTravelPins(itineraryId: string): Promise<void> {
+  const trimmed = itineraryId.trim();
+  if (!ITINERARY_UUID_RE.test(trimmed)) {
+    throw new Error('Invalid itinerary id');
+  }
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('id')
+    .eq('id', trimmed)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Itinerary not found');
+}
+
 /**
  * Get user's liked locations for itinerary generation
  */

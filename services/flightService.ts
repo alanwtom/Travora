@@ -86,6 +86,7 @@ function normalizeFlight(item: AviationStackFlight, index: number, p: FlightSear
     arrival_time: arrival,
     estimated_price: estimatePrice(p.origin, p.destination, airline, departure, arrival, p.date),
     currency: 'USD',
+    source: 'aviationstack',
   };
 }
 
@@ -237,6 +238,7 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
           normalized.date
         ),
         currency: 'USD',
+        source: 'fallback',
       },
     ];
     return fallback;

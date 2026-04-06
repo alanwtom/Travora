@@ -1,7 +1,10 @@
 import { supabase } from '@/lib/supabase';
+import { canEditItinerary } from '@/services/collaborators';
+import { assertItineraryExistsForTravelPins } from '@/services/itineraries';
+import type { SerpApiHotelOption } from '@/services/serpapiHotels';
+import { normalizeFlightForItineraryPin, normalizeHotelForItineraryPin } from '@/services/travelPinAdapters';
 import type { Database, Json } from '@/types/database';
 import type { FlightData } from '@/types/travel';
-import type { SerpApiHotelOption } from '@/services/serpapiHotels';
 
 export type ItineraryFlightPinRow = Database['public']['Tables']['itinerary_flight_pins']['Row'];
 export type ItineraryHotelPinRow = Database['public']['Tables']['itinerary_hotel_pins']['Row'];
@@ -267,18 +270,30 @@ export async function listHotelPinsForItinerary(itineraryId: string): Promise<It
   return mergePinsById(tableRows, metaRows);
 }
 
+/**
+ * Persists a flight snapshot for an itinerary. Does not call SerpAPI or AviationStack — the client
+ * passes search results already in memory (see flight search cache in flightService for API usage).
+ */
 export async function addFlightPin(
   itineraryId: string,
   userId: string,
-  flight: FlightData,
+  flight: FlightData | unknown,
   searchContext: FlightPinSearchContext
 ): Promise<ItineraryFlightPinRow> {
+  await assertItineraryExistsForTravelPins(itineraryId);
+  const canEdit = await canEditItinerary(itineraryId.trim(), userId);
+  if (!canEdit) {
+    throw new Error('You do not have permission to add flights to this itinerary');
+  }
+
+  const normalized = normalizeFlightForItineraryPin(flight, searchContext.date);
+
   const { data, error } = await supabase
     .from('itinerary_flight_pins')
     .insert({
-      itinerary_id: itineraryId,
+      itinerary_id: itineraryId.trim(),
       user_id: userId,
-      flight: JSON.parse(JSON.stringify(flight)) as Json,
+      flight: JSON.parse(JSON.stringify(normalized)) as Json,
       search_context: JSON.parse(JSON.stringify(searchContext)) as Json,
     })
     .select('*')
@@ -286,7 +301,7 @@ export async function addFlightPin(
 
   if (!error && data) return data;
   if (error && isFlightPinsTableUnavailable(error)) {
-    return appendFlightPinMetadata(itineraryId, userId, flight, searchContext);
+    return appendFlightPinMetadata(itineraryId.trim(), userId, normalized, searchContext);
   }
   if (error) throw error;
   throw new Error('Failed to save flight pin');
@@ -295,15 +310,23 @@ export async function addFlightPin(
 export async function addHotelPin(
   itineraryId: string,
   userId: string,
-  hotel: SerpApiHotelOption,
+  hotel: SerpApiHotelOption | unknown,
   searchContext: HotelPinSearchContext
 ): Promise<ItineraryHotelPinRow> {
+  await assertItineraryExistsForTravelPins(itineraryId);
+  const canEdit = await canEditItinerary(itineraryId.trim(), userId);
+  if (!canEdit) {
+    throw new Error('You do not have permission to add hotels to this itinerary');
+  }
+
+  const normalized = normalizeHotelForItineraryPin(hotel);
+
   const { data, error } = await supabase
     .from('itinerary_hotel_pins')
     .insert({
-      itinerary_id: itineraryId,
+      itinerary_id: itineraryId.trim(),
       user_id: userId,
-      hotel: JSON.parse(JSON.stringify(hotel)) as Json,
+      hotel: JSON.parse(JSON.stringify(normalized)) as Json,
       search_context: JSON.parse(JSON.stringify(searchContext)) as Json,
     })
     .select('*')
@@ -311,7 +334,7 @@ export async function addHotelPin(
 
   if (!error && data) return data;
   if (error && isHotelPinsTableUnavailable(error)) {
-    return appendHotelPinMetadata(itineraryId, userId, hotel, searchContext);
+    return appendHotelPinMetadata(itineraryId.trim(), userId, normalized, searchContext);
   }
   if (error) throw error;
   throw new Error('Failed to save hotel pin');

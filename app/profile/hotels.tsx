@@ -9,7 +9,7 @@ import {
 import { searchGoogleHotels, SerpApiHotelOption } from '@/services/serpapiHotels';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Hotel, Search, Star } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -42,6 +42,7 @@ export default function HotelsScreen() {
   const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<SerpApiHotelOption[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const searchInFlight = useRef(false);
 
   const formatDate = (value: Date) =>
     value.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -61,6 +62,8 @@ export default function HotelsScreen() {
   };
 
   const runSearch = async () => {
+    if (searchInFlight.current) return;
+    searchInFlight.current = true;
     setHasSearched(true);
     setSearchError(null);
     setIsLoading(true);
@@ -78,6 +81,7 @@ export default function HotelsScreen() {
       setSearchError(message);
     } finally {
       setIsLoading(false);
+      searchInFlight.current = false;
     }
   };
 
