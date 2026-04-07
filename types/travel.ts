@@ -43,6 +43,11 @@ export type FlightData = {
   arrival_time: string;
   estimated_price: number;
   currency: string;
+  /** Which pipeline produced this row (pins + UI use one canonical FlightData shape) */
+  source?: 'aviationstack' | 'serpapi' | 'fallback';
+  /** SerpAPI/Google Flights often exposes clock labels without full ISO; optional for display */
+  display_depart_label?: string;
+  display_arrive_label?: string;
 };
 
 export type FlightSearchResponse = {

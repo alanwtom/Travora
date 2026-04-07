@@ -6,15 +6,42 @@ import { useItineraryTravelTotals } from '@/hooks/useItineraryTravelTotals';
 import { ShareModal } from '@/components/ShareModal';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
+import { canEditItinerary } from '@/services/collaborators';
+import {
+  asFlightData,
+  asHotelOption,
+  deleteFlightPin,
+  deleteHotelPin,
+  listFlightPinsForItinerary,
+  listHotelPinsForItinerary,
+  type ItineraryFlightPinRow,
+  type ItineraryHotelPinRow,
+} from '@/services/itineraryTravelPins';
 import { deleteItinerary, getItineraryById, getItineraryStats, rateItinerary } from '@/services/itineraries';
 import { getProfile } from '@/services/profiles';
 import { getVideosByIds } from '@/services/videos';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AlertCircle, Bot, Calendar, Compass, Settings, Share2, Star, ThumbsDown, ThumbsUp, Trash2, Wallet } from 'lucide-react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  AlertCircle,
+  Bot,
+  Building2,
+  Calendar,
+  Compass,
+  Plane,
+  Settings,
+  Share2,
+  Star,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  Wallet,
+  X,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -37,12 +64,39 @@ export default function ItineraryDetailScreen() {
   const [currentUsername, setCurrentUsername] = useState<string | undefined>(undefined);
   const [videos, setVideos] = useState<any[]>([]);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [flightPins, setFlightPins] = useState<ItineraryFlightPinRow[]>([]);
+  const [hotelPins, setHotelPins] = useState<ItineraryHotelPinRow[]>([]);
+  const [canEditPins, setCanEditPins] = useState(false);
 
   const { totalUsd, loading: travelLoading } = useItineraryTravelTotals(videos);
 
   useEffect(() => {
     loadItinerary();
   }, [id]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!id || typeof id !== 'string') return;
+      let cancelled = false;
+      (async () => {
+        try {
+          const [f, h] = await Promise.all([
+            listFlightPinsForItinerary(id),
+            listHotelPinsForItinerary(id),
+          ]);
+          if (!cancelled) {
+            setFlightPins(f);
+            setHotelPins(h);
+          }
+        } catch {
+          // Table may not exist until migration is applied
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [id])
+  );
 
   // Load current user's profile for notifications
   useEffect(() => {
@@ -70,6 +124,24 @@ export default function ItineraryDetailScreen() {
       ]);
       setItinerary(itineraryData);
       setStats(statsData);
+
+      try {
+        const [fp, hp] = await Promise.all([
+          listFlightPinsForItinerary(id),
+          listHotelPinsForItinerary(id),
+        ]);
+        setFlightPins(fp);
+        setHotelPins(hp);
+      } catch {
+        setFlightPins([]);
+        setHotelPins([]);
+      }
+
+      if (user?.id) {
+        setCanEditPins(await canEditItinerary(id, user.id));
+      } else {
+        setCanEditPins(false);
+      }
 
       // Load videos for travel totals
       if (itineraryData?.metadata?.source_video_ids) {
@@ -126,6 +198,58 @@ export default function ItineraryDetailScreen() {
   const handleShare = () => {
     if (!itinerary) return;
     setShareModalVisible(true);
+  };
+
+  const openAddFlights = () => {
+    if (!itinerary) return;
+    router.push({
+      pathname: '/profile/flights',
+      params: { itineraryId: itinerary.id, itineraryTitle: itinerary.title },
+    } as any);
+  };
+
+  const openAddHotels = () => {
+    if (!itinerary) return;
+    router.push({
+      pathname: '/profile/hotels',
+      params: { itineraryId: itinerary.id, itineraryTitle: itinerary.title },
+    } as any);
+  };
+
+  const confirmRemoveFlightPin = (pinId: string) => {
+    Alert.alert('Remove this flight option?', 'It will only be removed from this trip.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteFlightPin(pinId, itinerary.id);
+            setFlightPins((prev) => prev.filter((p) => p.id !== pinId));
+          } catch {
+            Alert.alert('Error', 'Could not remove this flight.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const confirmRemoveHotelPin = (pinId: string) => {
+    Alert.alert('Remove this hotel option?', 'It will only be removed from this trip.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteHotelPin(pinId, itinerary.id);
+            setHotelPins((prev) => prev.filter((p) => p.id !== pinId));
+          } catch {
+            Alert.alert('Error', 'Could not remove this hotel.');
+          }
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -234,6 +358,123 @@ export default function ItineraryDetailScreen() {
             )}
           </View>
         )}
+      </View>
+
+      <View style={styles.pinsSection}>
+        <Text style={styles.sectionTitle}>Saved flights & hotels</Text>
+        <Text style={styles.pinsHint}>
+          Add options from flight and hotel search; each pin keeps the exact details you saw when you searched.
+        </Text>
+
+        {canEditPins && (
+          <View style={styles.pinsActions}>
+            <TouchableOpacity style={styles.pinsAddBtn} onPress={openAddFlights}>
+              <Plane size={18} color={COLORS.primary} strokeWidth={2.5} />
+              <Text style={styles.pinsAddBtnText}>Add flights</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.pinsAddBtn} onPress={openAddHotels}>
+              <Building2 size={18} color={COLORS.primary} strokeWidth={2.5} />
+              <Text style={styles.pinsAddBtnText}>Add hotels</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {flightPins.length === 0 && hotelPins.length === 0 ? (
+          <Text style={styles.pinsEmpty}>
+            {canEditPins
+              ? 'No saved options yet. Tap Add flights or Add hotels.'
+              : 'No saved flight or hotel options yet.'}
+          </Text>
+        ) : null}
+
+        {flightPins.map((pin) => {
+          const f = asFlightData(pin.flight);
+          const ctx = pin.search_context as { origin?: string; destination?: string; date?: string } | null;
+          return (
+            <View key={pin.id} style={styles.pinCard}>
+              {canEditPins && (
+                <Pressable
+                  style={styles.pinRemove}
+                  onPress={() => confirmRemoveFlightPin(pin.id)}
+                  hitSlop={8}
+                  accessibilityLabel="Remove flight option"
+                >
+                  <X size={18} color={COLORS.textMuted} strokeWidth={2.5} />
+                </Pressable>
+              )}
+              <View style={styles.pinCardHeader}>
+                <Plane size={16} color={COLORS.primary} strokeWidth={2.5} />
+                <Text style={styles.pinCardLabel}>Flight option</Text>
+              </View>
+              <Text style={styles.pinTitle}>{f.airline}</Text>
+              <Text style={styles.pinMeta}>{f.flight_number}</Text>
+              <Text style={styles.pinMeta}>
+                {(ctx?.origin ?? '—') + ' → ' + (ctx?.destination ?? '—')}
+                {ctx?.date ? ` · ${ctx.date}` : ''}
+              </Text>
+              <Text style={styles.pinMeta}>
+                Departs:{' '}
+                {f.display_depart_label ??
+                  (Number.isFinite(Date.parse(f.departure_time))
+                    ? new Date(f.departure_time).toLocaleString()
+                    : f.departure_time)}
+              </Text>
+              <Text style={styles.pinMeta}>
+                Arrives:{' '}
+                {f.display_arrive_label ??
+                  (Number.isFinite(Date.parse(f.arrival_time))
+                    ? new Date(f.arrival_time).toLocaleString()
+                    : f.arrival_time)}
+              </Text>
+              <Text style={styles.pinPrice}>
+                ${f.estimated_price} {f.currency}
+              </Text>
+            </View>
+          );
+        })}
+
+        {hotelPins.map((pin) => {
+          const h = asHotelOption(pin.hotel);
+          const ctx = pin.search_context as {
+            query?: string;
+            checkIn?: string;
+            checkOut?: string;
+            adults?: number;
+            rooms?: number;
+          } | null;
+          return (
+            <View key={pin.id} style={styles.pinCard}>
+              {canEditPins && (
+                <Pressable
+                  style={styles.pinRemove}
+                  onPress={() => confirmRemoveHotelPin(pin.id)}
+                  hitSlop={8}
+                  accessibilityLabel="Remove hotel option"
+                >
+                  <X size={18} color={COLORS.textMuted} strokeWidth={2.5} />
+                </Pressable>
+              )}
+              <View style={styles.pinCardHeader}>
+                <Building2 size={16} color={COLORS.primary} strokeWidth={2.5} />
+                <Text style={styles.pinCardLabel}>Hotel option</Text>
+              </View>
+              {h.thumbnail ? (
+                <Image source={{ uri: h.thumbnail }} style={styles.pinHotelThumb} />
+              ) : null}
+              <Text style={styles.pinTitle}>{h.name}</Text>
+              <Text style={styles.pinMeta}>{h.destination}</Text>
+              {ctx?.checkIn && ctx?.checkOut ? (
+                <Text style={styles.pinMeta}>
+                  {ctx.checkIn} → {ctx.checkOut}
+                  {ctx.adults != null ? ` · ${ctx.adults} guest${ctx.adults === 1 ? '' : 's'}` : ''}
+                  {ctx.rooms != null ? ` · ${ctx.rooms} room${ctx.rooms === 1 ? '' : 's'}` : ''}
+                </Text>
+              ) : null}
+              <Text style={styles.pinPrice}>${h.pricePerNight}/night</Text>
+              {h.description ? <Text style={styles.pinDescription}>{h.description}</Text> : null}
+            </View>
+          );
+        })}
       </View>
 
       {/* Days */}
@@ -475,5 +716,99 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     color: COLORS.text,
+  },
+  pinsSection: {
+    marginBottom: 24,
+  },
+  pinsHint: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  pinsActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
+  },
+  pinsAddBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+  pinsAddBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  pinsEmpty: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    marginBottom: 12,
+  },
+  pinCard: {
+    position: 'relative',
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  pinRemove: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    padding: 4,
+  },
+  pinCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  pinCardLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  pinTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  pinMeta: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    marginTop: 4,
+  },
+  pinPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: 8,
+  },
+  pinDescription: {
+    fontSize: 13,
+    color: COLORS.text,
+    marginTop: 8,
+    lineHeight: 18,
+  },
+  pinHotelThumb: {
+    width: '100%',
+    height: 140,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
+    marginBottom: 10,
   },
 });

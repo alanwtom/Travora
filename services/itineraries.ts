@@ -4,12 +4,18 @@ import type {
   ItineraryInsert,
   ItineraryRating,
   ItineraryRatingInsert,
+  Json,
   LocationWithCoordinates,
   ItineraryPreferences,
   ItineraryDay,
   LocationCluster,
   CollaborationRole,
 } from '@/types/database';
+
+/** Payload from hooks may include flight estimate before migration 011 is applied */
+export type ItineraryInsertWithFlight = ItineraryInsert & {
+  estimated_flight_price?: number | null;
+};
 import {
   clusterLocations,
   optimizeRoute,
@@ -50,6 +56,29 @@ export async function getItineraryById(
   }
 
   return data;
+}
+
+const ITINERARY_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Ensures an itinerary row exists before saving flight/hotel pins.
+ * Pins store JSON snapshots on `itinerary_flight_pins` / `itinerary_hotel_pins` (or metadata fallback);
+ * there is no separate content_id join — validation is on itinerary_id + payload shape.
+ */
+export async function assertItineraryExistsForTravelPins(itineraryId: string): Promise<void> {
+  const trimmed = itineraryId.trim();
+  if (!ITINERARY_UUID_RE.test(trimmed)) {
+    throw new Error('Invalid itinerary id');
+  }
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('id')
+    .eq('id', trimmed)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Itinerary not found');
 }
 
 /**
@@ -162,13 +191,43 @@ export async function generateRuleBasedItinerary(
  * Save a new itinerary
  */
 export async function saveItinerary(
-  itinerary: ItineraryInsert
+  itinerary: ItineraryInsertWithFlight
 ): Promise<Itinerary> {
   const { data, error } = await supabase
     .from('itineraries')
-    .insert(itinerary)
+    .insert(itinerary as ItineraryInsert)
     .select()
     .single();
+
+  if (
+    error?.code === 'PGRST204' &&
+    typeof error.message === 'string' &&
+    error.message.includes('estimated_flight_price')
+  ) {
+    const { estimated_flight_price, ...rest } = itinerary;
+    let metadata: Json | null | undefined = rest.metadata as Json | null | undefined;
+    if (estimated_flight_price != null) {
+      const base =
+        metadata !== null &&
+        metadata !== undefined &&
+        typeof metadata === 'object' &&
+        !Array.isArray(metadata)
+          ? { ...(metadata as Record<string, unknown>) }
+          : {};
+      metadata = {
+        ...base,
+        estimated_flight_price_usd: estimated_flight_price,
+      } as Json;
+    }
+    const fallbackInsert = { ...rest, metadata } as ItineraryInsert;
+    const retry = await supabase
+      .from('itineraries')
+      .insert(fallbackInsert)
+      .select()
+      .single();
+    if (retry.error) throw retry.error;
+    return retry.data;
+  }
 
   if (error) throw error;
   return data;

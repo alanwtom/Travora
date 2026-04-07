@@ -4,6 +4,9 @@
  * Uses EXPO_PUBLIC_SERPAPI_KEY from your app's `.env`.
  * Note: since this runs in the client, the key is bundled with the app.
  * For production, proxy via a backend or Edge Function.
+ *
+ * Adding a hotel to an itinerary does not call this API — only search does. Debounce rapid
+ * searches in the UI if you wire live search; each call here counts against the SerpAPI quota.
  */
 
 const SERPAPI_SEARCH = 'https://serpapi.com/search';

@@ -298,7 +298,10 @@ export default function GenerateItineraryScreen() {
              checkCountryMatch(destLower, locLower);
     });
 
-    return locationMatches.length >= 3;
+    // At least one liked video should relate to the chosen destination; generation
+    // still requires 3+ total likes (hasEnoughLocations). Requiring 3 matches was
+    // too strict and blocked valid cases (e.g. mixed Asia likes + Japan trip).
+    return locationMatches.length >= 1;
   }, [destination, locations]);
 
   const getMismatchedMessage = () => {
@@ -306,6 +309,16 @@ export default function GenerateItineraryScreen() {
 
     const destLower = destination.toLowerCase();
     const locationCountries = new Set<string>();
+    const matchCount = locations.filter((loc) => {
+      const locLower = (loc.location || '').toLowerCase();
+      const titleLower = (loc.title || '').toLowerCase();
+      return (
+        locLower.includes(destLower) ||
+        titleLower.includes(destLower) ||
+        destLower.includes(locLower) ||
+        checkCountryMatch(destLower, locLower)
+      );
+    }).length;
 
     locations.forEach(loc => {
       const locLower = (loc.location || '').toLowerCase();
@@ -362,13 +375,19 @@ export default function GenerateItineraryScreen() {
     });
 
     const countries = Array.from(locationCountries);
-    if (countries.length === 0) return null;
 
-    const countryList = countries.length <= 2
-      ? countries.join(' and ')
-      : `${countries.slice(0, -1).join(', ')}, and ${countries[countries.length - 1]}`;
+    const countryList =
+      countries.length === 0
+        ? null
+        : countries.length <= 2
+          ? countries.join(' and ')
+          : `${countries.slice(0, -1).join(', ')}, and ${countries[countries.length - 1]}`;
 
-    return `Your saved locations are in ${countryList}, but you selected ${destination}. Please like videos from ${destination} first.`;
+    if (countryList) {
+      return `None of your ${locations.length} liked videos match "${destination}" closely enough (found ${matchCount} match${matchCount === 1 ? '' : 'es'}). Your likes look tied to ${countryList}. Like at least one video from ${destination} (or a city there), or change the destination to match your likes.`;
+    }
+
+    return `None of your liked videos match "${destination}" yet. Like at least one video whose location fits ${destination}, or pick a different destination.`;
   };
 
   const isDestinationValid = destination.trim().length >= 2;
@@ -1125,7 +1144,7 @@ const styles = StyleSheet.create({
   },
   errorCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: 'rgba(212, 100, 90, 0.1)',
     borderRadius: 8,
     padding: 12,

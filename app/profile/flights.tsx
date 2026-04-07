@@ -1,25 +1,33 @@
 import { BackButton } from '@/components/BackButton';
 import { useFlights } from '@/hooks/useFlights';
 import { COLORS } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { addFlightPin, type FlightPinSearchContext } from '@/services/itineraryTravelPins';
+import type { FlightData } from '@/types/travel';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { ChevronDown, Plane, Search } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+   ActivityIndicator,
+   Alert,
+   FlatList,
+   Platform,
+   Pressable,
+   SafeAreaView,
+   StyleSheet,
+   Text,
+   TextInput,
+   TouchableOpacity,
+   View,
 } from 'react-native';
 
 export default function FlightsScreen() {
-  const router = useRouter();
+  const { user } = useAuth();
+  const { itineraryId, itineraryTitle } = useLocalSearchParams<{
+    itineraryId?: string;
+    itineraryTitle?: string;
+  }>();
   const { flights, loading, error, hasMore, loadMore, search, reset } = useFlights();
 
   const [from, setFrom] = useState('');
@@ -60,7 +68,28 @@ export default function FlightsScreen() {
     }
   };
 
-  const renderFlight = ({ item }: { item: any }) => (
+  const addFlightToItinerary = async (item: FlightData) => {
+    if (!itineraryId || !user?.id) return;
+    const ctx: FlightPinSearchContext = {
+      origin: from.trim().toUpperCase(),
+      destination: to.trim().toUpperCase(),
+      date: departDate.toISOString().slice(0, 10),
+    };
+    try {
+      await addFlightPin(itineraryId, user.id, item, ctx);
+      Alert.alert('Saved', `Added to ${itineraryTitle ?? 'your trip'}. You can add more options.`);
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+            ? (e as { message: string }).message
+            : 'Could not add this flight.';
+      Alert.alert('Error', msg);
+    }
+  };
+
+  const renderFlight = ({ item }: { item: FlightData }) => (
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <Text style={styles.airline}>{item.airline}</Text>
@@ -76,6 +105,11 @@ export default function FlightsScreen() {
       <Text style={styles.metaText}>
         Arrives: {new Date(item.arrival_time).toLocaleString()}
       </Text>
+      {itineraryId && user?.id ? (
+        <TouchableOpacity style={styles.addToTripBtn} onPress={() => addFlightToItinerary(item)}>
+          <Text style={styles.addToTripBtnText}>Add to trip</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 
@@ -93,6 +127,14 @@ export default function FlightsScreen() {
         renderItem={renderFlight}
         ListHeaderComponent={
           <View style={styles.form}>
+            {itineraryId ? (
+              <View style={styles.tripBanner}>
+                <Text style={styles.tripBannerText}>
+                  Saving to: {itineraryTitle ?? 'your trip'}
+                </Text>
+                <Text style={styles.tripBannerSub}>You can add several flight options; details stay as searched.</Text>
+              </View>
+            ) : null}
             <Text style={styles.sectionTitle}>Search Flights</Text>
             <TextInput
               style={styles.input}
@@ -283,4 +325,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadMoreText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  tripBanner: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  tripBannerText: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  tripBannerSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 4, lineHeight: 17 },
+  addToTripBtn: {
+    marginTop: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  addToTripBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

@@ -1,6 +1,9 @@
 import { searchFlights } from '@/services/flightService';
 import type { FlightData, FlightSearchParams, FlightSearchResponse } from '@/types/travel';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+
+/** Reduces back-to-back AviationStack calls when users tap “load more” quickly (free-tier friendly). */
+const LOAD_MORE_MIN_INTERVAL_MS = 600;
 
 export interface UseFlightsReturn {
   flights: FlightData[];
@@ -18,6 +21,7 @@ export function useFlights(): UseFlightsReturn {
   const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [currentParams, setCurrentParams] = useState<FlightSearchParams | null>(null);
+  const lastLoadMoreAt = useRef(0);
 
   const search = useCallback(async (params: Omit<FlightSearchParams, 'cursor'>) => {
     setLoading(true);
@@ -42,6 +46,9 @@ export function useFlights(): UseFlightsReturn {
 
   const loadMore = useCallback(async () => {
     if (!currentParams || !nextCursor || loading) return;
+    const now = Date.now();
+    if (now - lastLoadMoreAt.current < LOAD_MORE_MIN_INTERVAL_MS) return;
+    lastLoadMoreAt.current = now;
 
     setLoading(true);
     setError(null);

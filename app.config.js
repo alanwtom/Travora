@@ -57,6 +57,12 @@ export default {
       },
       // NEW: Add your Geoapify key here
       geoapifyApiKey: process.env.GEOAPIFY_API_KEY,
+      // OpenRouter: plain OPENROUTER_API_KEY is not visible to Metro; inject here so the app can read it via expo-constants
+      openrouterApiKey:
+        process.env.EXPO_PUBLIC_OPENROUTER_API_KEY ||
+        process.env.OPENROUTER_API_KEY ||
+        "",
+      openrouterModel: process.env.EXPO_PUBLIC_OPENROUTER_MODEL || "",
     },
   },
 };

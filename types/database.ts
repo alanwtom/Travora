@@ -339,6 +339,90 @@ export type Database = {
           },
         ]
       }
+      itinerary_flight_pins: {
+        Row: {
+          created_at: string
+          flight: Json
+          id: string
+          itinerary_id: string
+          search_context: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flight: Json
+          id?: string
+          itinerary_id: string
+          search_context?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flight?: Json
+          id?: string
+          itinerary_id?: string
+          search_context?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_flight_pins_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itinerary_flight_pins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_hotel_pins: {
+        Row: {
+          created_at: string
+          hotel: Json
+          id: string
+          itinerary_id: string
+          search_context: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hotel: Json
+          id?: string
+          itinerary_id: string
+          search_context?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hotel?: Json
+          id?: string
+          itinerary_id?: string
+          search_context?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_hotel_pins_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itinerary_hotel_pins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       itinerary_ratings: {
         Row: {
           created_at: string
