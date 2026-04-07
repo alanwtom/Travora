@@ -3,6 +3,7 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { addComment, getVideoComments, pinComment, toggleCommentLike } from '@/services/comments';
 import { toggleLike } from '@/services/likes';
+import { getVideoTagNames } from '@/services/mediaTags';
 import { isVideoSaved, toggleSave } from '@/services/saves';
 import { getVideo, incrementViewCount } from '@/services/videos';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
@@ -40,6 +41,7 @@ export default function VideoDetailScreen() {
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
   const [showShareModal, setShowShareModal] = useState(false);
+  const [videoTags, setVideoTags] = useState<string[]>([]);
   const [showInlinePlayer, setShowInlinePlayer] = useState(false);
   const [pendingFullscreen, setPendingFullscreen] = useState(false);
   const playerRef = useRef<Video | null>(null);
@@ -76,6 +78,14 @@ export default function VideoDetailScreen() {
         // Load comments with userId if authenticated
         const videoComments = await getVideoComments(id, user?.id);
         setComments(videoComments);
+
+        // Load tags for this video
+        try {
+          const tags = await getVideoTagNames(id);
+          setVideoTags(tags);
+        } catch {
+          setVideoTags([]);
+        }
       }
     } catch (error: any) {
       Alert.alert('Error', error.message);
@@ -612,6 +622,20 @@ export default function VideoDetailScreen() {
           </View>
         )}
 
+        {/* Tags */}
+        {videoTags.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.tagsRow}>
+              {videoTags.slice(0, 8).map((tag) => (
+                <View key={tag} style={styles.tagChip}>
+                  <Text style={styles.tagText}>#{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
@@ -888,6 +912,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.primary,
     fontWeight: '500',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: `${COLORS.primary}1A`,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.primary,
   },
   statsRow: {
     flexDirection: 'row',

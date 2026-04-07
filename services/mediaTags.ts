@@ -47,3 +47,18 @@ export async function setVideoTags(videoId: string, tagIds: string[]) {
     .insert(tagIds.map((tagId) => ({ video_id: videoId, tag_id: tagId })));
   if (insErr) throw insErr;
 }
+
+export async function getVideoTagNames(videoId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("video_tags" as any)
+    .select("tags(name)")
+    .eq("video_id", videoId);
+
+  if (error) throw error;
+
+  const names = ((data ?? []) as any[])
+    .map((row) => row?.tags?.name)
+    .filter((name): name is string => typeof name === "string" && name.length > 0);
+
+  return [...new Set(names)];
+}
