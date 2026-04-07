@@ -20,6 +20,7 @@ type Props = {
   onLoadMore: () => void;
   onRefresh: () => void;
   hasMore: boolean;
+  onSwipeDecision?: (direction: 'left' | 'right', video: PersonalizedFeedVideo) => void;
 };
 
 const { height } = Dimensions.get('window');
@@ -31,8 +32,10 @@ export function VerticalVideoFeed({
   onLoadMore,
   onRefresh,
   hasMore,
+  onSwipeDecision,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const listRef = useRef<FlatList<PersonalizedFeedVideo>>(null);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(
     videos[0]?.id || null
   );
@@ -56,13 +59,20 @@ export function VerticalVideoFeed({
   }
 
   const renderVideoItem = useCallback(
-    ({ item }: { item: PersonalizedFeedVideo }) => (
+    ({ item, index }: { item: PersonalizedFeedVideo; index: number }) => (
       <VerticalVideoCard
         video={item}
         isActive={activeVideoId === item.id}
+        onSwipeDecision={(direction, swipedVideo) => {
+          onSwipeDecision?.(direction, swipedVideo);
+          const nextIndex = index + 1;
+          if (nextIndex < videos.length) {
+            listRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+          }
+        }}
       />
     ),
-    [activeVideoId]
+    [activeVideoId, onSwipeDecision, videos.length]
   );
 
   if (isLoading && videos.length === 0) {
@@ -86,6 +96,7 @@ export function VerticalVideoFeed({
 
   return (
     <FlatList
+      ref={listRef}
       data={videos}
       renderItem={renderVideoItem}
       keyExtractor={(item) => item.id}

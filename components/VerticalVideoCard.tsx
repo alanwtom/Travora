@@ -19,6 +19,15 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommentsModal } from './CommentsModal';
 import { RatingsModal } from './RatingsModal';
@@ -29,12 +38,13 @@ import { ShareModal } from './ShareModal';
 type Props = {
   video: PersonalizedFeedVideo;
   isActive: boolean;
+  onSwipeDecision?: (direction: 'left' | 'right', video: PersonalizedFeedVideo) => void;
 };
 
 const { height, width } = Dimensions.get('window');
 const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 80 : 0;
 
-export function VerticalVideoCard({ video, isActive }: Props) {
+export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -63,6 +73,8 @@ export function VerticalVideoCard({ video, isActive }: Props) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
   const hasIncrementedView = useRef(false);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
 
   // Handle screen focus (tab switching)
   useFocusEffect(
@@ -187,9 +199,55 @@ export function VerticalVideoCard({ video, isActive }: Props) {
 
   const timeAgo = getTimeAgo(video.created_at);
   const tags = (video.tags ?? []).filter(Boolean);
+  const SWIPE_THRESHOLD = width * 0.2;
+  const SWIPE_OUT = width * 1.2;
+
+  const handleSwipeDecisionInternal = useCallback(
+    (direction: 'left' | 'right') => {
+      onSwipeDecision?.(direction, video);
+    },
+    [onSwipeDecision, video]
+  );
+
+  const pan = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+      translateY.value = e.translationY * 0.06;
+    })
+    .onEnd((e) => {
+      const goRight = translateX.value > SWIPE_THRESHOLD || e.velocityX > 900;
+      const goLeft = translateX.value < -SWIPE_THRESHOLD || e.velocityX < -900;
+      if (goRight || goLeft) {
+        translateX.value = withTiming(goRight ? SWIPE_OUT : -SWIPE_OUT, { duration: 180 }, () => {
+          runOnJS(handleSwipeDecisionInternal)(goRight ? 'right' : 'left');
+          translateX.value = 0;
+          translateY.value = 0;
+        });
+      } else {
+        translateX.value = withSpring(0, { damping: 18, stiffness: 240 });
+        translateY.value = withSpring(0, { damping: 18, stiffness: 240 });
+      }
+    });
+
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(translateX.value, [-width, 0, width], [-12, 0, 12], 'clamp');
+    return {
+      transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { rotateZ: `${rotate}deg` }],
+    };
+  });
+
+  const likeOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], 'clamp'),
+  }));
+
+  const passOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp'),
+  }));
 
   return (
-    <View style={[styles.container, { height: availableHeight }]}>
+    <GestureDetector gesture={pan}>
+    <Animated.View style={[styles.container, { height: availableHeight }, cardAnimatedStyle]}>
       {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
@@ -247,6 +305,15 @@ export function VerticalVideoCard({ video, isActive }: Props) {
           </View>
         )}
       </TouchableOpacity>
+
+      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, styles.likeSwipeOverlay, likeOverlayStyle]}>
+        <Icons.Heart size={62} color={COLORS.success} fill={COLORS.success} strokeWidth={1.5} />
+        <Text style={styles.swipeOverlayTextLike}>SAVE</Text>
+      </Animated.View>
+      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, styles.passSwipeOverlay, passOverlayStyle]}>
+        <Icons.X size={62} color={COLORS.error} strokeWidth={3} />
+        <Text style={styles.swipeOverlayTextPass}>PASS</Text>
+      </Animated.View>
 
       {/* Bottom Content Overlay */}
       <View style={styles.contentOverlay}>
@@ -444,7 +511,8 @@ export function VerticalVideoCard({ video, isActive }: Props) {
         contentTitle={video.title}
         onClose={() => setShowShareModal(false)}
       />
-    </View>
+    </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -650,5 +718,33 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
+  },
+  swipeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+  },
+  likeSwipeOverlay: {
+    backgroundColor: 'rgba(106,175,114,0.12)',
+    borderColor: COLORS.success,
+  },
+  passSwipeOverlay: {
+    backgroundColor: 'rgba(212,100,90,0.12)',
+    borderColor: COLORS.error,
+  },
+  swipeOverlayTextLike: {
+    marginTop: 10,
+    color: COLORS.success,
+    fontWeight: '800',
+    fontSize: 26,
+    letterSpacing: 1.5,
+  },
+  swipeOverlayTextPass: {
+    marginTop: 10,
+    color: COLORS.error,
+    fontWeight: '800',
+    fontSize: 26,
+    letterSpacing: 1.5,
   },
 });
