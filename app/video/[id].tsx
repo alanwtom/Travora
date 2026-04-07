@@ -8,7 +8,7 @@ import { getVideo, incrementViewCount } from '@/services/videos';
 import { CommentWithProfile, VideoWithProfile } from '@/types/database';
 import { PlayCircle, Play, User, MapPin, Heart, Bookmark, Share2, MessageCircle, Reply, X, Send, ChevronLeft, Video as VideoIcon } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShareModal } from '@/components/ShareModal';
+import { Video } from 'expo-av';
 
 export default function VideoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,6 +40,9 @@ export default function VideoDetailScreen() {
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showInlinePlayer, setShowInlinePlayer] = useState(false);
+  const [pendingFullscreen, setPendingFullscreen] = useState(false);
+  const playerRef = useRef<Video | null>(null);
 
   useEffect(() => {
     loadVideo();
@@ -505,18 +509,64 @@ export default function VideoDetailScreen() {
   const headerComponent = (
     <>
       {/* Video Thumbnail */}
-      <View style={styles.thumbnailContainer}>
-        {video.thumbnail_url ? (
-          <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnail} />
+      <TouchableOpacity
+        activeOpacity={0.9}
+        style={styles.thumbnailContainer}
+        onPress={() => {
+          if (!video?.video_url) return;
+
+          // First time: mount the inline player; onLoad will present full screen reliably
+          if (!showInlinePlayer) {
+            setShowInlinePlayer(true);
+            setPendingFullscreen(true);
+            return;
+          }
+
+          // Subsequent taps: just re-present fullscreen for existing player
+          if (playerRef.current) {
+            playerRef.current.presentFullscreenPlayer().catch(() => {});
+          }
+        }}
+      >
+        {showInlinePlayer && video.video_url ? (
+          <Video
+            ref={playerRef}
+            source={{ uri: video.video_url }}
+            style={styles.thumbnail}
+            resizeMode="contain"
+            shouldPlay
+            useNativeControls
+            onLoad={() => {
+              if (!pendingFullscreen) return;
+              setPendingFullscreen(false);
+              playerRef.current?.presentFullscreenPlayer().catch(() => {});
+            }}
+          />
         ) : (
-          <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-            <PlayCircle size={64} color="rgba(255,255,255,0.8)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
-          </View>
+          <>
+            {video.thumbnail_url ? (
+              <Image source={{ uri: video.thumbnail_url }} style={styles.thumbnail} />
+            ) : (
+              <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+                <PlayCircle
+                  size={64}
+                  color="rgba(255,255,255,0.8)"
+                  fill="rgba(255,255,255,0.2)"
+                  strokeWidth={2}
+                />
+              </View>
+            )}
+            <View style={styles.playOverlay}>
+              <Play
+                size={48}
+                color="rgba(255,255,255,0.9)"
+                fill="rgba(255,255,255,0.2)"
+                strokeWidth={2}
+              />
+            </View>
+          </>
         )}
-        <View style={styles.playOverlay}>
-          <Play size={48} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
-        </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Video Info */}
       <View style={styles.infoSection}>

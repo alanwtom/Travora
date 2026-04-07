@@ -32,9 +32,7 @@ function CustomHeader({ username, displayName }: { username?: string; displayNam
       <Text style={headerStyles.title} numberOfLines={1}>
         {title}
       </Text>
-      <TouchableOpacity onPress={onClose} style={headerStyles.shareButton}>
-        <Icons.Share size={22} color={COLORS.text} strokeWidth={2.5} />
-      </TouchableOpacity>
+      <View style={headerStyles.placeholder} />
     </View>
   );
 }
