@@ -6,6 +6,8 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { signOut } from '@/services/auth';
 import { getFollowerCount, getFollowingCount } from '@/services/profiles';
+import { deleteVideo } from '@/services/videos';
+import { deleteVideoFiles } from '@/services/storage';
 import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -25,12 +27,13 @@ type TabType = 'videos' | 'saved' | 'liked';
 export default function ProfileScreen() {
   const { user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
-  const { videos, isLoading: videosLoading } = useUserVideos(user?.id ?? '');
+  const { videos, isLoading: videosLoading, refetch: refetchUserVideos } = useUserVideos(user?.id ?? '');
   const { videos: savedVideos, isLoading: savedLoading } = useSavedVideos(user?.id ?? '');
   const { videos: likedVideos, isLoading: likedLoading } = useLikedVideos(user?.id ?? '');
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>('videos');
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,6 +60,47 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const getVideoFileNameBase = (videoUrl?: string | null): string | null => {
+    if (!videoUrl) return null;
+    const noQuery = videoUrl.split('?')[0];
+    const encodedFile = noQuery.split('/').pop();
+    if (!encodedFile) return null;
+    const file = decodeURIComponent(encodedFile);
+    const dotIndex = file.lastIndexOf('.');
+    if (dotIndex <= 0) return null;
+    return file.slice(0, dotIndex);
+  };
+
+  const confirmDeleteVideo = (item: any) => {
+    if (!user?.id || item?.user_id !== user.id) return;
+    Alert.alert(
+      'Delete video?',
+      'This will permanently remove your video and thumbnail.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeletingVideoId(item.id);
+              const fileNameBase = getVideoFileNameBase(item.video_url);
+              if (fileNameBase) {
+                await deleteVideoFiles(user.id, fileNameBase);
+              }
+              await deleteVideo(item.id);
+              await refetchUserVideos();
+            } catch (error: any) {
+              Alert.alert('Delete failed', error?.message || 'Unable to delete video.');
+            } finally {
+              setDeletingVideoId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const displayedVideos =
     activeTab === 'videos' ? videos : activeTab === 'saved' ? savedVideos : likedVideos;
   const isLoading =
@@ -80,6 +124,12 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.videoThumbnail}
             onPress={() => router.push({ pathname: '/video/[id]', params: { id: item.id } } as any)}
+            onLongPress={() => {
+              if (activeTab === 'videos') {
+                confirmDeleteVideo(item);
+              }
+            }}
+            delayLongPress={250}
           >
             {item.thumbnail_url ? (
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
@@ -88,6 +138,15 @@ export default function ProfileScreen() {
                 <Icons.Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
               </View>
             )}
+            {activeTab === 'videos' ? (
+              <View style={styles.deleteBadge}>
+                {deletingVideoId === item.id ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Icons.Trash2 size={12} color="#fff" strokeWidth={2.5} />
+                )}
+              </View>
+            ) : null}
           </TouchableOpacity>
         )}
         ListHeaderComponent={
@@ -458,6 +517,17 @@ const styles = StyleSheet.create({
   },
   thumbnailPlaceholder: {
     backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
   },
