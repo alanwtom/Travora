@@ -2,6 +2,8 @@
 // Notification System Types
 // ============================================
 
+import { COLORS } from '@/lib/constants';
+
 export type NotificationCategory =
   | 'trip_updates'
   | 'price_alerts'
@@ -201,7 +203,7 @@ export const NOTIFICATION_CATEGORIES: Record<
     label: 'Promotions',
     description: 'Special offers, seasonal sales, and referral bonuses',
     icon: 'gift',
-    color: '#F59E0B',
+    color: COLORS.accent,
     isEssential: false,
   },
   social: {
@@ -249,7 +251,7 @@ export const NOTIFICATION_PRIORITIES: Record<
     label: 'Medium',
     description: 'Standard delivery for important updates',
     deliveryTarget: '< 15 minutes',
-    color: '#F59E0B',
+    color: COLORS.accent,
   },
   low: {
     label: 'Low',

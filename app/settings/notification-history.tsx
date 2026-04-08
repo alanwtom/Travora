@@ -53,7 +53,7 @@ export default function NotificationHistoryScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return '#F59E0B';
+        return tintColor;
       case 'sent':
         return '#3B82F6';
       case 'delivered':

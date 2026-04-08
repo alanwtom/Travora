@@ -278,7 +278,7 @@ export function NotificationSettingsScreen({ userId }: NotificationSettingsProps
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                <Gift size={20} color="#F59E0B" strokeWidth={2} />
+                <Gift size={20} color={tintColor} strokeWidth={2} />
                 <Text
                   style={{ fontSize: 16, fontWeight: '600', marginLeft: 8, color: textColor }}
                 >

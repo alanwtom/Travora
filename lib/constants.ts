@@ -14,8 +14,8 @@ export const COLORS = {
   // Warm travel-inspired palette
   primary: '#1A1A2E',         // deep navy (buttons, headings)
   primaryLight: '#2D2D44',    // lighter navy
-  accent: '#D4856A',          // warm coral/terracotta
-  accentLight: '#E8A890',     // soft coral
+  accent: '#6699CC',          // blue-gray (brand accent)
+  accentLight: '#8AB3DB',     // lighter blue-gray
   warmPink: '#E8B4B8',        // soft pink
   warmGold: '#F5D5A0',        // golden hour
   lavender: '#C5B3D4',        // soft lavender
