@@ -5,7 +5,7 @@ export default {
     slug: "travora",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/travora-logo.png",
     scheme: "travora",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -28,7 +28,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
+        foregroundImage: "./assets/images/travora-logo.png",
         backgroundColor: "#0EA5E9",
       },
       edgeToEdgeEnabled: true,
