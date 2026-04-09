@@ -18,6 +18,7 @@ export interface VideoItem {
   profile_username: string | null;
   profile_avatar_url: string | null;
   tags: string[];
+  locations: string[];
   score: number;
 }
 

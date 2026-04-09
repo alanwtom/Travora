@@ -28,7 +28,6 @@ const SWIPE_TIP_INTRO_VERSION = "2";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useAuth();
   const { addToItinerary, removeFromItineraryById } = useSwipeItinerary();
   const [mediaType, setMediaType] = useState<"video" | "image" | "both">(

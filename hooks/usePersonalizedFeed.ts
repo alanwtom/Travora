@@ -51,6 +51,7 @@ export function usePersonalizedFeed(
           media_type: v.media_type,
           score: v.score,
           tags: v.tags ?? [],
+          locations: v.locations ?? [],
           profiles: {
             username: v.profile_username,
             display_name: v.profile_username,

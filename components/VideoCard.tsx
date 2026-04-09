@@ -50,7 +50,7 @@ export function VideoCard({ video }: Props) {
 
   const handleVideoPress = () => {
     router.push({
-      pathname: '/video/[id]',
+      pathname: '/video-feed/v/[id]',
       params: { id: video.id },
     });
   };

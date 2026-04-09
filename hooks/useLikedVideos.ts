@@ -43,7 +43,9 @@ export function useLikedVideos(userId: string | undefined) {
                 username,
                 display_name,
                 avatar_url
-              )
+              ),
+              like_count:likes(count),
+              comment_count:comments(count)
             )
           `)
           .eq('user_id', userId)
@@ -56,6 +58,8 @@ export function useLikedVideos(userId: string | undefined) {
       const transformedVideos: VideoWithProfile[] = data
         ?.map((like: any) => ({
           ...like.videos,
+          like_count: like.videos?.like_count?.[0]?.count ?? 0,
+          comment_count: like.videos?.comment_count?.[0]?.count ?? 0,
           is_liked: true,
           is_saved: false,
         }))
