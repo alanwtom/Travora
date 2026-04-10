@@ -211,7 +211,7 @@ export default function DiscoverItineraryScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
           <ArrowLeft size={22} color={COLORS.accent} />
         </Pressable>
-        <Text style={styles.pageTitle}>Swipe itinerary</Text>
+        <Text style={styles.pageTitle}>Swipe history</Text>
         <View style={styles.topBarSpacer} />
       </View>
 

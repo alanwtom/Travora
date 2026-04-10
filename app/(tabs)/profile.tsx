@@ -17,6 +17,7 @@ import {
     Alert,
     FlatList,
     Image,
+    Pressable,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -122,30 +123,39 @@ export default function ProfileScreen() {
         keyExtractor={(item) => item.id}
         numColumns={3}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.videoThumbnail}
-            onPress={() => router.push({
-              pathname: '/video-feed/[tab]',
-              params: { tab: activeTab, startIndex: displayedVideos.findIndex(v => v.id === item.id), returnTo: '/(tabs)/profile' }
-            } as any)}
-            onLongPress={() => {
-              if (activeTab === 'videos') {
-                confirmDeleteVideo(item);
+          <View style={styles.videoThumbnail}>
+            <TouchableOpacity
+              style={styles.thumbnailTouchable}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: '/video-feed/[tab]',
+                  params: {
+                    tab: activeTab,
+                    startIndex: displayedVideos.findIndex((v) => v.id === item.id),
+                    returnTo: '/(tabs)/profile',
+                  },
+                } as any)
               }
-            }}
-            delayLongPress={250}
-          >
-            <VideoThumbnail videoUrl={item.video_url} thumbnailUrl={item.thumbnail_url} />
+            >
+              <VideoThumbnail videoUrl={item.video_url} thumbnailUrl={item.thumbnail_url} />
+            </TouchableOpacity>
             {activeTab === 'videos' ? (
-              <View style={styles.deleteBadge}>
+              <Pressable
+                style={styles.deleteBadge}
+                onPress={() => confirmDeleteVideo(item)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Delete video"
+              >
                 {deletingVideoId === item.id ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <Icons.Trash2 size={12} color="#fff" strokeWidth={2.5} />
                 )}
-              </View>
+              </Pressable>
             ) : null}
-          </TouchableOpacity>
+          </View>
         )}
         ListHeaderComponent={
           <View style={styles.header}>
@@ -211,15 +221,25 @@ export default function ProfileScreen() {
               <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
             </TouchableOpacity>
 
-            {/* Notification Settings Button */}
-            <TouchableOpacity
-              style={styles.itinerariesButton}
-              onPress={() => router.push('/settings/notifications' as any)}
-            >
-              <Icons.Bell size={20} color={COLORS.primary} strokeWidth={2} />
-              <Text style={styles.itinerariesButtonText}>Notification Settings</Text>
-              <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
-            </TouchableOpacity>
+            {/* Notifications (icon) + Swipe history */}
+            <View style={styles.shortcutsRow}>
+              <TouchableOpacity
+                style={styles.notificationIconButton}
+                onPress={() => router.push('/settings/notifications' as any)}
+                accessibilityLabel="Notification settings"
+                accessibilityRole="button"
+              >
+                <Icons.Bell size={22} color={COLORS.primary} strokeWidth={2} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.swipeHistoryButton}
+                onPress={() => router.push('/(tabs)/discover-itinerary' as any)}
+              >
+                <Icons.BookmarkCheck size={20} color={COLORS.primary} strokeWidth={2} />
+                <Text style={styles.itinerariesButtonText}>Swipe history</Text>
+                <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
 
             {/* Action Buttons */}
             <View style={styles.actions}>
@@ -451,6 +471,35 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
+  shortcutsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  notificationIconButton: {
+    width: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingVertical: 14,
+  },
+  swipeHistoryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
   actions: {
     flexDirection: 'row',
     marginTop: 20,
@@ -533,6 +582,9 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     padding: 1,
   },
+  thumbnailTouchable: {
+    flex: 1,
+  },
   thumbnailImage: {
     flex: 1,
     borderRadius: 4,
@@ -546,12 +598,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
   },
   emptyVideos: {
     alignItems: 'center',

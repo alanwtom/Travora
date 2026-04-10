@@ -2,22 +2,7 @@ import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
 import { buildOptimizedItineraryForUser } from '@/services/itineraries';
 import React, { useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-// runtime-safe import of react-native-maps
-let MapView: any = null;
-let Marker: any = null;
-let Polyline: any = null;
-try {
-  // require at runtime so app doesn't crash if package isn't installed
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Maps = require('react-native-maps');
-  MapView = Maps.default || Maps;
-  Marker = Maps.Marker || Maps.Marker;
-  Polyline = Maps.Polyline || Maps.Polyline;
-} catch (e) {
-  MapView = null;
-}
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ItineraryScreen() {
   const { user } = useAuth();
@@ -53,35 +38,13 @@ export default function ItineraryScreen() {
         <Text style={styles.summaryText}>Total distance: {totalKm.toFixed(2)} km</Text>
       </View>
 
-      {MapView && places.length > 0 ? (
-        <View style={{ height: 260 }}>
-          <MapView
-            style={{ flex: 1 }}
-            initialRegion={{
-              latitude: places[0].latitude,
-              longitude: places[0].longitude,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
-            }}
-          >
-            {places.map((p, i) => (
-              <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }} title={p.title ?? p.location} description={`${i + 1}`} />
-            ))}
-            <Polyline coordinates={places.map((p) => ({ latitude: p.latitude, longitude: p.longitude }))} strokeColor={COLORS.primary} strokeWidth={3} />
-          </MapView>
+      {places.length > 0 ? (
+        <View style={styles.mapLimitationBanner}>
+          <Text style={styles.mapLimitationText}>
+            Map view is not available in this version (known limitation). Stops are listed below.
+          </Text>
         </View>
-      ) : (
-        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-          {!MapView && (
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#FF9500' }]}
-              onPress={() => Alert.alert('Map not available', 'Install react-native-maps to see a map preview')}
-            >
-              <Text style={styles.buttonText}>Install react-native-maps to preview route</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      ) : null}
 
       <FlatList
         data={places}
@@ -112,6 +75,16 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '600' },
   summary: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between' },
   summaryText: { color: COLORS.textMuted },
+  mapLimitationBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  mapLimitationText: { fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
   index: { width: 28, fontWeight: '700', color: COLORS.text },
   info: { flex: 1 },

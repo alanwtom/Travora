@@ -88,7 +88,7 @@ export default function TabLayout() {
         name="discover-itinerary"
         options={{
           href: null,
-          title: 'Itinerary',
+          title: 'Swipe history',
         }}
       />
       <Tabs.Screen
