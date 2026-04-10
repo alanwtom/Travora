@@ -11,11 +11,31 @@ import React, {
 
 const ITINERARY_STORAGE_KEY = 'travora:swipe_itinerary_v1';
 
+/** Merge AsyncStorage restore with in-memory rows so a fast swipe before hydration completes is not lost. */
+function mergeItineraryHydrate(
+  stored: PersonalizedFeedVideo[],
+  current: PersonalizedFeedVideo[]
+): PersonalizedFeedVideo[] {
+  if (!current.length) return stored;
+  const currentById = new Map(current.map((v) => [v.id, v]));
+  const storedIds = new Set(stored.map((v) => v.id));
+  const out: PersonalizedFeedVideo[] = [];
+  for (const v of stored) {
+    out.push(currentById.get(v.id) ?? v);
+  }
+  for (const v of current) {
+    if (!storedIds.has(v.id)) out.push(v);
+  }
+  return out;
+}
+
 type SwipeItineraryContextValue = {
   itinerary: PersonalizedFeedVideo[];
   hydrated: boolean;
   addToItinerary: (video: PersonalizedFeedVideo) => void;
   removeFromItineraryById: (videoId: string) => void;
+  /** Replace server-backed likes in order, keep local-only rows at the end. */
+  syncItineraryWithServerVideos: (videos: PersonalizedFeedVideo[]) => void;
   clearItinerary: () => void;
 };
 
@@ -34,7 +54,7 @@ export function SwipeItineraryProvider({ children }: { children: React.ReactNode
         if (raw) {
           const parsed = JSON.parse(raw) as PersonalizedFeedVideo[];
           if (Array.isArray(parsed)) {
-            setItinerary(parsed);
+            setItinerary((current) => mergeItineraryHydrate(parsed, current));
           }
         }
       } catch {
@@ -64,6 +84,14 @@ export function SwipeItineraryProvider({ children }: { children: React.ReactNode
     setItinerary((prev) => prev.filter((v) => v.id !== videoId));
   }, []);
 
+  const syncItineraryWithServerVideos = useCallback((serverVideos: PersonalizedFeedVideo[]) => {
+    setItinerary((prev) => {
+      const serverIds = new Set(serverVideos.map((v) => v.id));
+      const tail = prev.filter((v) => !serverIds.has(v.id));
+      return [...serverVideos, ...tail];
+    });
+  }, []);
+
   const clearItinerary = useCallback(() => setItinerary([]), []);
 
   const value = useMemo(
@@ -72,9 +100,17 @@ export function SwipeItineraryProvider({ children }: { children: React.ReactNode
       hydrated,
       addToItinerary,
       removeFromItineraryById,
+      syncItineraryWithServerVideos,
       clearItinerary,
     }),
-    [itinerary, hydrated, addToItinerary, removeFromItineraryById, clearItinerary]
+    [
+      itinerary,
+      hydrated,
+      addToItinerary,
+      removeFromItineraryById,
+      syncItineraryWithServerVideos,
+      clearItinerary,
+    ]
   );
 
   return (

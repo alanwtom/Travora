@@ -209,3 +209,29 @@ export async function getDislikedVideos(): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Video ids the user swiped right (like), newest first — for hydrating swipe itinerary from Supabase.
+ */
+export async function getUserSwipeLikedVideoIdsOrdered(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('swipes')
+      .select('video_id')
+      .eq('user_id', userId)
+      .eq('swipe_type', 'like')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      if (isMissingTableError(error)) return [];
+      console.error('Error loading swipe likes:', error);
+      return [];
+    }
+
+    return (data ?? []).map((r) => r.video_id);
+  } catch (err: any) {
+    if (isMissingTableError(err)) return [];
+    console.error('Failed to load swipe likes:', err);
+    return [];
+  }
+}
