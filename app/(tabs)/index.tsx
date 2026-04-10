@@ -10,7 +10,6 @@ import {
   removeSwipe,
   saveDislikedVideo,
 } from "@/services/swipes";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { BookmarkCheck } from "lucide-react-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,10 +20,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const SWIPE_TIP_DISMISSED_KEY = "travora:swipe_tip_dismissed";
-const SWIPE_TIP_INTRO_VERSION_KEY = "travora:swipe_tip_intro_version";
-const SWIPE_TIP_INTRO_VERSION = "2";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -67,40 +62,13 @@ export default function HomeScreen() {
   }, [feed.videos, selectedTag]);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const [dismissed, introVersion] = await Promise.all([
-          AsyncStorage.getItem(SWIPE_TIP_DISMISSED_KEY),
-          AsyncStorage.getItem(SWIPE_TIP_INTRO_VERSION_KEY),
-        ]);
-        if (!mounted) return;
-        if (dismissed === "true" && introVersion === SWIPE_TIP_INTRO_VERSION) {
-          setShowSwipeTip(false);
-          setShowIntroOverlay(false);
-        } else {
-          setShowIntroOverlay(true);
-        }
-      } catch {
-        if (mounted) setShowIntroOverlay(true);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+    setShowIntroOverlay(true);
+    setShowSwipeTip(false);
   }, []);
 
-  const dismissSwipeTip = useCallback(async () => {
+  const dismissSwipeTip = useCallback(() => {
     setShowSwipeTip(false);
     setShowIntroOverlay(false);
-    try {
-      await Promise.all([
-        AsyncStorage.setItem(SWIPE_TIP_DISMISSED_KEY, "true"),
-        AsyncStorage.setItem(SWIPE_TIP_INTRO_VERSION_KEY, SWIPE_TIP_INTRO_VERSION),
-      ]);
-    } catch {
-      // non-blocking
-    }
   }, []);
 
   const handleSwipeDecision = useCallback(
