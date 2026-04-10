@@ -199,6 +199,7 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
 
   const timeAgo = getTimeAgo(video.created_at);
   const tags = (video.tags ?? []).filter(Boolean);
+  const recommendationTag = video.score > 0 ? tags[0] : null;
   const SWIPE_THRESHOLD = width * 0.2;
   const SWIPE_OUT = width * 1.2;
 
@@ -406,6 +407,9 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
               )}
             </View>
           )}
+          {recommendationTag ? (
+            <Text style={styles.recommendationText}>Recommended by #{recommendationTag}</Text>
+          ) : null}
         </View>
 
         {/* Right side - Action buttons */}
@@ -709,6 +713,12 @@ const styles = StyleSheet.create({
   tagMore: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.7)',
+  },
+  recommendationText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.85)',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   actionButton: {
     alignItems: 'center',
