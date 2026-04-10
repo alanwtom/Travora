@@ -277,6 +277,17 @@ export default function HomeScreen() {
         onSwipeDecision={handleSwipeDecision}
       />
 
+      {selectedTag && filteredVideos.length === 0 && !feed.isLoading ? (
+        <View style={styles.emptyTagHintWrap} pointerEvents="box-none">
+          <View style={styles.emptyTagHintCard}>
+            <Text style={styles.emptyTagHintText}>No videos found for #{selectedTag}</Text>
+            <Pressable onPress={() => setSelectedTag(null)} style={styles.emptyTagHintBtn}>
+              <Text style={styles.emptyTagHintBtnText}>Clear filter</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
       <View pointerEvents="box-none" style={styles.modeBarWrap}>
         <View style={[styles.modeBarRow, { paddingTop: insets.top + 6 }]}>
           {showSwipeTip ? (
@@ -564,6 +575,40 @@ const styles = StyleSheet.create({
   snackbarUndoText: {
     color: "#fff",
     fontSize: 12,
+    fontWeight: "700",
+  },
+  emptyTagHintWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 72,
+    alignItems: "center",
+    zIndex: 29,
+  },
+  emptyTagHintCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "rgba(15,23,42,0.94)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    maxWidth: "92%",
+  },
+  emptyTagHintText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  emptyTagHintBtn: {
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+  },
+  emptyTagHintBtnText: {
+    color: "#fff",
+    fontSize: 11,
     fontWeight: "700",
   },
 });
