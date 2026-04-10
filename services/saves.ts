@@ -52,12 +52,29 @@ export async function getSavedVideos(userId: string) {
 
   if (error) throw error;
 
-  return (data ?? []).map((item: any) => ({
+  const videos = (data ?? []).map((item: any) => ({
     ...item.videos,
     profiles: item.videos.profiles,
     like_count: item.videos.like_count?.[0]?.count ?? 0,
     comment_count: item.videos.comment_count?.[0]?.count ?? 0,
+    is_saved: true,
   }));
+
+  // Check which videos the user has liked
+  if (userId && videos.length > 0) {
+    const videoIds = videos.map((v: any) => v.id);
+    const { data: likedData } = await supabase
+      .from('likes')
+      .select('video_id')
+      .eq('user_id', userId)
+      .in('video_id', videoIds);
+    const likedSet = new Set((likedData ?? []).map((l: any) => l.video_id));
+    videos.forEach((v: any) => {
+      v.is_liked = likedSet.has(v.id);
+    });
+  }
+
+  return videos;
 }
 
 export async function toggleSave(userId: string, videoId: string): Promise<boolean> {

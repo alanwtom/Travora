@@ -81,7 +81,7 @@ export default function DiscoverItineraryScreen() {
   );
 
   const openVideo = (id: string) => {
-    router.push({ pathname: '/video/[id]', params: { id } } as any);
+    router.push({ pathname: '/video-feed/v/[id]', params: { id, returnTo: '/(tabs)/discover-itinerary' } } as any);
   };
 
   const confirmRemove = (video: PersonalizedFeedVideo) => {

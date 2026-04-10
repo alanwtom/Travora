@@ -10,6 +10,7 @@ import { deleteVideo } from '@/services/videos';
 import { deleteVideoFiles } from '@/services/storage';
 import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -123,7 +124,10 @@ export default function ProfileScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.videoThumbnail}
-            onPress={() => router.push({ pathname: '/video/[id]', params: { id: item.id } } as any)}
+            onPress={() => router.push({
+              pathname: '/video-feed/[tab]',
+              params: { tab: activeTab, startIndex: displayedVideos.findIndex(v => v.id === item.id), returnTo: '/(tabs)/profile' }
+            } as any)}
             onLongPress={() => {
               if (activeTab === 'videos') {
                 confirmDeleteVideo(item);
@@ -131,13 +135,7 @@ export default function ProfileScreen() {
             }}
             delayLongPress={250}
           >
-            {item.thumbnail_url ? (
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumbnailImage} />
-            ) : (
-              <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
-                <Icons.Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
-              </View>
-            )}
+            <VideoThumbnail videoUrl={item.video_url} thumbnailUrl={item.thumbnail_url} />
             {activeTab === 'videos' ? (
               <View style={styles.deleteBadge}>
                 {deletingVideoId === item.id ? (
@@ -325,6 +323,30 @@ export default function ProfileScreen() {
           ) : null
         }
       />
+    </View>
+  );
+}
+
+function VideoThumbnail({ videoUrl, thumbnailUrl }: { videoUrl: string; thumbnailUrl: string | null }) {
+  const [uri, setUri] = useState<string | null>(thumbnailUrl);
+
+  useEffect(() => {
+    if (uri || !videoUrl) return;
+    let cancelled = false;
+    VideoThumbnails.getThumbnailAsync(videoUrl, { time: 1000 })
+      .then(({ uri: generated }) => {
+        if (!cancelled) setUri(generated);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [videoUrl]);
+
+  if (uri) {
+    return <Image source={{ uri }} style={styles.thumbnailImage} />;
+  }
+  return (
+    <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
+      <Icons.Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
     </View>
   );
 }

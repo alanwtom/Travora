@@ -1,6 +1,6 @@
 import { COLORS } from '@/lib/constants';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
-import { Video } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
 import * as Icons from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -78,6 +79,7 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
               ref={videoRef}
               source={{ uri: video.video_url }}
               style={styles.video}
+              resizeMode={ResizeMode.COVER}
               isLooping
               isMuted={isMuted}
               pointerEvents="none"
@@ -103,6 +105,12 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
       </View>
 
       {dimmed && <View style={styles.dim} pointerEvents="none" />}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.7)']}
+        locations={[0.2, 1]}
+        style={styles.gradientOverlay}
+        pointerEvents="none"
+      />
 
       <View style={styles.footer} pointerEvents="box-none">
         <View style={styles.footerRow}>
@@ -195,6 +203,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.25)',
   },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
   dim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -216,8 +233,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,1)',
   },
   avatarPh: {
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -232,11 +249,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   title: {
     color: 'rgba(255,255,255,0.92)',
     fontSize: 13,
     lineHeight: 18,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   locRow: {
     flexDirection: 'row',
@@ -249,6 +272,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     flex: 1,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   footerIconBtn: {
     width: 40,

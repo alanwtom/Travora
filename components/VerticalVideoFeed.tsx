@@ -5,12 +5,12 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   View,
   ViewToken,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalVideoCard } from './VerticalVideoCard';
 
 type Props = {
@@ -20,10 +20,13 @@ type Props = {
   onLoadMore: () => void;
   onRefresh: () => void;
   hasMore: boolean;
+  initialScrollIndex?: number;
+  fullScreen?: boolean;
   onSwipeDecision?: (direction: 'left' | 'right', video: PersonalizedFeedVideo) => void;
 };
 
 const { height } = Dimensions.get('window');
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 78 : 64;
 
 export function VerticalVideoFeed({
   videos,
@@ -32,12 +35,14 @@ export function VerticalVideoFeed({
   onLoadMore,
   onRefresh,
   hasMore,
+  initialScrollIndex,
+  fullScreen,
   onSwipeDecision,
 }: Props) {
-  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<PersonalizedFeedVideo>>(null);
+  const safeInitialIndex = initialScrollIndex != null && initialScrollIndex < videos.length ? initialScrollIndex : 0;
   const [activeVideoId, setActiveVideoId] = useState<string | null>(
-    videos[0]?.id || null
+    videos[safeInitialIndex]?.id || null
   );
   const viewabilityConfigCallbackPairs = useRef([
     {
@@ -63,6 +68,7 @@ export function VerticalVideoFeed({
       <VerticalVideoCard
         video={item}
         isActive={activeVideoId === item.id}
+        fullScreen={fullScreen}
         onSwipeDecision={(direction, swipedVideo) => {
           onSwipeDecision?.(direction, swipedVideo);
           const nextIndex = index + 1;
@@ -92,7 +98,8 @@ export function VerticalVideoFeed({
     );
   }
 
-  const snapInterval = height - insets.bottom;
+  const snapInterval = fullScreen ? height : height - TAB_BAR_HEIGHT;
+  const itemHeight = snapInterval;
 
   return (
     <FlatList
@@ -100,6 +107,12 @@ export function VerticalVideoFeed({
       data={videos}
       renderItem={renderVideoItem}
       keyExtractor={(item) => item.id}
+      getItemLayout={(_, index) => ({
+        length: itemHeight,
+        offset: itemHeight * index,
+        index,
+      })}
+      initialScrollIndex={safeInitialIndex > 0 ? safeInitialIndex : undefined}
       pagingEnabled
       snapToInterval={snapInterval}
       decelerationRate="fast"
@@ -114,8 +127,7 @@ export function VerticalVideoFeed({
       refreshing={isRefreshing}
       onRefresh={onRefresh}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingTop: insets.top, flexGrow: 1 }}
-      scrollIndicatorInsets={{ top: insets.top }}
+      contentContainerStyle={{ flexGrow: 1 }}
       ListFooterComponent={
         isLoading ? (
           <View style={styles.loader}>

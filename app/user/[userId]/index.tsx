@@ -141,9 +141,10 @@ export default function UserProfileScreen() {
   };
 
   const handleVideoPress = (videoId: string) => {
+    const idx = videos.findIndex(v => v.id === videoId);
     router.push({
-      pathname: '/video/[id]',
-      params: { id: videoId },
+      pathname: '/video-feed/user/[userId]',
+      params: { userId, startIndex: idx >= 0 ? idx : 0, returnTo: `/user/${userId}` },
     } as any);
   };
 

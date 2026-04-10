@@ -68,7 +68,16 @@ export default function ExploreScreen() {
     <View style={styles.row}>
       {rowVideos.map((video: any, index: number) => (
         <View key={`${video.id}-${index}`} style={styles.columnWrapper}>
-          <GridVideoCard video={video} />
+          <GridVideoCard
+            video={video}
+            onPress={() => {
+              const globalIndex = displayVideos.findIndex((v: any) => v.id === video.id);
+              router.push({
+                pathname: '/video-feed/explore',
+                params: { startIndex: globalIndex >= 0 ? globalIndex : 0, returnTo: '/(tabs)/explore' },
+              } as any);
+            }}
+          />
         </View>
       ))}
       {rowVideos.length === 1 && <View style={styles.columnWrapper} />}

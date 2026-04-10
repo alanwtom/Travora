@@ -128,15 +128,58 @@ export async function getFeedVideos(
   return videos as VideoWithProfile[];
 }
 
-export async function getUserVideos(userId: string): Promise<Video[]> {
+export async function getUserVideos(userId: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('videos')
-    .select('*')
+    .select(`
+      *,
+      profiles!videos_user_id_fkey(*),
+      like_count:likes(count),
+      comment_count:comments(count)
+    `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data ?? [];
+
+  const videos = (data ?? []).map((video: any) => ({
+    ...video,
+    profiles: video.profiles,
+    like_count: video.like_count?.[0]?.count ?? 0,
+    comment_count: video.comment_count?.[0]?.count ?? 0,
+  }));
+
+  // Check is_liked and is_saved for the current user
+  if (userId && videos.length > 0) {
+    const videoIds = videos.map((v: any) => v.id);
+
+    const { data: likedData } = await supabase
+      .from('likes')
+      .select('video_id')
+      .eq('user_id', userId)
+      .in('video_id', videoIds);
+    const likedSet = new Set((likedData ?? []).map((l: any) => l.video_id));
+
+    try {
+      const { data: savedData } = await (supabase
+        .from('saves') as any)
+        .select('video_id')
+        .eq('user_id', userId)
+        .in('video_id', videoIds);
+      const savedSet = new Set((savedData ?? []).map((s: any) => s.video_id));
+      videos.forEach((v: any) => {
+        v.is_liked = likedSet.has(v.id);
+        v.is_saved = savedSet.has(v.id);
+      });
+    } catch {
+      videos.forEach((v: any) => {
+        v.is_liked = likedSet.has(v.id);
+        v.is_saved = false;
+      });
+    }
+  }
+
+  return videos;
 }
 
 export async function getVideo(videoId: string): Promise<VideoWithProfile | null> {

@@ -1,13 +1,15 @@
 import { useFollow } from '@/hooks/useFollow';
 import { COLORS } from '@/lib/constants';
 import { useAuth } from '@/providers/AuthProvider';
+import { useVideoMute } from '@/providers/VideoMuteProvider';
 import { toggleLike } from '@/services/likes';
 import { PersonalizedFeedVideo } from '@/services/personalizedFeed';
 import { toggleSave } from '@/services/saves';
 import { incrementViewCount } from '@/services/videos';
 import * as Icons from 'lucide-react-native';
-import { Video } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
 import { useFocusEffect, useRouter } from 'expo-router';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -29,6 +31,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CommentsModal } from './CommentsModal';
 import { RatingsModal } from './RatingsModal';
 import { ReviewsModal } from './ReviewsModal';
@@ -38,13 +41,14 @@ import { ShareModal } from './ShareModal';
 type Props = {
   video: PersonalizedFeedVideo;
   isActive: boolean;
+  fullScreen?: boolean;
   onSwipeDecision?: (direction: 'left' | 'right', video: PersonalizedFeedVideo) => void;
 };
 
 const { height, width } = Dimensions.get('window');
-const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 80 : 0;
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 78 : 64;
 
-export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
+export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -54,15 +58,15 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
     video.user_id
   );
   const showFollowButton = user?.id && video.user_id !== user.id;
-  
+
   // Calculate the available height accounting for the tab bar
-  const availableHeight = height - insets.bottom;
+  const availableHeight = fullScreen ? height : height - TAB_BAR_HEIGHT;
   
   const [isLiked, setIsLiked] = useState(video.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(video.like_count);
   const [isSaved, setIsSaved] = useState(video.is_saved ?? false);
   const [isPlaying, setIsPlaying] = useState(isActive);
-  const [isMuted, setIsMuted] = useState(true);
+  const { isMuted, setMuted: setGlobalMuted } = useVideoMute();
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -72,9 +76,24 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
   const [showReviewSubmitModal, setShowReviewSubmitModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [posterUri, setPosterUri] = useState<string | null>(video.thumbnail_url ?? null);
   const hasIncrementedView = useRef(false);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+
+  // Generate a thumbnail from the video if none exists
+  useEffect(() => {
+    if (posterUri || !video.video_url) return;
+    let cancelled = false;
+    VideoThumbnails.getThumbnailAsync(video.video_url, { time: 1000 })
+      .then(({ uri }) => {
+        if (!cancelled) setPosterUri(uri);
+      })
+      .catch((e) => {
+        console.warn('Thumbnail generation failed for', video.id, e?.message);
+      });
+    return () => { cancelled = true; };
+  }, [video.video_url]);
 
   // Handle screen focus (tab switching)
   useFocusEffect(
@@ -106,6 +125,13 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
       setIsPlaying(false);
     }
   }, [isActive, isScreenFocused, video.id]);
+
+  // Sync mute state from global context to the video player
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.setIsMutedAsync(isMuted).catch(() => {});
+    }
+  }, [isMuted]);
 
   const handleLike = async () => {
     if (!user) return;
@@ -150,8 +176,9 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
     if (!videoRef.current) return;
 
     try {
-      await videoRef.current.setIsMutedAsync(!isMuted);
-      setIsMuted(!isMuted);
+      const newMuted = !isMuted;
+      await videoRef.current.setIsMutedAsync(newMuted);
+      setGlobalMuted(newMuted);
     } catch (error) {
       // Silently fail
     }
@@ -166,13 +193,6 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
         params: { userId: video.user_id },
       } as any);
     }
-  };
-
-  const handleVideoPress = () => {
-    router.push({
-      pathname: '/video/[id]',
-      params: { id: video.id },
-    });
   };
 
   const handleShare = () => {
@@ -200,6 +220,7 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
   const timeAgo = getTimeAgo(video.created_at);
   const tags = (video.tags ?? []).filter(Boolean);
   const recommendationTag = video.score > 0 ? tags[0] : null;
+  const locations = (video.locations ?? []).filter(Boolean);
   const SWIPE_THRESHOLD = width * 0.2;
   const SWIPE_OUT = width * 1.2;
 
@@ -261,9 +282,14 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
               ref={videoRef}
               source={{ uri: video.video_url }}
               style={styles.video}
+              resizeMode={ResizeMode.COVER}
               isLooping
               isMuted={isMuted}
+              usePoster={!!posterUri}
+              posterSource={posterUri ? { uri: posterUri } : undefined}
+              posterStyle={{ resizeMode: 'cover' }}
               onLoadStart={() => setIsLoadingVideo(true)}
+              onReadyForDisplay={() => setIsLoadingVideo(false)}
               onLoad={(status: any) => {
                 setIsLoadingVideo(false);
                 if (status.durationMillis) {
@@ -279,11 +305,17 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
             />
             {isLoadingVideo && (
               <View style={styles.loadingOverlay}>
+                {posterUri && (
+                  <Image source={{ uri: posterUri }} style={styles.posterImage} />
+                )}
                 <ActivityIndicator size="large" color={COLORS.primary} />
               </View>
             )}
             {!isPlaying && !isLoadingVideo && (
               <View style={styles.pauseOverlay}>
+                {posterUri && (
+                  <Image source={{ uri: posterUri }} style={styles.posterImage} />
+                )}
                 <Icons.Play size={64} color="rgba(255,255,255,0.9)" fill="rgba(255,255,255,0.2)" strokeWidth={2} />
               </View>
             )}
@@ -331,6 +363,12 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
           )}
         </TouchableOpacity>
 
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.6)']}
+          locations={[0.3, 1]}
+          style={styles.gradientOverlay}
+          pointerEvents="none"
+        />
         {/* Left side - User info and description */}
         <View style={styles.leftContent}>
           {/* User Info */}
@@ -394,6 +432,21 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
             </View>
           )}
 
+          {/* Tagged Locations */}
+          {locations.length > 0 && (
+            <View style={styles.locationsRow}>
+              {locations.slice(0, 3).map((loc) => (
+                <View key={loc} style={styles.locationChip}>
+                  <Icons.MapPin size={10} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+                  <Text style={styles.locationChipText}>{loc}</Text>
+                </View>
+              ))}
+              {locations.length > 3 && (
+                <Text style={styles.locationMore}>+{locations.length - 3}</Text>
+              )}
+            </View>
+          )}
+
           {/* Tags */}
           {tags.length > 0 && (
             <View style={styles.tagsRow}>
@@ -453,11 +506,11 @@ export function VerticalVideoCard({ video, isActive, onSwipeDecision }: Props) {
           >
             <Icons.Bookmark
               size={28}
-              color={isSaved ? COLORS.primary : 'rgba(255,255,255,0.8)'}
-              fill={isSaved ? COLORS.primary : 'none'}
+              color={isSaved ? COLORS.accent : 'rgba(255,255,255,0.8)'}
+              fill={isSaved ? COLORS.accent : 'none'}
               strokeWidth={isSaved ? 0 : 2}
             />
-            <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
+            <Text style={[styles.actionLabel, isSaved && { color: COLORS.accent }]}>{isSaved ? 'Saved' : 'Save'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -561,6 +614,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    overflow: 'hidden',
+  },
+  posterImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    resizeMode: 'cover',
+    opacity: 0.4,
   },
   pauseOverlay: {
     position: 'absolute',
@@ -571,6 +634,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    overflow: 'hidden',
   },
   progressBar: {
     position: 'absolute',
@@ -592,8 +656,15 @@ const styles = StyleSheet.create({
     top: 0,
     flexDirection: 'row',
     padding: 16,
-    paddingBottom: BOTTOM_SAFE_AREA + 16,
+    paddingBottom: 20,
     justifyContent: 'space-between',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   muteButton: {
     position: 'absolute',
@@ -653,8 +724,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 2.5,
+    borderColor: 'rgba(255, 255, 255, 1)',
   },
   avatarPlaceholder: {
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -666,22 +737,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     maxWidth: 200,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   timestamp: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   title: {
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
     lineHeight: 22,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   caption: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     lineHeight: 20,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   locationRow: {
     flexDirection: 'row',
@@ -693,6 +776,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -719,6 +805,30 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  locationsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(15,23,42,0.7)',
+  },
+  locationChipText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  locationMore: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    alignSelf: 'center',
   },
   actionButton: {
     alignItems: 'center',

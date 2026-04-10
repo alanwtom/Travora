@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
+import { VideoMuteProvider } from '@/providers/VideoMuteProvider';
 import { initializeNotificationDelivery } from '@/services/notificationDelivery';
 
 export {
@@ -85,7 +86,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <VideoMuteProvider>
+        <RootLayoutNav />
+      </VideoMuteProvider>
     </AuthProvider>
   );
 }

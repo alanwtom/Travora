@@ -3,7 +3,9 @@ import { useAuth } from '@/providers/AuthProvider';
 import { uploadThumbnail, uploadVideo } from '@/services/storage';
 import { createVideo } from '@/services/videos';
 import { ensureTags, setVideoTags } from '@/services/mediaTags';
+import { ensureLocations, setVideoLocations } from '@/services/videoLocations';
 import * as ImagePicker from 'expo-image-picker';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { CheckCircle, Image as LucideImage, MapPin, UploadCloud, Video } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -27,6 +29,7 @@ export default function UploadScreen() {
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
   const [tagsText, setTagsText] = useState('');
+  const [locationsText, setLocationsText] = useState('');
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -54,7 +57,18 @@ export default function UploadScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setVideoUri(result.assets[0].uri);
+      const selectedVideoUri = result.assets[0].uri;
+      setVideoUri(selectedVideoUri);
+      // Auto-generate thumbnail from the first frame
+      try {
+        const { uri: autoThumbnailUri } = await VideoThumbnails.getThumbnailAsync(
+          selectedVideoUri,
+          { time: 0 }
+        );
+        setThumbnailUri(autoThumbnailUri);
+      } catch (e) {
+        console.warn('Auto-thumbnail generation failed:', e);
+      }
     }
   };
 
@@ -128,6 +142,22 @@ export default function UploadScreen() {
         }
       }
 
+      // 3) Parse and attach locations (best-effort; don't fail whole upload)
+      const locationNames = locationsText
+        .split(',')
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      if (video?.id && locationNames.length > 0) {
+        try {
+          const locs = await ensureLocations(locationNames);
+          const locIds = locs.map((l) => l.id);
+          await setVideoLocations(video.id, locIds);
+        } catch (locErr) {
+          console.warn('Failed to save locations', locErr);
+        }
+      }
+
       Alert.alert('Success', 'Your video has been uploaded!');
 
       // Reset form
@@ -136,6 +166,7 @@ export default function UploadScreen() {
       setCaption('');
       setLocation('');
       setTagsText('');
+      setLocationsText('');
       setVideoUri(null);
       setThumbnailUri(null);
     } catch (error: any) {
@@ -163,16 +194,23 @@ export default function UploadScreen() {
       </TouchableOpacity>
 
       {/* Thumbnail Picker */}
-      <TouchableOpacity style={styles.thumbnailPicker} onPress={pickThumbnail}>
-        {thumbnailUri ? (
-          <Image source={{ uri: thumbnailUri }} style={styles.thumbnailPreview} />
-        ) : (
-          <View style={styles.placeholderThumbnail}>
-            <LucideImage size={20} color={COLORS.textMuted} strokeWidth={2} />
-            <Text style={styles.thumbnailPlaceholderText}>Add thumbnail</Text>
-          </View>
+      <View>
+        <TouchableOpacity style={styles.thumbnailPicker} onPress={pickThumbnail}>
+          {thumbnailUri ? (
+            <Image source={{ uri: thumbnailUri }} style={styles.thumbnailPreview} />
+          ) : (
+            <View style={styles.placeholderThumbnail}>
+              <LucideImage size={20} color={COLORS.textMuted} strokeWidth={2} />
+              <Text style={styles.thumbnailPlaceholderText}>Add thumbnail</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        {thumbnailUri && (
+          <TouchableOpacity style={styles.changeThumbnailButton} onPress={pickThumbnail}>
+            <Text style={styles.changeThumbnailText}>Change Thumbnail</Text>
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
 
       {/* Form */}
       <View style={styles.form}>
@@ -205,6 +243,13 @@ export default function UploadScreen() {
           placeholderTextColor={COLORS.textMuted}
           value={tagsText}
           onChangeText={setTagsText}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Locations (comma separated, e.g. Shibuya, Shinjuku, Akihabara)"
+          placeholderTextColor={COLORS.textMuted}
+          value={locationsText}
+          onChangeText={setLocationsText}
         />
         {/* GPS ADDITION: modified location input with GPS button */}
         <View style={styles.locationInput}>
@@ -354,6 +399,15 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  changeThumbnailButton: {
+    marginTop: 8,
+    alignSelf: 'center',
+  },
+  changeThumbnailText: {
+    fontSize: 13,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 });

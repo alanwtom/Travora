@@ -121,8 +121,8 @@ export default function ActivityScreen() {
 
   const handlePress = (item: ActivityItem) => {
     router.push({
-      pathname: '/video/[id]',
-      params: { id: item.video_id },
+      pathname: '/video-feed/v/[id]',
+      params: { id: item.video_id, returnTo: '/(tabs)/activity' },
     } as any);
   };
 

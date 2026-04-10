@@ -23,7 +23,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useAuth();
   const { addToItinerary, removeFromItineraryById } = useSwipeItinerary();
   const [mediaType, setMediaType] = useState<"video" | "image" | "both">(

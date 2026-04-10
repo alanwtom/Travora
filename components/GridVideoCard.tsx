@@ -4,7 +4,8 @@ import { COLORS } from '@/lib/constants';
 import { VideoWithProfile } from '@/types/database';
 import * as Icons from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import * as VideoThumbnails from 'expo-video-thumbnails';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,6 +18,7 @@ import {
 
 type Props = {
   video: VideoWithProfile;
+  onPress?: () => void;
 };
 
 const { width } = Dimensions.get('window');
@@ -26,19 +28,36 @@ const TOTAL_GAP = GAP * (COLUMN_COUNT - 1);
 const CARD_WIDTH = (width - 32 - TOTAL_GAP) / COLUMN_COUNT; // 32 = padding
 const CARD_HEIGHT = CARD_WIDTH * 1.4; // Aspect ratio
 
-export function GridVideoCard({ video }: Props) {
+export function GridVideoCard({ video, onPress }: Props) {
   const router = useRouter();
   const { user } = useAuth();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [thumbnailUri, setThumbnailUri] = useState<string | null>(video.thumbnail_url ?? null);
   const { isFollowing, toggle, isLoading: followLoading } = useFollow(
     user?.id,
     video.user_id
   );
   const showFollowButton = user?.id && video.user_id !== user.id;
 
+  // Generate a thumbnail from the video if none exists
+  useEffect(() => {
+    if (thumbnailUri || !video.video_url) return;
+    let cancelled = false;
+    VideoThumbnails.getThumbnailAsync(video.video_url, { time: 1000 })
+      .then(({ uri }) => {
+        if (!cancelled) setThumbnailUri(uri);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [video.video_url]);
+
   const handlePress = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
     router.push({
-      pathname: '/video/[id]',
+      pathname: '/video-feed/v/[id]',
       params: { id: video.id },
     });
   };
@@ -59,9 +78,9 @@ export function GridVideoCard({ video }: Props) {
     <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.8}>
       {/* Thumbnail */}
       <View style={styles.thumbnailContainer}>
-        {video.thumbnail_url ? (
+        {thumbnailUri ? (
           <Image
-            source={{ uri: video.thumbnail_url }}
+            source={{ uri: thumbnailUri }}
             style={styles.thumbnail}
             onLoad={() => setImageLoaded(true)}
           />
