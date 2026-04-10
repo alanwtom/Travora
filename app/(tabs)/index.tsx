@@ -10,27 +10,17 @@ import {
   removeSwipe,
   saveDislikedVideo,
 } from "@/services/swipes";
-import { useRouter } from "expo-router";
-import { BookmarkCheck } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { addToItinerary, removeFromItineraryById } = useSwipeItinerary();
-  const [mediaType, setMediaType] = useState<"video" | "image" | "both">(
-    "both",
-  );
-  const [showSwipeTip, setShowSwipeTip] = useState(false);
-  const [showIntroOverlay, setShowIntroOverlay] = useState(false);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [lastSwipeAction, setLastSwipeAction] = useState<{
     direction: "left" | "right";
@@ -38,37 +28,7 @@ export default function HomeScreen() {
   } | null>(null);
   const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const snackbarVisible = useSharedValue(0);
-  const feed = usePersonalizedFeed(mediaType);
-
-  const topTags = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const v of feed.videos) {
-      for (const t of v.tags ?? []) {
-        const tag = t.trim();
-        if (!tag) continue;
-        counts.set(tag, (counts.get(tag) ?? 0) + 1);
-      }
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([tag]) => tag);
-  }, [feed.videos]);
-
-  const filteredVideos = useMemo(() => {
-    if (!selectedTag) return feed.videos;
-    return feed.videos.filter((v) => (v.tags ?? []).includes(selectedTag));
-  }, [feed.videos, selectedTag]);
-
-  useEffect(() => {
-    setShowIntroOverlay(true);
-    setShowSwipeTip(false);
-  }, []);
-
-  const dismissSwipeTip = useCallback(() => {
-    setShowSwipeTip(false);
-    setShowIntroOverlay(false);
-  }, []);
+  const feed = usePersonalizedFeed("both");
 
   const handleSwipeDecision = useCallback(
     (direction: "left" | "right", video: any) => {
@@ -139,103 +99,8 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Media type filter bar */}
-      <View pointerEvents="box-none" style={styles.filterWrap}>
-        <View style={[styles.filterRow, { paddingTop: insets.top + 6 }]}>
-          <View style={styles.filterSegment}>
-            <Pressable
-              onPress={() => setMediaType("video")}
-              style={[
-                styles.filterBtn,
-                mediaType === "video" && styles.filterBtnActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterLabel,
-                  mediaType === "video" && styles.filterLabelActive,
-                ]}
-              >
-                Videos
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setMediaType("image")}
-              style={[
-                styles.filterBtn,
-                mediaType === "image" && styles.filterBtnActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterLabel,
-                  mediaType === "image" && styles.filterLabelActive,
-                ]}
-              >
-                Images
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setMediaType("both")}
-              style={[
-                styles.filterBtn,
-                mediaType === "both" && styles.filterBtnActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterLabel,
-                  mediaType === "both" && styles.filterLabelActive,
-                ]}
-              >
-                All
-              </Text>
-            </Pressable>
-          </View>
-          {topTags.length > 0 ? (
-            <View style={styles.tagFilterRow}>
-              <Pressable
-                onPress={() => setSelectedTag(null)}
-                style={[
-                  styles.tagFilterChip,
-                  !selectedTag && styles.tagFilterChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tagFilterText,
-                    !selectedTag && styles.tagFilterTextActive,
-                  ]}
-                >
-                  All
-                </Text>
-              </Pressable>
-              {topTags.map((tag) => (
-                <Pressable
-                  key={tag}
-                  onPress={() => setSelectedTag(tag)}
-                  style={[
-                    styles.tagFilterChip,
-                    selectedTag === tag && styles.tagFilterChipActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tagFilterText,
-                      selectedTag === tag && styles.tagFilterTextActive,
-                    ]}
-                  >
-                    #{tag}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-        </View>
-      </View>
-
       <VerticalVideoFeed
-        videos={filteredVideos}
+        videos={feed.videos}
         isLoading={feed.isLoading}
         isRefreshing={feed.isRefreshing}
         onLoadMore={feed.loadMore}
@@ -243,59 +108,6 @@ export default function HomeScreen() {
         hasMore={feed.hasMore}
         onSwipeDecision={handleSwipeDecision}
       />
-
-      {selectedTag && filteredVideos.length === 0 && !feed.isLoading ? (
-        <View style={styles.emptyTagHintWrap} pointerEvents="box-none">
-          <View style={styles.emptyTagHintCard}>
-            <Text style={styles.emptyTagHintText}>No videos found for #{selectedTag}</Text>
-            <Pressable onPress={() => setSelectedTag(null)} style={styles.emptyTagHintBtn}>
-              <Text style={styles.emptyTagHintBtnText}>Clear filter</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
-
-      <View pointerEvents="box-none" style={styles.modeBarWrap}>
-        <View style={[styles.modeBarRow, { paddingTop: insets.top + 6 }]}>
-          {showSwipeTip ? (
-            <View style={styles.tipCard}>
-              <Text style={styles.tipText}>Swipe right to save, left to pass.</Text>
-              <Pressable onPress={dismissSwipeTip} style={styles.tipCloseBtn}>
-                <Text style={styles.tipCloseText}>Got it</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable style={styles.segment} onPress={() => setShowSwipeTip(true)}>
-              <Text style={styles.segmentLabel}>Swipe tips</Text>
-            </Pressable>
-          )}
-          <Pressable style={styles.itineraryBtn} onPress={() => router.push("/(tabs)/discover-itinerary" as any)}>
-            <BookmarkCheck size={16} color={COLORS.accent} />
-            <Text style={styles.itineraryBtnText}>Itinerary</Text>
-          </Pressable>
-          <View style={styles.segmentDark}>
-            <Text style={styles.segmentDarkText}>{mediaType === "video" ? "Videos" : mediaType === "image" ? "Images" : "All"}</Text>
-          </View>
-        </View>
-      </View>
-
-      {showIntroOverlay ? (
-        <View style={styles.introOverlay}>
-          <View style={styles.introCard}>
-            <Text style={styles.introTitle}>Welcome to Travora!</Text>
-            <Text style={styles.introBody}>
-              • Swipe up and down to scroll through videos.{"\n"}
-              • Swipe right to save videos for itinerary generation.{"\n"}
-              • Swipe left to pass.{"\n"}
-              • Tap the itinerary button to view saved videos.{"\n\n"}
-              Happy travels!!
-            </Text>
-            <Pressable onPress={dismissSwipeTip} style={styles.introCta}>
-              <Text style={styles.introCtaText}>Got it</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
 
       {snackbarMessage ? (
         <View style={styles.snackbarWrap} pointerEvents="box-none">
@@ -315,200 +127,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  modeBarWrap: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-  modeBarRow: {
-    paddingHorizontal: 16,
-    width: "100%",
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  segment: {
-    flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.06)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  segmentBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-  },
-  segmentBtnActive: {
-    backgroundColor: COLORS.primary,
-  },
-  segmentLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  segmentLabelActive: {
-    color: "#FFFFFF",
-  },
-  filterWrap: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-  filterRow: {
-    paddingHorizontal: 16,
-    width: "100%",
-    alignItems: "center",
-  },
-  filterSegment: {
-    flexDirection: "row",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 999,
-    padding: 3,
-    gap: 4,
-  },
-  filterBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-  },
-  filterBtnActive: {
-    backgroundColor: COLORS.primary,
-  },
-  filterLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#FFFFFF",
-  },
-  filterLabelActive: {
-    color: "#FFFFFF",
-  },
-  tagFilterRow: {
-    marginTop: 10,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 8,
-  },
-  tagFilterChip: {
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  tagFilterChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  tagFilterText: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  tagFilterTextActive: {
-    color: "#fff",
-  },
-  itineraryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
-  },
-  itineraryBtnText: {
-    color: COLORS.accent,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  segmentDark: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-  },
-  segmentDarkText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  tipCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
-  },
-  tipText: {
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  tipCloseBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  tipCloseText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  introOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.48)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    zIndex: 20,
-  },
-  introCard: {
-    width: "100%",
-    maxWidth: 420,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 18,
-    gap: 12,
-  },
-  introTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  introBody: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: COLORS.text,
-  },
-  introCta: {
-    alignSelf: "flex-end",
-    backgroundColor: COLORS.primary,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  introCtaText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "700",
   },
   snackbarWrap: {
     position: "absolute",
@@ -542,40 +160,6 @@ const styles = StyleSheet.create({
   snackbarUndoText: {
     color: "#fff",
     fontSize: 12,
-    fontWeight: "700",
-  },
-  emptyTagHintWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 72,
-    alignItems: "center",
-    zIndex: 29,
-  },
-  emptyTagHintCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "rgba(15,23,42,0.94)",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    maxWidth: "92%",
-  },
-  emptyTagHintText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  emptyTagHintBtn: {
-    backgroundColor: "rgba(255,255,255,0.16)",
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 9,
-  },
-  emptyTagHintBtnText: {
-    color: "#fff",
-    fontSize: 11,
     fontWeight: "700",
   },
 });

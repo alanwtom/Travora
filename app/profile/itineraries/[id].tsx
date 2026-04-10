@@ -49,11 +49,13 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ItineraryDetailScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [itinerary, setItinerary] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
@@ -254,7 +256,7 @@ export default function ItineraryDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
@@ -262,7 +264,7 @@ export default function ItineraryDetailScreen() {
 
   if (!itinerary) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { paddingTop: insets.top }]}>
         <AlertCircle size={48} color={COLORS.error} strokeWidth={2} />
         <Text style={styles.errorText}>Itinerary not found</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -275,7 +277,7 @@ export default function ItineraryDetailScreen() {
   const days = Array.isArray(itinerary.days) ? itinerary.days : [];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.contentContainer, { paddingTop: insets.top + 16 }]}>
       {/* Header */}
       <View style={styles.header}>
         <BackButton />
