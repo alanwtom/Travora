@@ -63,7 +63,7 @@ export function normalizeFlightForItineraryPin(raw: unknown, searchDate: string)
     const data: FlightData = {
       id: f.id,
       airline: f.airline,
-      flight_number: `${f.from}-${f.to}`,
+      flight_number: f.flightNumber?.trim() || `${f.from}-${f.to}`,
       departure_time: isoFromSearchDateAndClock(date, f.departAt),
       arrival_time: isoFromSearchDateAndClock(date, f.arriveAt),
       estimated_price: f.price,

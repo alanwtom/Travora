@@ -1,8 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import { searchGoogleFlights } from '@/services/serpapiFlights';
+import { normalizeFlightForItineraryPin } from '@/services/travelPinAdapters';
 import type { FlightData, FlightSearchParams, FlightSearchResponse } from '@/types/travel';
 
 const AVIATIONSTACK_API_KEY =
   process.env.EXPO_PUBLIC_AVIATIONSTACK_API_KEY || process.env.AVIATIONSTACK_API_KEY;
+const SERPAPI_KEY = process.env.EXPO_PUBLIC_SERPAPI_KEY;
 const CACHE_DURATION_HOURS = 1;
 const AVIATIONSTACK_URL = 'http://api.aviationstack.com/v1/flights';
 const DEFAULT_LIMIT = 25;
@@ -104,6 +107,52 @@ function mapAviationStackError(payload: AviationStackPayload): Error {
     return new Error('Invalid AviationStack API key.');
   }
   return new Error(message);
+}
+
+/**
+ * Google Flights retail fares (per SerpAPI). Used when EXPO_PUBLIC_SERPAPI_KEY is set.
+ * Returns null if the key is missing, the request fails, or there are no itineraries.
+ */
+async function fetchFromSerpApi(params: FlightSearchParams): Promise<FlightSearchResponse | null> {
+  if (!SERPAPI_KEY) return null;
+
+  const parts = params.date.split('-').map(Number);
+  const y = parts[0];
+  const mo = parts[1];
+  const d = parts[2];
+  if (!y || !mo || !d) return null;
+
+  try {
+    const options = await searchGoogleFlights({
+      departureId: params.origin,
+      arrivalId: params.destination,
+      outboundDate: new Date(y, mo - 1, d),
+      returnDate: null,
+      roundTrip: false,
+      adults: 1,
+      travelClass: 'Economy',
+    });
+
+    if (!options.length) return null;
+
+    const flights = options.map((opt) => normalizeFlightForItineraryPin(opt, params.date));
+    const n = flights.length;
+
+    return {
+      flights,
+      next_cursor: null,
+      pagination: {
+        cursor: params.cursor ?? null,
+        next_cursor: null,
+        limit: n,
+        total: n,
+      },
+      source: 'api',
+    };
+  } catch (e) {
+    console.warn('SerpAPI Google Flights search failed, falling back:', e);
+    return null;
+  }
 }
 
 async function fetchFromAviationStack(params: FlightSearchParams): Promise<FlightSearchResponse> {
@@ -208,6 +257,14 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
   if (cached) return cached;
 
   try {
+    if (!normalized.cursor) {
+      const serp = await fetchFromSerpApi(normalized);
+      if (serp && serp.flights.length > 0) {
+        await cacheResult(normalized, serp);
+        return serp;
+      }
+    }
+
     const live = await fetchFromAviationStack(normalized);
     await cacheResult(normalized, live);
     if (live.flights.length === 0) {

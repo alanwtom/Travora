@@ -20,6 +20,8 @@ export type SerpApiFlightOption = {
   className: FlightSearchClass;
   price: number;
   stops: number;
+  /** First outbound segment flight number when the API provides it */
+  flightNumber?: string;
 };
 
 type SerpLeg = {
@@ -27,6 +29,8 @@ type SerpLeg = {
   arrival_airport: { id: string; time: string };
   airline: string;
   travel_class?: string;
+  /** e.g. "UA 2175" when present */
+  flight_number?: string;
 };
 
 type SerpBestFlight = {
@@ -55,6 +59,14 @@ function formatDurationMinutes(totalMinutes: number): string {
   return `${h}h ${m.toString().padStart(2, '0')}m`;
 }
 
+/** Avoid UTC-shift bugs from `toISOString()` when turning a calendar Date into YYYY-MM-DD. */
+function dateToYmdLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function formatTimeShort(isoDateTime: string): string {
   const part = isoDateTime.includes(' ') ? isoDateTime.split(' ')[1] : isoDateTime;
   if (!part) return isoDateTime;
@@ -79,7 +91,7 @@ function mapGroup(f: SerpBestFlight, index: number): SerpApiFlightOption | null 
   const last = legs[legs.length - 1];
   const stops = Math.max(0, legs.length - 1);
   return {
-    id: f.departure_token ?? `serp-flight-${index}-${f.price}`,
+    id: f.departure_token ?? `serp-flight-${index}-${f.price}-${first.departure_airport.time}`,
     airline: first.airline,
     from: first.departure_airport.id,
     to: last.arrival_airport.id,
@@ -89,6 +101,7 @@ function mapGroup(f: SerpBestFlight, index: number): SerpApiFlightOption | null 
     className: normalizeClass(first.travel_class),
     price: f.price,
     stops,
+    flightNumber: first.flight_number,
   };
 }
 
@@ -116,8 +129,8 @@ export async function searchGoogleFlights(params: SearchFlightsParams): Promise<
     throw new Error('Enter 3-letter airport codes for origin and destination (e.g. SFO and NRT).');
   }
 
-  const outbound = params.outboundDate.toISOString().slice(0, 10);
-  const ret = params.returnDate ? params.returnDate.toISOString().slice(0, 10) : '';
+  const outbound = dateToYmdLocal(params.outboundDate);
+  const ret = params.returnDate ? dateToYmdLocal(params.returnDate) : '';
 
   const query = new URLSearchParams({
     engine: 'google_flights',
@@ -131,6 +144,12 @@ export async function searchGoogleFlights(params: SearchFlightsParams): Promise<
     currency: 'USD',
     hl: 'en',
     gl: 'us',
+    /** Match Google Flights in the browser (slower but accurate). */
+    deep_search: 'true',
+    /** Include "View more flights" rows for a wider set of fares. */
+    show_hidden: 'true',
+    /** Cheapest options first when multiple itineraries are returned. */
+    sort_by: '2',
   });
 
   if (params.roundTrip) {
@@ -158,10 +177,17 @@ export async function searchGoogleFlights(params: SearchFlightsParams): Promise<
   ];
 
   const options: SerpApiFlightOption[] = [];
+  const seenIds = new Set<string>();
   groups.forEach((g, i) => {
     const mapped = mapGroup(g, i);
-    if (mapped) options.push(mapped);
+    if (mapped && !seenIds.has(mapped.id)) {
+      seenIds.add(mapped.id);
+      options.push(mapped);
+    }
   });
 
-  return options;
+  options.sort((a, b) => a.price - b.price);
+
+  const max = 50;
+  return options.length > max ? options.slice(0, max) : options;
 }
