@@ -10,7 +10,7 @@ import * as Icons from 'lucide-react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -133,7 +133,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
     }
   }, [isMuted]);
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -143,7 +143,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
     } catch (error) {
       // Silently fail
     }
-  };
+  }, [user, video.id]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -156,7 +156,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
     }
   };
 
-  const togglePlayPause = async () => {
+  const togglePlayPause = useCallback(async () => {
     if (!videoRef.current) return;
 
     try {
@@ -170,7 +170,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
     } catch (error) {
       // Silently fail
     }
-  };
+  }, [isPlaying]);
 
   const toggleMute = async () => {
     if (!videoRef.current) return;
@@ -267,15 +267,34 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp'),
   }));
 
+  const doubleTap = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(2)
+        .onEnd(() => {
+          runOnJS(handleLike)();
+        }),
+    [handleLike]
+  );
+
+  const singleTap = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(1)
+        .onEnd(() => {
+          runOnJS(togglePlayPause)();
+        }),
+    [togglePlayPause]
+  );
+
+  const videoTapGesture = useMemo(() => Gesture.Exclusive(doubleTap, singleTap), [doubleTap, singleTap]);
+
   return (
     <GestureDetector gesture={pan}>
     <Animated.View style={[styles.container, { height: availableHeight }, cardAnimatedStyle]}>
-      {/* Video Player */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={togglePlayPause}
-        style={styles.videoWrapper}
-      >
+      {/* Video Player: single tap = play/pause, double tap / double-click = like (same as heart button) */}
+      <GestureDetector gesture={videoTapGesture}>
+      <View style={styles.videoWrapper}>
         {video.video_url ? (
           <>
             <Video
@@ -337,7 +356,8 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
             />
           </View>
         )}
-      </TouchableOpacity>
+      </View>
+      </GestureDetector>
 
       <Animated.View pointerEvents="none" style={[styles.swipeOverlay, styles.likeSwipeOverlay, likeOverlayStyle]}>
         <Icons.Heart size={62} color={COLORS.success} fill={COLORS.success} strokeWidth={1.5} />
