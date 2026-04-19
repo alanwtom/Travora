@@ -49,3 +49,15 @@ export function truncate(text: string, maxLength: number): string {
 export function generateFileName(prefix: string = 'file'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 }
+
+export function sanitizeSearchQuery(query: string): string {
+  return query
+    .trim()
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/,/g, '\\,')
+    .replace(/\./g, '\\.')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}

@@ -1,6 +1,7 @@
 import { FEED_PAGE_SIZE } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 import { Video, VideoInsert, VideoUpdate, VideoWithProfile } from '@/types/database';
+import { sanitizeSearchQuery } from '@/utils/helpers';
 
 export async function getVideosByIds(
   videoIds: string[],
@@ -56,7 +57,7 @@ export async function getVideosByIds(
         v.is_saved = savedSet.has(v.id);
       });
     } catch (saveError) {
-      // Saves table might not exist yet, ignore
+      console.warn('Saves table not yet available:', saveError);
     }
   }
 
@@ -120,8 +121,7 @@ export async function getFeedVideos(
         v.is_saved = savedSet.has(v.id);
       });
     } catch (error) {
-      // Silently ignore if saves table doesn't exist yet
-      console.log('Saves table not yet available');
+      console.warn('Saves table not yet available:', error);
     }
   }
 
@@ -172,6 +172,7 @@ export async function getUserVideos(userId: string): Promise<any[]> {
         v.is_saved = savedSet.has(v.id);
       });
     } catch {
+      console.warn('Saves table not yet available');
       videos.forEach((v: any) => {
         v.is_liked = likedSet.has(v.id);
         v.is_saved = false;
@@ -318,6 +319,7 @@ export async function getFollowingFeed(
         v.is_saved = savedSet.has(v.id);
       });
     } catch {
+      console.warn('Saves table not yet available');
       videos.forEach((v: any) => {
         v.is_liked = likedSet.has(v.id);
         v.is_saved = false;
@@ -337,7 +339,7 @@ export async function searchVideos(query: string): Promise<VideoWithProfile[]> {
       like_count:likes(count),
       comment_count:comments(count)
     `)
-    .or(`title.ilike.%${query}%,description.ilike.%${query}%,location.ilike.%${query}%,caption.ilike.%${query}%`)
+    .or(`title.ilike.%${sanitizeSearchQuery(query)}%,description.ilike.%${sanitizeSearchQuery(query)}%,location.ilike.%${sanitizeSearchQuery(query)}%,caption.ilike.%${sanitizeSearchQuery(query)}%`)
     .order('created_at', { ascending: false })
     .limit(20);
 
