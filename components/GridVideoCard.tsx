@@ -47,7 +47,7 @@ export function GridVideoCard({ video, onPress }: Props) {
       .then(({ uri }) => {
         if (!cancelled) setThumbnailUri(uri);
       })
-      .catch(() => {});
+      .catch((err) => { console.warn('Thumbnail generation failed:', err); });
     return () => { cancelled = true; };
   }, [video.video_url]);
 

@@ -115,8 +115,8 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
 
       // Increment view count on first play
       if (!hasIncrementedView.current) {
-        incrementViewCount(video.id).catch(() => {
-          // Silently fail
+        incrementViewCount(video.id).catch((err) => {
+          console.warn('Failed to increment view count:', err);
         });
         hasIncrementedView.current = true;
       }
@@ -129,7 +129,9 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
   // Sync mute state from global context to the video player
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.setIsMutedAsync(isMuted).catch(() => {});
+      videoRef.current.setIsMutedAsync(isMuted).catch((err) => {
+        console.warn('Failed to set mute state:', err);
+      });
     }
   }, [isMuted]);
 
@@ -141,7 +143,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
       setIsLiked(liked);
       setLikeCount((prev) => (liked ? prev + 1 : prev - 1));
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle like:', error);
     }
   }, [user, video.id]);
 
@@ -152,7 +154,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
       const saved = await toggleSave(user.id, video.id);
       setIsSaved(saved);
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle save:', error);
     }
   };
 
@@ -168,7 +170,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
         setIsPlaying(true);
       }
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle play/pause:', error);
     }
   }, [isPlaying]);
 
@@ -180,7 +182,7 @@ export function VerticalVideoCard({ video, isActive, fullScreen, onSwipeDecision
       await videoRef.current.setIsMutedAsync(newMuted);
       setGlobalMuted(newMuted);
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle mute:', error);
     }
   };
 

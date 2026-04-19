@@ -83,8 +83,8 @@ export default function UserProfileScreen() {
 
   useEffect(() => {
     if (userId && !isOwnProfile) {
-      getFollowerCount(userId).then(setFollowers).catch(() => {});
-      getFollowingCount(userId).then(setFollowing).catch(() => {});
+      getFollowerCount(userId).then(setFollowers).catch((err) => { console.warn('Failed to get follower count:', err); });
+      getFollowingCount(userId).then(setFollowing).catch((err) => { console.warn('Failed to get following count:', err); });
     }
   }, [userId, isFollowing, isOwnProfile]);
 

@@ -42,6 +42,7 @@ export default function SingleVideoFeedScreen() {
   const insets = useSafeAreaInsets();
   const [videos, setVideos] = useState<PersonalizedFeedVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const goBack = () => {
     if (returnTo) {
@@ -57,7 +58,9 @@ export default function SingleVideoFeedScreen() {
       .then((data) => {
         setVideos(data.map(mapToFeedVideo));
       })
-      .catch(() => {})
+      .catch((err) => {
+        setError(err?.message || 'Failed to load video');
+      })
       .finally(() => setIsLoading(false));
   }, [id, user?.id]);
 
@@ -66,6 +69,29 @@ export default function SingleVideoFeedScreen() {
       <View style={styles.container}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+        <Pressable
+          style={[styles.backButton, { top: insets.top + 8 }]}
+          onPress={goBack}
+        >
+          <Icons.X size={24} color="#FFFFFF" strokeWidth={2.5} />
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centered}>
+          <Icons.AlertCircle size={48} color={COLORS.error} />
+          <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '600', marginTop: 16 }}>{error}</Text>
+          <Pressable
+            style={{ marginTop: 16, backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+            onPress={() => { setError(null); setIsLoading(true); getVideosByIds([id], user?.id).then((data) => setVideos(data.map(mapToFeedVideo))).catch((err) => setError(err?.message || 'Failed to load video')).finally(() => setIsLoading(false)); }}
+          >
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>Retry</Text>
+          </Pressable>
         </View>
         <Pressable
           style={[styles.backButton, { top: insets.top + 8 }]}

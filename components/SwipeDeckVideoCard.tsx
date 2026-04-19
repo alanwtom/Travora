@@ -33,10 +33,10 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
     if (!ref) return;
 
     if (isActive) {
-      ref.playAsync().catch(() => {});
+      ref.playAsync().catch((err) => { console.warn('playAsync failed:', err); });
       setIsPlaying(true);
     } else {
-      ref.pauseAsync().catch(() => {});
+      ref.pauseAsync().catch((err) => { console.warn('pauseAsync failed:', err); });
       setIsPlaying(false);
     }
   }, [isActive]);
@@ -52,8 +52,8 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
         await ref.playAsync();
         setIsPlaying(true);
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn('Toggle play failed:', err);
     }
   };
 
@@ -63,8 +63,8 @@ export function SwipeDeckVideoCard({ video, isActive, dimmed = false }: Props) {
     try {
       await ref.setIsMutedAsync(!isMuted);
       setIsMuted(!isMuted);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn('Toggle mute failed:', err);
     }
   };
 

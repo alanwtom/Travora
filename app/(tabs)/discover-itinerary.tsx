@@ -93,7 +93,9 @@ export default function DiscoverItineraryScreen() {
         onPress: async () => {
           removeFromItineraryById(video.id);
           if (user?.id) {
-            await removeSwipe(user.id, video.id).catch(() => {});
+            await removeSwipe(user.id, video.id).catch((err) => {
+              console.warn('Failed to remove swipe:', err);
+            });
           }
         },
       },

@@ -40,8 +40,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (user?.id) {
-      getFollowerCount(user.id).then(setFollowers).catch(() => {});
-      getFollowingCount(user.id).then(setFollowing).catch(() => {});
+      getFollowerCount(user.id).then(setFollowers).catch((err) => { console.warn('Failed to get follower count:', err); });
+      getFollowingCount(user.id).then(setFollowing).catch((err) => { console.warn('Failed to get following count:', err); });
     }
   }, [user?.id]);
 
@@ -357,7 +357,7 @@ function VideoThumbnail({ videoUrl, thumbnailUrl }: { videoUrl: string; thumbnai
       .then(({ uri: generated }) => {
         if (!cancelled) setUri(generated);
       })
-      .catch(() => {});
+      .catch((err) => { console.warn('Thumbnail generation failed:', err); });
     return () => { cancelled = true; };
   }, [videoUrl]);
 

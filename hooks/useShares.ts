@@ -25,7 +25,7 @@ export function useShares() {
       setShares(receivedShares);
       setUnreadCount(count);
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to load shares:', error);
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export function useShares() {
       const count = await getUnreadShareCount(user.id);
       setUnreadCount(count);
     } catch {
-      // Silently fail
+      console.warn('Failed to load unread share count');
     }
   };
 
