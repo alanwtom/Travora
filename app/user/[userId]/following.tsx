@@ -39,8 +39,8 @@ function FollowingRow({
   const handleToggle = async () => {
     try {
       await toggle();
-    } catch {
-      // Ignore
+    } catch (err) {
+      console.warn('Failed to toggle follow:', err);
     }
   };
 

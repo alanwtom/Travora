@@ -32,7 +32,9 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     if (user?.id) {
-      getSuggestedUsers(user.id, 5).then(setSuggestedUsers).catch(() => {});
+      getSuggestedUsers(user.id, 5).then(setSuggestedUsers).catch((err) => {
+        console.warn('Failed to load suggested users:', err);
+      });
     }
   }, [user?.id]);
 

@@ -11,10 +11,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { VideoMuteProvider } from '@/providers/VideoMuteProvider';
 import { initializeNotificationDelivery } from '@/services/notificationDelivery';
-
-export {
-    ErrorBoundary
-} from 'expo-router';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -87,7 +84,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <VideoMuteProvider>
-        <RootLayoutNav />
+        <ErrorBoundary>
+          <RootLayoutNav />
+        </ErrorBoundary>
       </VideoMuteProvider>
     </AuthProvider>
   );

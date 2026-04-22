@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { Profile, ProfileUpdate } from '@/types/database';
 import { triggerNewFollower } from './notificationTriggers';
+import { sanitizeSearchQuery } from '@/utils/helpers';
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -40,7 +41,7 @@ export async function searchProfiles(query: string): Promise<Profile[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .or(`username.ilike.%${sanitizeSearchQuery(query)}%,display_name.ilike.%${sanitizeSearchQuery(query)}%`)
     .limit(20);
 
   if (error) throw error;
@@ -175,7 +176,7 @@ async function searchFollowers(
     .from('profiles')
     .select('*')
     .in('id', followerIds)
-    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+    .or(`username.ilike.%${sanitizeSearchQuery(q)}%,display_name.ilike.%${sanitizeSearchQuery(q)}%`)
     .limit(100);
 
   return enrichWithFollowStatus(profiles ?? [], currentUserId);
@@ -233,7 +234,7 @@ async function searchFollowing(
     .from('profiles')
     .select('*')
     .in('id', followingIds)
-    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+    .or(`username.ilike.%${sanitizeSearchQuery(q)}%,display_name.ilike.%${sanitizeSearchQuery(q)}%`)
     .limit(100);
 
   return enrichWithFollowStatus(profiles ?? [], currentUserId);

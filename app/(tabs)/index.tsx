@@ -47,12 +47,12 @@ export default function HomeScreen() {
       if (direction === "right") {
         addToItinerary(video);
         if (user?.id) {
-          recordSwipe(user.id, video.id, "like").catch(() => {});
+          recordSwipe(user.id, video.id, "like").catch((err) => { console.warn("Failed to record swipe:", err); });
         }
       } else {
-        saveDislikedVideo(video.id).catch(() => {});
+        saveDislikedVideo(video.id).catch((err) => { console.warn("Failed to save disliked video:", err); });
         if (user?.id) {
-          recordSwipe(user.id, video.id, "dislike").catch(() => {});
+          recordSwipe(user.id, video.id, "dislike").catch((err) => { console.warn("Failed to record swipe:", err); });
         }
       }
 

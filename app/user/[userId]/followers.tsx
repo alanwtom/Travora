@@ -42,8 +42,8 @@ function FollowerRow({
     try {
       await toggle();
       onFollowChange?.();
-    } catch {
-      // Ignore
+    } catch (err) {
+      console.warn('Failed to toggle follow:', err);
     }
   };
 

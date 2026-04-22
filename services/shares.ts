@@ -59,8 +59,8 @@ export async function shareContent(
         contentId,
         ...(message && { message }),
       },
-    }).catch(() => {});
-  }).catch(() => {});
+    }).catch((err) => { console.warn('Failed to send share notifications:', err); });
+  }).catch((err) => { console.warn('Failed to get sender profile:', err); });
 
   return data;
 }

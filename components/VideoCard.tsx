@@ -33,7 +33,7 @@ export function VideoCard({ video }: Props) {
       setIsLiked(liked);
       setLikeCount((prev) => (liked ? prev + 1 : prev - 1));
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle like:', error);
     }
   };
 
@@ -44,7 +44,7 @@ export function VideoCard({ video }: Props) {
       const saved = await toggleSave(user.id, video.id);
       setIsSaved(saved);
     } catch (error) {
-      // Silently fail
+      console.warn('Failed to toggle save:', error);
     }
   };
 

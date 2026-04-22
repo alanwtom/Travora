@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { sanitizeSearchQuery } from "@/utils/helpers";
 
 export type VideoLocation = {
   id: string;
@@ -9,7 +10,7 @@ export async function searchLocations(query: string): Promise<VideoLocation[]> {
   const { data, error } = await supabase
     .from("locations" as any)
     .select("id, name")
-    .ilike("name", `%${query}%`)
+    .ilike("name", `%${sanitizeSearchQuery(query)}%`)
     .limit(20);
   if (error) throw error;
   return ((data ?? []) as any) as VideoLocation[];

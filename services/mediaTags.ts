@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { sanitizeSearchQuery } from "@/utils/helpers";
 
 export type MediaTag = {
   id: string;
@@ -10,7 +11,7 @@ export async function searchTags(query: string): Promise<MediaTag[]> {
     // New table not in generated types yet
     .from("tags" as any)
     .select("id, name")
-    .ilike("name", `%${query}%`)
+    .ilike("name", `%${sanitizeSearchQuery(query)}%`)
     .limit(20);
   if (error) throw error;
   return ((data ?? []) as any) as MediaTag[];
