@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { VideoMuteProvider } from '@/providers/VideoMuteProvider';
 import { initializeNotificationDelivery } from '@/services/notificationDelivery';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ThemeModeProvider } from '@/providers/ThemeModeProvider';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -83,11 +84,13 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <VideoMuteProvider>
-        <ErrorBoundary>
-          <RootLayoutNav />
-        </ErrorBoundary>
-      </VideoMuteProvider>
+      <ThemeModeProvider>
+        <VideoMuteProvider>
+          <ErrorBoundary>
+            <RootLayoutNav />
+          </ErrorBoundary>
+        </VideoMuteProvider>
+      </ThemeModeProvider>
     </AuthProvider>
   );
 }

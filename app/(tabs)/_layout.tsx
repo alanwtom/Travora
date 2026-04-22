@@ -6,6 +6,7 @@ import { Home, Compass, Plus, Bell, User } from 'lucide-react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { COLORS } from '@/lib/constants';
+import { useAppColors } from '@/lib/theme';
 import { SwipeItineraryProvider } from '@/providers/SwipeItineraryProvider';
 
 function TabBarIcon(props: {
@@ -14,12 +15,13 @@ function TabBarIcon(props: {
   focused?: boolean;
 }) {
   const { name, color, focused } = props;
+  const colors = useAppColors();
   const IconComponent = { Home, Compass, Bell, User }[name];
   return (
     <View style={styles.iconContainer}>
       <IconComponent
         size={22}
-        color={focused ? COLORS.accent : color}
+        color={focused ? colors.accent : color}
         strokeWidth={2.5}
       />
     </View>
@@ -28,13 +30,14 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const colors = useAppColors();
 
   return (
     <SwipeItineraryProvider>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.accent,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
         headerShown: false,
         tabBarStyle: {
           height: Platform.OS === 'ios' ? 78 : 64,
@@ -42,13 +45,13 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingHorizontal: 4,
           elevation: 0,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.background,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.06,
           shadowRadius: 8,
           borderTopWidth: 0.5,
-          borderTopColor: 'rgba(0, 0, 0, 0.08)',
+          borderTopColor: colors.border,
         },
         tabBarLabelStyle: {
           fontSize: 12,

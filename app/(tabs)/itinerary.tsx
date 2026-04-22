@@ -1,10 +1,11 @@
-import { COLORS } from '@/lib/constants';
+import { useAppColors } from '@/lib/theme';
 import { useAuth } from '@/providers/AuthProvider';
 import { buildOptimizedItineraryForUser } from '@/services/itineraries';
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ItineraryScreen() {
+  const colors = useAppColors();
   const { user } = useAuth();
   const [places, setPlaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,22 +26,29 @@ export default function ItineraryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Itinerary</Text>
-        <TouchableOpacity style={styles.button} onPress={generate}>
+        <Text style={[styles.title, { color: colors.text }]}>Itinerary</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={generate}>
           <Text style={styles.buttonText}>{isLoading ? 'Generating...' : 'Generate'}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.summary}>
-        <Text style={styles.summaryText}>Stops: {places.length}</Text>
-        <Text style={styles.summaryText}>Total distance: {totalKm.toFixed(2)} km</Text>
+        <Text style={[styles.summaryText, { color: colors.textMuted }]}>Stops: {places.length}</Text>
+        <Text style={[styles.summaryText, { color: colors.textMuted }]}>
+          Total distance: {totalKm.toFixed(2)} km
+        </Text>
       </View>
 
       {places.length > 0 ? (
-        <View style={styles.mapLimitationBanner}>
-          <Text style={styles.mapLimitationText}>
+        <View
+          style={[
+            styles.mapLimitationBanner,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.mapLimitationText, { color: colors.textMuted }]}>
             Map view is not available in this version (known limitation). Stops are listed below.
           </Text>
         </View>
@@ -51,12 +59,16 @@ export default function ItineraryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <View style={styles.row}>
-            <Text style={styles.index}>{index + 1}.</Text>
+            <Text style={[styles.index, { color: colors.text }]}>{index + 1}.</Text>
             <View style={styles.info}>
-              <Text style={styles.placeTitle}>{item.title ?? item.location ?? 'Untitled'}</Text>
-              <Text style={styles.placeSub}>{item.location ?? ''}</Text>
+              <Text style={[styles.placeTitle, { color: colors.text }]}>
+                {item.title ?? item.location ?? 'Untitled'}
+              </Text>
+              <Text style={[styles.placeSub, { color: colors.textMuted }]}>{item.location ?? ''}</Text>
               {item.latitude != null && item.longitude != null && (
-                <Text style={styles.coords}>{item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</Text>
+                <Text style={[styles.coords, { color: colors.textMuted }]}>
+                  {item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}
+                </Text>
               )}
             </View>
           </View>
@@ -68,27 +80,25 @@ export default function ItineraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  title: { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  button: { backgroundColor: COLORS.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  title: { fontSize: 20, fontWeight: '700' },
+  button: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   buttonText: { color: '#fff', fontWeight: '600' },
   summary: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between' },
-  summaryText: { color: COLORS.textMuted },
+  summaryText: {},
   mapLimitationBanner: {
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 12,
-    backgroundColor: COLORS.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  mapLimitationText: { fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
+  mapLimitationText: { fontSize: 13, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  index: { width: 28, fontWeight: '700', color: COLORS.text },
+  index: { width: 28, fontWeight: '700' },
   info: { flex: 1 },
-  placeTitle: { color: COLORS.text, fontWeight: '700' },
-  placeSub: { color: COLORS.textMuted, fontSize: 13 },
-  coords: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
+  placeTitle: { fontWeight: '700' },
+  placeSub: { fontSize: 13 },
+  coords: { fontSize: 12, marginTop: 4 },
 });

@@ -1,6 +1,6 @@
 import { VerticalVideoFeed } from "@/components/VerticalVideoFeed";
 import { usePersonalizedFeed } from "@/hooks/usePersonalizedFeed";
-import { COLORS } from "@/lib/constants";
+import { useAppColors } from "@/lib/theme";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSwipeItinerary } from "@/providers/SwipeItineraryProvider";
 import { PersonalizedFeedVideo } from "@/services/personalizedFeed";
@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 let homeWelcomePresentedThisSession = false;
 
 export default function HomeScreen() {
+  const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { addToItinerary, removeFromItineraryById } = useSwipeItinerary();
@@ -114,7 +115,7 @@ export default function HomeScreen() {
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <VerticalVideoFeed
         videos={feed.videos}
         isLoading={feed.isLoading}
@@ -141,16 +142,16 @@ export default function HomeScreen() {
           style={[styles.introOverlay, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
           pointerEvents="auto"
         >
-          <View style={styles.introCard}>
-            <Text style={styles.introTitle}>Welcome to Travora!</Text>
-            <Text style={styles.introBody}>
+          <View style={[styles.introCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.introTitle, { color: colors.text }]}>Welcome to Travora!</Text>
+            <Text style={[styles.introBody, { color: colors.textMuted }]}>
               • Swipe up and down to scroll through videos.{"\n"}
               • Swipe right to save videos for itinerary generation.{"\n"}
               • Swipe left to pass.{"\n"}
               • Open the Itinerary tab to view saved videos.{"\n\n"}
               Happy travels!!
             </Text>
-            <Pressable onPress={dismissIntroOverlay} style={styles.introCta}>
+            <Pressable onPress={dismissIntroOverlay} style={[styles.introCta, { backgroundColor: colors.primary }]}>
               <Text style={styles.introCtaText}>Got it</Text>
             </Pressable>
           </View>
@@ -163,7 +164,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   snackbarWrap: {
     position: "absolute",
@@ -210,27 +210,22 @@ const styles = StyleSheet.create({
   introCard: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 22,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   introTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: COLORS.text,
     marginBottom: 14,
   },
   introBody: {
     fontSize: 15,
     lineHeight: 24,
-    color: COLORS.textMuted,
     marginBottom: 20,
   },
   introCta: {
     alignSelf: "flex-start",
-    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,

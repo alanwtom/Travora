@@ -11,15 +11,19 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '@/lib/constants';
+import { useAppColors } from '@/lib/theme';
+import { useColorScheme } from '@/components/useColorScheme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const colors = useAppColors();
+  const scheme = useColorScheme();
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
 
       {/* Hero Image */}
       <ImageBackground
@@ -38,8 +42,8 @@ export default function WelcomeScreen() {
       {/* Bottom Content */}
       <View style={styles.content}>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>The new way to{'\n'}explore the world</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.primary }]}>The new way to{'\n'}explore the world</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Share your travel adventures, discover hidden gems, and connect with fellow explorers.
           </Text>
         </View>
@@ -61,7 +65,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   heroImage: {
     width: '100%',
@@ -87,14 +90,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: COLORS.primary,
     textAlign: 'center',
     letterSpacing: -0.8,
     lineHeight: 40,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: 14,
     lineHeight: 23,

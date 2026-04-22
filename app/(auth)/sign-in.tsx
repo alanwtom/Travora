@@ -14,9 +14,11 @@ import { Link, useRouter } from 'expo-router';
 import { signInWithMagicLink } from '@/services/auth';
 import { COLORS } from '@/lib/constants';
 import { ChevronLeft, Mail, Info } from 'lucide-react-native';
+import { useAppColors } from '@/lib/theme';
 
 export default function SignIn() {
   const router = useRouter();
+  const colors = useAppColors();
   const [email, setEmail] = useState('');
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
 
@@ -38,7 +40,7 @@ export default function SignIn() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -52,23 +54,28 @@ export default function SignIn() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ChevronLeft size={16} color={COLORS.primary} strokeWidth={3} />
+          <ChevronLeft size={16} color={colors.primary} strokeWidth={3} />
         </TouchableOpacity>
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in with your email to continue</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>Welcome back</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            Sign in with your email to continue
+          </Text>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={[styles.inputLabel, { color: colors.primary }]}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: colors.card, borderColor: colors.border, color: colors.text },
+              ]}
               placeholder="you@example.com"
-              placeholderTextColor={COLORS.textLight}
+              placeholderTextColor={colors.textLight}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -78,7 +85,11 @@ export default function SignIn() {
 
           {/* Sign In Button */}
           <TouchableOpacity
-            style={[styles.button, isSendingMagicLink && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              { backgroundColor: colors.primary, shadowColor: colors.primary },
+              isSendingMagicLink && styles.buttonDisabled,
+            ]}
             onPress={handleMagicLinkSignIn}
             disabled={isSendingMagicLink}
             activeOpacity={0.85}
@@ -91,19 +102,21 @@ export default function SignIn() {
         </View>
 
         {/* Info */}
-        <View style={styles.infoBox}>
-          <Info size={16} color={COLORS.accent} strokeWidth={2.5} style={{ marginRight: 8 }} />
-          <Text style={styles.infoText}>
+        <View style={[styles.infoBox, { backgroundColor: colors.surface }]}>
+          <Info size={16} color={colors.accent} strokeWidth={2.5} style={{ marginRight: 8 }} />
+          <Text style={[styles.infoText, { color: colors.textMuted }]}>
             We'll send a 6-digit code to your email to sign you in.
           </Text>
         </View>
 
         {/* Sign Up Link */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>
+            Don't have an account?{' '}
+          </Text>
           <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.footerLink}>Sign up</Text>
+              <Text style={[styles.footerLink, { color: colors.accent }]}>Sign up</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -115,7 +128,6 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -127,7 +139,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -138,12 +149,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '800',
-    color: COLORS.primary,
     letterSpacing: -0.6,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.textMuted,
     marginTop: 8,
   },
   form: {
@@ -155,28 +164,22 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.primary,
     marginLeft: 4,
   },
   input: {
-    backgroundColor: COLORS.card,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
     borderRadius: 14,
     paddingHorizontal: 18,
     paddingVertical: 15,
     fontSize: 16,
-    color: COLORS.text,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary,
     borderRadius: 50,
     paddingVertical: 17,
     marginTop: 6,
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
@@ -193,7 +196,6 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -202,7 +204,6 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.textMuted,
     lineHeight: 20,
   },
   footer: {
@@ -211,11 +212,9 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: {
-    color: COLORS.textMuted,
     fontSize: 15,
   },
   footerLink: {
-    color: COLORS.accent,
     fontSize: 15,
     fontWeight: '600',
   },

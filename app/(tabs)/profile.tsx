@@ -3,7 +3,9 @@ import { useProfile } from '@/hooks/useProfile';
 import { useSavedVideos } from '@/hooks/useSavedVideos';
 import { useUserVideos } from '@/hooks/useVideos';
 import { COLORS } from '@/lib/constants';
+import { useAppColors } from '@/lib/theme';
 import { useAuth } from '@/providers/AuthProvider';
+import { useThemeMode } from '@/providers/ThemeModeProvider';
 import { signOut } from '@/services/auth';
 import { getFollowerCount, getFollowingCount } from '@/services/profiles';
 import { deleteVideo } from '@/services/videos';
@@ -28,6 +30,8 @@ type TabType = 'videos' | 'saved' | 'liked';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const colors = useAppColors();
+  const { mode, toggle: toggleTheme } = useThemeMode();
   const { profile, isLoading: profileLoading } = useProfile();
   const { videos, isLoading: videosLoading, refetch: refetchUserVideos } = useUserVideos(user?.id ?? '');
   const { videos: savedVideos, isLoading: savedLoading } = useSavedVideos(user?.id ?? '');
@@ -110,14 +114,14 @@ export default function ProfileScreen() {
 
   if (profileLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={displayedVideos}
         keyExtractor={(item) => item.id}
@@ -164,98 +168,128 @@ export default function ProfileScreen() {
               {profile?.avatar_url ? (
                 <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
               ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Icons.User size={32} color={COLORS.textMuted} strokeWidth={2} />
+                <View
+                  style={[
+                    styles.avatar,
+                    styles.avatarPlaceholder,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  <Icons.User size={32} color={colors.textMuted} strokeWidth={2} />
                 </View>
               )}
             </View>
 
             {/* Name */}
-            <Text style={styles.displayName}>
+            <Text style={[styles.displayName, { color: colors.text }]}>
               {profile?.display_name || 'Traveler'}
             </Text>
             {profile?.username && (
-              <Text style={styles.username}>@{profile.username}</Text>
+              <Text style={[styles.username, { color: colors.textMuted }]}>@{profile.username}</Text>
             )}
 
             {/* Bio */}
-            {profile?.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+            {profile?.bio && <Text style={[styles.bio, { color: colors.text }]}>{profile.bio}</Text>}
 
             {/* Location */}
             {profile?.location && (
               <View style={styles.locationRow}>
-                <Icons.MapPin size={14} color={COLORS.textMuted} strokeWidth={2.5} />
-                <Text style={styles.locationText}>{profile.location}</Text>
+                <Icons.MapPin size={14} color={colors.textMuted} strokeWidth={2.5} />
+                <Text style={[styles.locationText, { color: colors.textMuted }]}>{profile.location}</Text>
               </View>
             )}
 
             {/* Stats */}
             <View style={styles.statsRow}>
               <View style={styles.stat}>
-                <Text style={styles.statValue}>{videos.length}</Text>
-                <Text style={styles.statLabel}>Videos</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{videos.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Videos</Text>
               </View>
               <TouchableOpacity
                 style={styles.stat}
                 onPress={() => user?.id && router.push({ pathname: '/user/[userId]/followers', params: { userId: user.id } } as any)}
               >
-                <Text style={[styles.statValue, styles.statLink]}>{followers}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
+                <Text style={[styles.statValue, styles.statLink, { color: colors.primary }]}>{followers}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Followers</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.stat}
                 onPress={() => user?.id && router.push({ pathname: '/user/[userId]/following', params: { userId: user.id } } as any)}
               >
-                <Text style={[styles.statValue, styles.statLink]}>{following}</Text>
-                <Text style={styles.statLabel}>Following</Text>
+                <Text style={[styles.statValue, styles.statLink, { color: colors.primary }]}>{following}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Following</Text>
               </TouchableOpacity>
             </View>
 
             {/* Itineraries Button */}
             <TouchableOpacity
-              style={styles.itinerariesButton}
+              style={[
+                styles.itinerariesButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
               onPress={() => router.push('/profile/itineraries' as any)}
             >
-              <Icons.MapPin size={20} color={COLORS.primary} strokeWidth={2} />
-              <Text style={styles.itinerariesButtonText}>My Itineraries</Text>
-              <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+              <Icons.MapPin size={20} color={colors.primary} strokeWidth={2} />
+              <Text style={[styles.itinerariesButtonText, { color: colors.text }]}>My Itineraries</Text>
+              <Icons.ChevronRight size={16} color={colors.textMuted} strokeWidth={2.5} />
             </TouchableOpacity>
 
             {/* Notifications (icon) + Swipe history */}
             <View style={styles.shortcutsRow}>
               <TouchableOpacity
-                style={styles.notificationIconButton}
+                style={[
+                  styles.notificationIconButton,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
                 onPress={() => router.push('/settings/notifications' as any)}
                 accessibilityLabel="Notification settings"
                 accessibilityRole="button"
               >
-                <Icons.Bell size={22} color={COLORS.primary} strokeWidth={2} />
+                <Icons.Bell size={22} color={colors.primary} strokeWidth={2} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.swipeHistoryButton}
+                style={[
+                  styles.swipeHistoryButton,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
                 onPress={() => router.push('/(tabs)/discover-itinerary' as any)}
               >
-                <Icons.BookmarkCheck size={20} color={COLORS.primary} strokeWidth={2} />
-                <Text style={styles.itinerariesButtonText}>Swipe history</Text>
-                <Icons.ChevronRight size={16} color={COLORS.textMuted} strokeWidth={2.5} />
+                <Icons.BookmarkCheck size={20} color={colors.primary} strokeWidth={2} />
+                <Text style={[styles.itinerariesButtonText, { color: colors.text }]}>Swipe history</Text>
+                <Icons.ChevronRight size={16} color={colors.textMuted} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
             {/* Action Buttons */}
             <View style={styles.actions}>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => router.push('/profile/edit' as any)}
               >
-                <Text style={styles.editButtonText}>Edit Profile</Text>
+                <Text style={[styles.editButtonText, { color: colors.text }]}>Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.devButton}
+                style={[styles.themeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={toggleTheme}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle dark mode"
+              >
+                {mode === 'dark' ? (
+                  <Icons.Sun size={18} color={colors.primary} strokeWidth={2} />
+                ) : (
+                  <Icons.Moon size={18} color={colors.primary} strokeWidth={2} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.devButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => router.push('/(tabs)/../dev' as any)}
               >
-                <Icons.TestTube2 size={18} color={COLORS.primary} strokeWidth={2} />
+                <Icons.TestTube2 size={18} color={colors.primary} strokeWidth={2} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+              <TouchableOpacity
+                style={[styles.signOutButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={handleSignOut}
+              >
                 <Icons.LogOut size={18} color={COLORS.error} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
@@ -268,14 +302,15 @@ export default function ProfileScreen() {
               >
                 <Icons.Play
                   size={16}
-                  color={activeTab === 'videos' ? COLORS.primary : COLORS.textMuted}
-                  fill={activeTab === 'videos' ? COLORS.primary : 'none'}
+                  color={activeTab === 'videos' ? colors.primary : colors.textMuted}
+                  fill={activeTab === 'videos' ? colors.primary : 'none'}
                   strokeWidth={activeTab === 'videos' ? 0 : 2}
                 />
                 <Text
                   style={[
                     styles.tabLabel,
                     activeTab === 'videos' && styles.tabLabelActive,
+                    { color: activeTab === 'videos' ? colors.primary : colors.textMuted },
                   ]}
                 >
                   Videos ({videos.length})
@@ -287,14 +322,15 @@ export default function ProfileScreen() {
               >
                 <Icons.Bookmark
                   size={16}
-                  color={activeTab === 'saved' ? COLORS.primary : COLORS.textMuted}
-                  fill={activeTab === 'saved' ? COLORS.primary : 'none'}
+                  color={activeTab === 'saved' ? colors.primary : colors.textMuted}
+                  fill={activeTab === 'saved' ? colors.primary : 'none'}
                   strokeWidth={activeTab === 'saved' ? 0 : 2}
                 />
                 <Text
                   style={[
                     styles.tabLabel,
                     activeTab === 'saved' && styles.tabLabelActive,
+                    { color: activeTab === 'saved' ? colors.primary : colors.textMuted },
                   ]}
                 >
                   Saved ({savedVideos.length})
@@ -306,14 +342,15 @@ export default function ProfileScreen() {
               >
                 <Icons.Heart
                   size={16}
-                  color={activeTab === 'liked' ? COLORS.primary : COLORS.textMuted}
-                  fill={activeTab === 'liked' ? COLORS.primary : 'none'}
+                  color={activeTab === 'liked' ? colors.primary : colors.textMuted}
+                  fill={activeTab === 'liked' ? colors.primary : 'none'}
                   strokeWidth={activeTab === 'liked' ? 0 : 2}
                 />
                 <Text
                   style={[
                     styles.tabLabel,
                     activeTab === 'liked' && styles.tabLabelActive,
+                    { color: activeTab === 'liked' ? colors.primary : colors.textMuted },
                   ]}
                 >
                   Liked ({likedVideos.length})
@@ -349,6 +386,7 @@ export default function ProfileScreen() {
 
 function VideoThumbnail({ videoUrl, thumbnailUrl }: { videoUrl: string; thumbnailUrl: string | null }) {
   const [uri, setUri] = useState<string | null>(thumbnailUrl);
+  const colors = useAppColors();
 
   useEffect(() => {
     if (uri || !videoUrl) return;
@@ -366,7 +404,7 @@ function VideoThumbnail({ videoUrl, thumbnailUrl }: { videoUrl: string; thumbnai
   }
   return (
     <View style={[styles.thumbnailImage, styles.thumbnailPlaceholder]}>
-      <Icons.Play size={20} color={COLORS.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
+      <Icons.Play size={20} color={colors.textMuted} fill="rgba(0,0,0,0.1)" strokeWidth={2} />
     </View>
   );
 }
@@ -374,7 +412,6 @@ function VideoThumbnail({ videoUrl, thumbnailUrl }: { videoUrl: string; thumbnai
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   centered: {
     flex: 1,
@@ -522,6 +559,16 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   devButton: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeButton: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,

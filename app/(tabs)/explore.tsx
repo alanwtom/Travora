@@ -4,6 +4,7 @@ import { useFollow } from '@/hooks/useFollow';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import { useFeedVideos, useVideoSearch } from '@/hooks/useVideos';
 import { COLORS } from '@/lib/constants';
+import { useAppColors } from '@/lib/theme';
 import { useAuth } from '@/providers/AuthProvider';
 import { getSuggestedUsers } from '@/services/profiles';
 import { User } from 'lucide-react-native';
@@ -24,6 +25,7 @@ import {
 export default function ExploreScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const colors = useAppColors();
   const { videos, isLoading, isRefreshing, error, loadMore, refresh, hasMore } = useFeedVideos();
   const { results: userResults, isSearching: userSearching, search: searchUsers } = useUserSearch();
   const { results: videoResults, isSearching: videoSearching, search: searchVideos } = useVideoSearch();
@@ -51,17 +53,17 @@ export default function ExploreScreen() {
 
   if (isLoading && videos.length === 0 && !showSearchResults) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (error && videos.length === 0 && !showSearchResults) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Something went wrong</Text>
-        <Text style={styles.errorSubtext}>{error}</Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.text }]}>Something went wrong</Text>
+        <Text style={[styles.errorSubtext, { color: colors.textMuted }]}>{error}</Text>
       </View>
     );
   }
@@ -103,26 +105,36 @@ export default function ExploreScreen() {
           <Image source={{ uri: profile.avatar_url }} style={styles.suggestedAvatar} />
         ) : (
           <View style={[styles.suggestedAvatar, styles.avatarPlaceholder]}>
-            <User size={20} color={COLORS.textMuted} strokeWidth={2} />
+            <User size={20} color={colors.textMuted} strokeWidth={2} />
           </View>
         )}
         <View style={styles.suggestedInfo}>
-          <Text style={styles.suggestedName} numberOfLines={1}>
+          <Text style={[styles.suggestedName, { color: colors.text }]} numberOfLines={1}>
             {profile.display_name || 'Traveler'}
           </Text>
           {profile.username && (
-            <Text style={styles.suggestedUsername} numberOfLines={1}>
+            <Text style={[styles.suggestedUsername, { color: colors.textMuted }]} numberOfLines={1}>
               @{profile.username}
             </Text>
           )}
         </View>
         {user?.id !== profile.id && (
           <TouchableOpacity
-            style={[styles.suggestedFollowBtn, isFollowing && styles.followingBtn]}
+            style={[
+              styles.suggestedFollowBtn,
+              { backgroundColor: colors.primary },
+              isFollowing && [styles.followingBtn, { backgroundColor: colors.surface, borderColor: colors.border }],
+            ]}
             onPress={() => toggle()}
             disabled={isLoading}
           >
-            <Text style={[styles.suggestedFollowText, isFollowing && styles.followingBtnText]}>
+            <Text
+              style={[
+                styles.suggestedFollowText,
+                { color: colors.background },
+                isFollowing && [styles.followingBtnText, { color: colors.text }],
+              ]}
+            >
               {isFollowing ? 'Following' : 'Follow'}
             </Text>
           </TouchableOpacity>
@@ -142,26 +154,36 @@ export default function ExploreScreen() {
           <Image source={{ uri: profile.avatar_url }} style={styles.searchUserAvatar} />
         ) : (
           <View style={[styles.searchUserAvatar, styles.avatarPlaceholder]}>
-            <User size={24} color={COLORS.textMuted} strokeWidth={2} />
+            <User size={24} color={colors.textMuted} strokeWidth={2} />
           </View>
         )}
         <View style={styles.searchUserInfo}>
-          <Text style={styles.searchUserName} numberOfLines={1}>
+          <Text style={[styles.searchUserName, { color: colors.text }]} numberOfLines={1}>
             {profile.display_name || 'Traveler'}
           </Text>
           {profile.username && (
-            <Text style={styles.searchUserUsername} numberOfLines={1}>
+            <Text style={[styles.searchUserUsername, { color: colors.textMuted }]} numberOfLines={1}>
               @{profile.username}
             </Text>
           )}
         </View>
         {user?.id !== profile.id && (
           <TouchableOpacity
-            style={[styles.followBtn, isFollowing && styles.followingBtn]}
+            style={[
+              styles.followBtn,
+              { backgroundColor: colors.primary },
+              isFollowing && [styles.followingBtn, { backgroundColor: colors.surface, borderColor: colors.border }],
+            ]}
             onPress={() => toggle()}
             disabled={isLoading}
           >
-            <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+            <Text
+              style={[
+                styles.followBtnText,
+                { color: colors.background },
+                isFollowing && [styles.followingBtnText, { color: colors.text }],
+              ]}
+            >
               {isFollowing ? 'Following' : 'Follow'}
             </Text>
           </TouchableOpacity>
@@ -202,7 +224,7 @@ export default function ExploreScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.searchContainer}>
         <SearchBar
           onSearch={handleSearch}
@@ -229,11 +251,11 @@ export default function ExploreScreen() {
         }
         ListEmptyComponent={
           !isLoading && !isSearching && displayVideos.length === 0 ? (
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>
+            <View style={[styles.centered, { backgroundColor: colors.background }]}>
+              <Text style={[styles.emptyText, { color: colors.text }]}>
                 {showSearchResults ? 'No videos found' : 'No videos yet'}
               </Text>
-              <Text style={styles.emptySubtext}>
+              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                 {showSearchResults ? 'Try a different search' : 'Check back later for new content'}
               </Text>
             </View>
@@ -242,7 +264,7 @@ export default function ExploreScreen() {
         ListFooterComponent={
           isLoading && displayVideos.length > 0 && !showSearchResults ? (
             <View style={styles.footer}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : null
         }
