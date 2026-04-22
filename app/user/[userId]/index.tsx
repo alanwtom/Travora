@@ -1,4 +1,5 @@
 import { useFollow } from '@/hooks/useFollow';
+import { useBlock } from '@/hooks/useBlock';
 import { useProfile } from '@/hooks/useProfile';
 import { useUserVideos } from '@/hooks/useVideos';
 import { COLORS } from '@/lib/constants';
@@ -13,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -76,6 +78,7 @@ export default function UserProfileScreen() {
     user?.id,
     userId
   );
+  const { isBlocked, toggle: toggleBlock, isLoading: blockLoading } = useBlock(user?.id, userId);
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
 
@@ -146,6 +149,33 @@ export default function UserProfileScreen() {
       pathname: '/video-feed/user/[userId]',
       params: { userId, startIndex: idx >= 0 ? idx : 0, returnTo: `/user/${userId}` },
     } as any);
+  };
+
+  const confirmToggleBlock = () => {
+    if (!user?.id || !userId) return;
+    if (isBlocked) {
+      toggleBlock().catch((e: any) => {
+        Alert.alert('Unblock failed', e?.message || String(e) || 'Unable to unblock user.');
+      });
+      return;
+    }
+
+    Alert.alert(
+      'Block this user?',
+      'You won’t see their videos or profile content, and they won’t see yours.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: () => {
+            toggleBlock().catch((e: any) => {
+              Alert.alert('Block failed', e?.message || String(e) || 'Unable to block user.');
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -227,6 +257,20 @@ export default function UserProfileScreen() {
                   ]}
                 >
                   {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.blockButton, isBlocked && styles.unblockButton]}
+              onPress={confirmToggleBlock}
+              disabled={blockLoading}
+            >
+              {blockLoading ? (
+                <ActivityIndicator size="small" color={COLORS.error} />
+              ) : (
+                <Text style={[styles.blockButtonText, isBlocked && styles.unblockButtonText]}>
+                  {isBlocked ? 'Unblock' : 'Block'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -351,6 +395,28 @@ const styles = StyleSheet.create({
   },
   followingButtonText: {
     color: COLORS.text,
+  },
+  blockButton: {
+    marginTop: 10,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 48,
+    alignItems: 'center',
+    minWidth: 120,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+  },
+  unblockButton: {
+    borderColor: COLORS.border,
+  },
+  blockButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.error,
+  },
+  unblockButtonText: {
+    color: COLORS.textMuted,
   },
   tabContainer: {
     flexDirection: 'row',

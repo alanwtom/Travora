@@ -90,7 +90,7 @@ async function verifySupabase() {
 
   // 4. Verify database tables exist
   console.log('\n📊 Verifying Database Schema...');
-  const tables = ['profiles', 'videos', 'likes', 'comments', 'follows', 'saves'];
+  const tables = ['profiles', 'videos', 'likes', 'comments', 'follows', 'saves', 'blocks'];
   
   for (const table of tables) {
     try {

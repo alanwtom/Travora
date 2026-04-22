@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { VideoWithProfile } from '@/types/database';
 import { getFeedVideos, getUserVideos, searchVideos } from '@/services/videos';
 import { useAuth } from '@/providers/AuthProvider';
+import { getLocallyBlockedUserIds, subscribeToLocalBlocks } from '@/services/localBlocks';
 
 export function useFeedVideos() {
   const { user } = useAuth();
@@ -19,14 +20,16 @@ export function useFeedVideos() {
       setError(null);
 
       const data = await getFeedVideos(pageNum, user?.id);
+      const blockedIds = await getLocallyBlockedUserIds();
+      const filtered = blockedIds.length ? data.filter((v) => !blockedIds.includes(v.user_id)) : data;
 
       if (refresh || pageNum === 0) {
-        setVideos(data);
+        setVideos(filtered);
       } else {
-        setVideos((prev) => [...prev, ...data]);
+        setVideos((prev) => [...prev, ...filtered]);
       }
 
-      setHasMore(data.length > 0);
+      setHasMore(filtered.length > 0);
       setPage(pageNum);
     } catch (err: any) {
       setError(err.message);
@@ -38,6 +41,13 @@ export function useFeedVideos() {
 
   useEffect(() => {
     fetchVideos(0);
+  }, [fetchVideos]);
+
+  useEffect(() => {
+    const unsub = subscribeToLocalBlocks(() => {
+      fetchVideos(0, true);
+    });
+    return unsub;
   }, [fetchVideos]);
 
   const loadMore = () => {
@@ -83,6 +93,13 @@ export function useUserVideos(userId: string) {
     fetchVideos();
   }, [fetchVideos]);
 
+  useEffect(() => {
+    const unsub = subscribeToLocalBlocks(() => {
+      fetchVideos();
+    });
+    return unsub;
+  }, [fetchVideos]);
+
   return { videos, isLoading, error, refetch: fetchVideos };
 }
 
@@ -101,7 +118,9 @@ export function useVideoSearch() {
       setIsSearching(true);
       setError(null);
       const data = await searchVideos(query);
-      setResults(data);
+      const blockedIds = await getLocallyBlockedUserIds();
+      const filtered = blockedIds.length ? data.filter((v) => !blockedIds.includes(v.user_id)) : data;
+      setResults(filtered);
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -5,6 +5,7 @@ import {
     VideoItem,
 } from "@/services/personalizedFeed";
 import { useCallback, useEffect, useState } from "react";
+import { getLocallyBlockedUserIds, subscribeToLocalBlocks } from "@/services/localBlocks";
 
 export function usePersonalizedFeed(
   mediaType: "video" | "image" | "both" = "both",
@@ -33,8 +34,9 @@ export function usePersonalizedFeed(
         );
         if (err) throw err;
         const rawVideos = (data as VideoItem[]) || [];
+        const blockedIds = await getLocallyBlockedUserIds();
 
-        const mapped: PersonalizedFeedVideo[] = rawVideos.map((v) => ({
+        const mappedAll: PersonalizedFeedVideo[] = rawVideos.map((v) => ({
           id: v.id,
           user_id: v.user_id,
           title: v.title,
@@ -61,6 +63,9 @@ export function usePersonalizedFeed(
           comment_count: 0,
         }));
 
+        const mapped =
+          blockedIds.length ? mappedAll.filter((v) => !blockedIds.includes(v.user_id)) : mappedAll;
+
         if (refresh) {
           setVideos(mapped);
         } else {
@@ -86,6 +91,14 @@ export function usePersonalizedFeed(
   useEffect(() => {
     refresh();
   }, [mediaType]);
+
+  useEffect(() => {
+    const unsub = subscribeToLocalBlocks(() => {
+      // Immediately refresh so Home reflects new block/unblock
+      refresh();
+    });
+    return unsub;
+  }, [refresh]);
 
   return { videos, isLoading, isRefreshing, error, hasMore, refresh, loadMore };
 }
